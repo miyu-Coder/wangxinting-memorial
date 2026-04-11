@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="孝感市王新亭将军红色教育基地 · 展点讲解" />
+  <title>展点讲解 · 王新亭将军红色教育基地</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="banner-error" id="detail-error" hidden role="alert"></div>
+
+    <header class="site-header site-header--official">
+      <p class="detail-kicker" id="detail-kicker">王新亭将军红色教育基地</p>
+      <h1 class="site-title site-title--serif" id="detail-page-title">讲解详情</h1>
+      <p class="site-subtitle" id="detail-subtitle">加载中…</p>
+    </header>
+
+    <main id="detail-main" hidden>
+      <section class="detail-block detail-block--route" aria-labelledby="detail-route-label">
+        <p id="detail-route-label" class="placeholder-label">参观动线</p>
+        <div
+          id="detail-route-strip"
+          class="route-timeline route-timeline--compact"
+          role="navigation"
+          aria-label="四展点动线，当前展点已高亮"
+        ></div>
+        <button type="button" class="btn btn-next-cycle" id="btn-next-location">
+          下一展点
+        </button>
+      </section>
+
+      <section class="detail-block" aria-labelledby="carousel-label">
+        <p id="carousel-label" class="placeholder-label">图片展示</p>
+        <div class="carousel" id="detail-carousel" hidden>
+          <div class="carousel-viewport" id="carousel-viewport">
+            <img id="carousel-image" class="carousel-image" src="" alt="" hidden />
+            <div id="carousel-placeholder-slide" class="carousel-placeholder-slide" hidden>
+              <span id="carousel-placeholder-text" class="carousel-placeholder-text"></span>
+            </div>
+          </div>
+          <div class="carousel-toolbar">
+            <button type="button" class="carousel-btn" id="carousel-prev" aria-label="上一张">‹</button>
+            <div class="carousel-dots" id="carousel-dots" aria-label="选择图片"></div>
+            <button type="button" class="carousel-btn" id="carousel-next" aria-label="下一张">›</button>
+          </div>
+        </div>
+        <div class="placeholder-box" id="carousel-empty">暂无配图</div>
+      </section>
+
+      <section class="detail-block detail-text-block" aria-labelledby="text-label">
+        <p id="text-label" class="placeholder-label">文字介绍</p>
+        <div class="section-body detail-text-scroll" id="detail-text"></div>
+      </section>
+
+      <section class="detail-block" aria-labelledby="audio-label">
+        <p id="audio-label" class="placeholder-label">音频讲解</p>
+        <p class="audio-hint" id="audio-hint">
+          受浏览器策略影响，语音可能需手动点击播放。参观时请佩戴耳机，勿外放干扰他人。
+        </p>
+        <audio id="detail-audio" preload="metadata" playsinline></audio>
+        <div class="audio-controls">
+          <button type="button" class="btn btn-primary btn-audio" id="btn-audio-toggle">播放讲解</button>
+        </div>
+      </section>
+
+      <section class="detail-block" id="block-video" hidden aria-labelledby="video-label">
+        <p id="video-label" class="placeholder-label">视频资料</p>
+        <video
+          id="detail-video"
+          class="detail-video"
+          controls
+          playsinline
+          preload="metadata"
+        ></video>
+        <p class="video-caption" id="video-caption"></p>
+      </section>
+
+      <nav class="action-bar action-bar--single" aria-label="返回导航">
+        <a class="btn btn-primary btn-home-only" href="index.html">返回首页</a>
+      </nav>
+    </main>
+
+    <div class="retry-wrap" id="detail-retry-wrap" aria-live="polite">
+      <button type="button" class="btn btn-secondary" id="btn-retry-load">重新加载</button>
+      <a class="btn btn-secondary" href="index.html">返回首页</a>
+    </div>
+
+    <footer class="site-footer site-footer--compact" role="contentinfo">
+      <p class="site-footer__name">王新亭将军红色教育基地</p>
+      <p class="site-footer__addr">湖北省孝感市孝南区朋兴乡北庙村</p>
+      <p class="site-footer__hours">开放时间请以基地公告为准</p>
+    </footer>
+  </div>
+  <script src="js/nav-utils.js?v=3"></script>
+  <script src="js/timeline.js?v=3"></script>
+  <script src="js/detail.js?v=3" defer></script>
+</body>
+</html>

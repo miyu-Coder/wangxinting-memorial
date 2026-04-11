@@ -1,0 +1,6 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <rect width="800" height="450" fill="#1a1512"/>
+  <rect x="120" y="110" width="560" height="230" fill="#2a221e" stroke="#6d2a2a" stroke-width="2"/>
+  <text x="400" y="230" fill="#f5f0eb" font-size="32" text-anchor="middle">革命旧址纪念点</text>
+  <text x="400" y="278" fill="#b8a99a" font-size="20" text-anchor="middle">配图一</text>
+</svg>

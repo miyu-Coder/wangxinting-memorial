@@ -1,0 +1,8 @@
+{
+  "name": "wangxinting-memorial-h5",
+  "private": true,
+  "description": "基于二维码的纪念地数字化展播静态站点",
+  "scripts": {
+    "serve": "npx --yes serve . -l 3000"
+  }
+}
