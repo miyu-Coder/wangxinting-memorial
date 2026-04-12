@@ -471,19 +471,53 @@
 
     var isChecked = window.wxCheckin.isChecked(exhibitId);
     var checkTime = window.wxCheckin.getCheckTime(exhibitId);
+    var totalChecked = window.wxCheckin.getTotalChecked();
+    var isCertificateUnlocked = window.wxCheckin.isCertificateUnlocked();
 
     if (isChecked) {
       // 已打卡状态
       container.innerHTML =
-        '<div class="checkin-status checkin-status--checked">' +
-        '  <span>✅ 已打卡</span>' +
+        '<div class="checkin-header">' +
+        '  <h3 class="checkin-title checkin-title--checked">✅ 已打卡留念</h3>' +
         '</div>' +
-        '<div class="checkin-time">' + (checkTime ? '打卡时间：' + window.wxCheckin.formatTime(checkTime) : '') + '</div>';
+        '<div class="checkin-info">' +
+        '  <p class="checkin-message">🎉 感谢您的参观！</p>' +
+        '  <p class="checkin-time">' + (checkTime ? '打卡时间：' + window.wxCheckin.formatTime(checkTime) : '') + '</p>' +
+        '</div>' +
+        '<div class="checkin-progress-inline">' +
+        '  <div class="checkin-progress-wrapper">' +
+        '    <div class="checkin-progress-bar">' +
+        '      <div class="checkin-progress-fill" style="width: ' + (totalChecked / 4 * 100) + '%"></div>' +
+        '    </div>' +
+        '    <span class="checkin-progress-text">打卡进度：' + totalChecked + '/4</span>' +
+        '  </div>';
+
+      // 如果集齐了四个展点，添加查看证书按钮
+      if (isCertificateUnlocked) {
+        container.innerHTML +=
+          '  <a class="btn btn-primary btn-sm checkin-certificate-btn" href="certificate.html">' +
+          '    查看我的纪念证书 ❯' +
+          '  </a>' +
+          '</div>';
+      } else {
+        container.innerHTML += '</div>';
+      }
     } else {
       // 未打卡状态
       container.innerHTML =
-        '<div class="checkin-status checkin-status--unchecked">' +
-        '  您还未在此处打卡留念' +
+        '<div class="checkin-header">' +
+        '  <h3 class="checkin-title">📍 参观打卡</h3>' +
+        '</div>' +
+        '<div class="checkin-info">' +
+        '  <p class="checkin-message">在这里留下您的足迹，集齐四个展点解锁纪念证书！</p>' +
+        '</div>' +
+        '<div class="checkin-progress-inline">' +
+        '  <div class="checkin-progress-wrapper">' +
+        '    <div class="checkin-progress-bar">' +
+        '      <div class="checkin-progress-fill" style="width: ' + (totalChecked / 4 * 100) + '%"></div>' +
+        '    </div>' +
+        '    <span class="checkin-progress-text">当前进度：' + totalChecked + '/4</span>' +
+        '  </div>' +
         '</div>' +
         '<button type="button" class="checkin-btn" id="btn-checkin">' +
         '  <span class="checkin-btn-icon">📷</span> 打卡留念' +

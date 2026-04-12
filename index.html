@@ -18,13 +18,21 @@
       <p class="site-subtitle site-subtitle--gold">湖北省爱国主义教育基地 · 孝感</p>
       <p class="site-tagline">官方 H5 导览 · 移动优先</p>
       <p class="home-quiz-progress" id="home-quiz-progress" hidden aria-live="polite"></p>
-      <div class="checkin-progress-banner" id="checkin-progress" hidden>
-        <div class="checkin-progress-header">
-          <span class="checkin-progress-title" id="checkin-progress-title">📍 打卡进度 0/4</span>
-          <span class="checkin-progress-value" id="checkin-progress-percent">0%</span>
-        </div>
-        <div class="checkin-progress-bar">
-          <div class="checkin-progress-fill" id="checkin-progress-fill" style="width: 0%;"></div>
+
+      <div class="checkin-progress-section" id="checkin-section" hidden>
+        <div class="checkin-progress-banner-home">
+          <div class="checkin-progress-header">
+            <span class="checkin-progress-title-home">
+              🏆 <span id="checkin-progress-text">红色足迹打卡中 0/4</span>
+            </span>
+            <span class="checkin-progress-percent-home" id="checkin-percent">0%</span>
+          </div>
+          <div class="checkin-progress-bar-home">
+            <div class="checkin-progress-fill" id="checkin-progress-home" style="width: 0%;"></div>
+          </div>
+          <div class="checkin-progress-actions" id="checkin-actions">
+            <p class="checkin-progress-msg">集齐四个展点解锁纪念证书</p>
+          </div>
         </div>
       </div>
     </header>
@@ -104,6 +112,8 @@
       <section class="section" aria-labelledby="spots-heading">
         <h2 id="spots-heading" class="section-title section-title--serif">展点导览</h2>
         <p class="section-body" id="list-load-hint">正在加载展点列表…</p>
+        <!-- 打卡进度条将在此处动态添加 -->
+        <div id="checkin-progress-section"></div>
         <ul class="location-list" id="location-list-root"></ul>
       </section>
 

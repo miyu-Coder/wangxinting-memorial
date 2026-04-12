@@ -71,10 +71,10 @@
       dateEl.textContent = window.wxCheckin.formatTime(new Date(latestTime));
     }
 
-    // 渲染展点列表
+    // 渲染展点列表和改进的展点布局
     var sitesList = document.getElementById("certificate-sites");
     if (sitesList && LOCATIONS.length > 0) {
-      var listHtml = '<h3 class="certificate-sites-title">已打卡展点：</h3>';
+      var listHtml = '<div class="certificate-sites-wrapper"><h3 class="certificate-sites-title">已打卡展点：</h3>';
 
       for (var i = 0; i < 4; i++) {
         var loc = LOCATIONS[i];
@@ -87,20 +87,28 @@
         var checked = time ? true : false;
 
         listHtml += '<div class="certificate-site-item">';
-        listHtml += '<span class="certificate-site-icon">' + (checked ? '✅' : '⏳') + '</span>';
+        listHtml += '<div class="certificate-site-icon">' + (checked ? '✅' : '🏛️') + '</div>';
         listHtml += '<div class="certificate-site-info">';
-        listHtml += '<p class="certificate-site-name">' + (loc.routeShort || loc.title) + '</p>';
+        listHtml += '<div class="certificate-site-name">';
+        listHtml += '<span class="certificate-site-number">' + (i + 1) + '</span>';
+        listHtml += (loc.routeShort || loc.title);
+        listHtml += '</div>';
         if (checked && time) {
-          listHtml += '<p class="certificate-site-time">打卡时间：' + window.wxCheckin.formatTime(new Date(time)) + '</p>';
+          listHtml += '<p class="certificate-site-time">' + window.wxCheckin.formatTime(new Date(time)) + '</p>';
         } else {
-          listHtml += '<p class="certificate-site-time">还未打卡</p>';
+          listHtml += '<p class="certificate-site-time">未完成打卡</p>';
         }
         listHtml += '</div>';
         listHtml += '</div>';
       }
 
+      listHtml += '</div>';
       sitesList.innerHTML = listHtml;
     }
+
+    // 添加证书印章
+    listHtml += '<div class="certificate-seal"><div class="certificate-seal-text">已完成</div></div>';
+    if (sitesList) sitesList.innerHTML = listHtml;
 
     // 显示证书内容
     var main = document.getElementById("certificate-main");

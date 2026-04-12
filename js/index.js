@@ -45,42 +45,45 @@
   }
 
   /**
-   * 更新打卡进度条
+   * 更新打卡进度条 - 移动到展点卡片上方
    */
   function updateCheckinProgress() {
-    var progressEl = document.getElementById("checkin-progress");
-    var titleEl = document.getElementById("checkin-progress-title");
-    var percentEl = document.getElementById("checkin-progress-percent");
-    var fillEl = document.getElementById("checkin-progress-fill");
-
-    if (!progressEl || !window.wxCheckin) return;
+    var sectionEl = document.getElementById("checkin-progress-section");
+    if (!sectionEl || !window.wxCheckin) return;
 
     var total = window.wxCheckin.getTotalChecked();
     var percent = window.wxCheckin.getProgressPercent();
 
-    // 更新标题
-    titleEl.textContent = "📍 打卡进度 " + total + "/4";
+    var html = '<div class="checkin-progress-banner-home">' +
+      '<div class="checkin-progress-header">' +
+      '  <span class="checkin-progress-title-home">' +
+      '    🏆 <span id="checkin-progress-text">红色足迹打卡中 ' + total + '/4</span>' +
+      '  </span>' +
+      '  <span class="checkin-progress-percent-home" id="checkin-percent">' + percent + '%</span>' +
+      '</div>' +
+      '<div class="checkin-progress-bar-home">' +
+      '  <div class="checkin-progress-fill" id="checkin-progress-home" style="width: ' + percent + '%;"></div>' +
+      '</div>' +
+      '<div class="checkin-progress-actions" id="checkin-actions">' +
+      '  <p class="checkin-progress-msg">集齐四个展点解锁纪念证书</p>';
 
-    // 更新百分比
-    percentEl.textContent = percent + "%";
-
-    // 更新进度条
-    fillEl.style.width = percent + "%";
-
-    // 如果集齐四个展点，显示解锁提示
-    if (total === 4) {
-      var progressHeader = progressEl.querySelector(".checkin-progress-header");
-      var unlockedEl = document.createElement("div");
-      unlockedEl.className = "checkin-unlocked";
-      unlockedEl.innerHTML = "🎉 集齐";
-
-      // 先清空标题区域，然后添加新内容
-      var parent = titleEl.parentNode;
-      parent.innerHTML = "";
-      parent.appendChild(unlockedEl);
+    // 如果集齐四个展点，添加查看证书按钮
+    if (total === 4 && window.wxCheckin.isCertificateUnlocked()) {
+      html += '  <a class="checkin-view-certificate-btn" href="certificate.html">🎉 查看证书</a>';
     }
 
-    progressEl.hidden = false;
+    html += '</div></div>';
+
+    sectionEl.innerHTML = html;
+    sectionEl.hidden = false;
+
+    // 为进度条添加动画效果
+    setTimeout(function() {
+      var fillEl = document.getElementById("checkin-progress-home");
+      if (fillEl) {
+        fillEl.style.width = percent + "%";
+      }
+    }, 100);
   }
 
   function applyUrlCardHighlight(normalizedId) {

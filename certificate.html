@@ -19,6 +19,11 @@
     </header>
 
     <main class="certificate-main" id="certificate-main">
+      <!-- 四角装饰 -->
+      <div class="certificate-corner certificate-corner--tl"></div>
+      <div class="certificate-corner certificate-corner--tr"></div>
+      <div class="certificate-corner certificate-corner--bl"></div>
+      <div class="certificate-corner certificate-corner--br"></div>
       <div class="certificate-badge">
         <span class="certificate-badge-icon">🏅</span>
         <span class="certificate-badge-text">红色足迹证明</span>
@@ -31,15 +36,39 @@
         <p class="certificate-sites-count">已完成参观打卡展点 <strong>4</strong> 处</p>
       </div>
 
-      <div class="certificate-sites-list" id="certificate-sites">
-        <h3 class="certificate-sites-title">已打卡展点：</h3>
-        <!-- 展点列表将通过JS动态渲染 -->
+      <div class="certificate-content">
+        <div class="certificate-badge">
+          <span class="certificate-badge-icon">🏅</span>
+          <span class="certificate-badge-text">红色足迹证明</span>
+        </div>
+
+        <p class="certificate-intro">恭喜您完成王新亭将军红色教育基地的全部参观打卡！</p>
+
+        <div class="certificate-user-info">
+          <p class="certificate-date-line" id="certificate-date">完成日期：<span>--年--月--日</span></p>
+          <p class="certificate-sites-count">已完成参观打卡展点 <strong>4</strong> 处</p>
+        </div>
+
+        <div class="certificate-sites-list" id="certificate-sites">
+          <div class="certificate-sites-wrapper">
+            <h3 class="certificate-sites-title">已打卡展点：</h3>
+            <!-- 展点列表将通过JS动态渲染 -->
+          </div>
+        </div>
+
+        <div class="certificate-message">
+          <p>感谢您参观王新亭将军红色教育基地，</p>
+          <p>让我们一起传承红色基因，赓续红色血脉！</p>
+        </div>
+
+      <div class="certificate-divider">
+        <span class="certificate-divider-icon">🎖️</span>
       </div>
 
-      <div class="certificate-message">
-        <p>感谢您参观王新亭将军红色教育基地，</p>
-        <p>让我们一起传承红色基因，赓续红色血脉！</p>
+      <div class="certificate-seal">
+        <div class="certificate-seal-text">已完成</div>
       </div>
+    </main>
 
       <div class="certificate-actions">
         <button type="button" class="btn btn-primary certificate-btn-save" id="btn-save-certificate">
