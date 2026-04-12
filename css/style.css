@@ -38,6 +38,7 @@
 
   --radius: 12px;
   --radius-sm: 8px;
+  --radius-lg: 12px;
   --safe-bottom: env(safe-area-inset-bottom, 14px);
 
   /* 兼容旧变量名（避免遗漏选择器） */
@@ -198,11 +199,15 @@ body {
 
 .detail-exhibit-quiz-badge {
   margin: 10px 0 0;
+  padding: 6px 12px;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--color-gold-light);
+  color: #ffffff;
+  background: #C41E3A;
+  border-radius: 10px;
   text-align: center;
   line-height: 1.45;
+  display: inline-block;
 }
 
 .detail-global-progress {
@@ -1288,7 +1293,7 @@ body {
   font-size: 0.88rem;
   font-weight: 600;
   color: #ffffff;
-  background: var(--color-red);
+  background: #C41E3A;
   border-radius: 10px;
   text-align: center;
   letter-spacing: 0.04em;
@@ -1310,11 +1315,6 @@ body {
 /* 知识问答内部选项也统一圆角 */
 .quiz-option {
   border-radius: var(--radius);
-}
-
-/* 问答状态标签也统一圆角 */
-.quiz-exhibit-status {
-  border-radius: var(--radius-sm);
 }
 
 .quiz-progress-meta {
