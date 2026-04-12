@@ -320,6 +320,386 @@
     window.renderExhibitTimeline(strip, LOCATIONS, normId(loc.id));
   }
 
+  function updateAchievementLines(loc) {
+    var globalEl = document.getElementById("detail-global-progress");
+    var badgeEl = document.getElementById("detail-exhibit-quiz-badge");
+    var inQuizStatus = document.getElementById("quiz-exhibit-status");
+    var st = window.wxQuizStorage;
+    var totalQ =
+      loc && loc.quiz && Array.isArray(loc.quiz.questions)
+        ? loc.quiz.questions.length
+        : 0;
+
+    if (st && globalEl) {
+      globalEl.textContent = st.formatGlobalProgressLine(LOCATIONS);
+      globalEl.hidden = false;
+    } else if (globalEl) {
+      globalEl.hidden = true;
+    }
+
+    var statusText =
+      st && totalQ > 0
+        ? st.formatExhibitQuizStatus(normId(loc.id), totalQ, LOCATIONS)
+        : "";
+    if (badgeEl) {
+      if (statusText) {
+        badgeEl.textContent = statusText;
+        badgeEl.hidden = false;
+      } else {
+        badgeEl.textContent = "";
+        badgeEl.hidden = true;
+      }
+    }
+    if (inQuizStatus) {
+      inQuizStatus.textContent = statusText;
+    }
+  }
+
+  /** 评语：与答题结束时写入 localStorage 的文案一致 */
+  function quizCommentForScore(correct, total) {
+    if (correct >= total && total > 0) {
+      return "⭐ 太棒了！你对王新亭将军非常了解！";
+    }
+    if (correct === total - 1 && total >= 2) {
+      return "👍 不错哦，再复习一下会更棒！";
+    }
+    if (correct >= 2) {
+      return "📚 还可以，继续学习吧！";
+    }
+    return "🌱 刚起步，再参观一遍会有收获！";
+  }
+
+  /**
+   * 全部展点答完后引导至终章（遮罩 + 操作）
+   */
+  function showAchievementEntranceModal() {
+    if (document.getElementById("wx-quiz-celebration-modal")) return;
+    var mask = document.createElement("div");
+    mask.id = "wx-quiz-celebration-modal";
+    mask.className = "quiz-celebration-modal";
+    mask.setAttribute("role", "dialog");
+    mask.setAttribute("aria-modal", "true");
+    mask.setAttribute("aria-labelledby", "wx-modal-title");
+
+    var panel = document.createElement("div");
+    panel.className = "quiz-celebration-modal__panel";
+
+    var h = document.createElement("h3");
+    h.id = "wx-modal-title";
+    h.className = "quiz-celebration-modal__title";
+    h.textContent = "🎊 恭喜完成全部展点问答！";
+
+    var p = document.createElement("p");
+    p.className = "quiz-celebration-modal__text";
+    p.textContent =
+      "您已走完四站知识问答，前往「红色传承之旅」查看总成就、生成分享海报。";
+
+    var row = document.createElement("div");
+    row.className = "quiz-celebration-modal__actions";
+
+    var go = document.createElement("a");
+    go.className = "btn btn-primary";
+    go.href = "achievement.html";
+    go.textContent = "前往终章页";
+
+    var later = document.createElement("button");
+    later.type = "button";
+    later.className = "btn btn-secondary";
+    later.textContent = "稍后再说";
+    later.addEventListener("click", function () {
+      mask.remove();
+    });
+
+    row.appendChild(go);
+    row.appendChild(later);
+    panel.appendChild(h);
+    panel.appendChild(p);
+    panel.appendChild(row);
+    mask.appendChild(panel);
+    document.body.appendChild(mask);
+  }
+
+  /**
+   * 已锁定：成就回顾卡片（不可再答）
+   */
+  function renderQuizRecap(loc, rec, root) {
+    root.innerHTML = "";
+    var wrap = document.createElement("div");
+    wrap.className = "quiz-recap-card";
+
+    var done = document.createElement("p");
+    done.className = "quiz-recap-card__done";
+    done.textContent = "🎉 本展点已完成";
+
+    var scoreP = document.createElement("p");
+    scoreP.className = "quiz-recap-card__score";
+    scoreP.textContent =
+      "您的得分：" + rec.score + "/" + (rec.maxScore || 4) + " 分";
+
+    var comment = document.createElement("p");
+    comment.className = "quiz-recap-card__comment";
+    var txt =
+      rec.comment && String(rec.comment).trim()
+        ? rec.comment
+        : quizCommentForScore(rec.score, rec.maxScore || 4);
+    comment.textContent = "获得的评语：" + txt;
+
+    var actions = document.createElement("div");
+    actions.className = "quiz-recap-card__actions";
+    var btn = document.createElement("a");
+    btn.className = "btn btn-primary quiz-recap-card__cta";
+    btn.href = "achievement.html";
+    btn.textContent = "查看总成就";
+    actions.appendChild(btn);
+
+    wrap.appendChild(done);
+    wrap.appendChild(scoreP);
+    wrap.appendChild(comment);
+    wrap.appendChild(actions);
+    root.appendChild(wrap);
+  }
+
+  /**
+   * 知识问答：每展点仅一次作答；未完成时展示答题卡，已完成时展示回顾卡
+   */
+  function setupQuiz(loc) {
+    var block = document.getElementById("block-quiz");
+    var root = document.getElementById("quiz-root");
+    if (!block || !root) return;
+
+    var questions =
+      loc && loc.quiz && Array.isArray(loc.quiz.questions) ? loc.quiz.questions : [];
+    if (!questions.length) {
+      block.hidden = true;
+      root.innerHTML = "";
+      return;
+    }
+
+    block.hidden = false;
+    var exhibitId = normId(loc.id);
+    var total = questions.length;
+    var st = window.wxQuizStorage;
+
+    var existing =
+      st && typeof st.getExhibitRecord === "function"
+        ? st.getExhibitRecord(exhibitId, LOCATIONS)
+        : { completed: false };
+
+    if (existing.completed) {
+      renderQuizRecap(loc, existing, root);
+      return;
+    }
+
+    var state = { idx: 0, correct: 0, picked: false };
+    /** 最后一题作答后立即写入，防止刷新页面重复刷分 */
+    var lastLockResult = { ok: false, allExhibitsComplete: false };
+
+    /** 仅展示结果页（得分已在最后一题选项点击时锁定） */
+    function showFinalResultPanel() {
+      var comment = quizCommentForScore(state.correct, total);
+      root.innerHTML = "";
+      var wrap = document.createElement("div");
+      wrap.className = "quiz-result quiz-result--final";
+
+      var scoreEl = document.createElement("p");
+      scoreEl.className = "quiz-result__score";
+      scoreEl.textContent = "✅ 成绩已封存 · " + state.correct + " / " + total + " 分";
+
+      var msg = document.createElement("p");
+      msg.className = "quiz-result__comment";
+      msg.textContent = comment;
+
+      wrap.appendChild(scoreEl);
+      wrap.appendChild(msg);
+
+      if (st && st.isHeritageUnlocked(LOCATIONS)) {
+        var heritage = document.createElement("p");
+        heritage.className = "quiz-result__heritage";
+        heritage.textContent = "🏅 累计满分 · 「红色传承人」";
+        wrap.appendChild(heritage);
+      }
+
+      var btnRow = document.createElement("div");
+      btnRow.className = "quiz-result__actions quiz-result__actions--stack";
+
+      var toAch = document.createElement("a");
+      toAch.className = "btn btn-primary";
+      toAch.href = "achievement.html";
+      toAch.textContent = "查看总成就";
+      btnRow.appendChild(toAch);
+
+      wrap.appendChild(btnRow);
+      root.appendChild(wrap);
+
+      if (lastLockResult.allExhibitsComplete) {
+        showAchievementEntranceModal();
+      }
+    }
+
+    function renderQuestion() {
+      root.innerHTML = "";
+      var q = questions[state.idx];
+      if (!q) return;
+
+      var card = document.createElement("div");
+      card.className = "quiz-card";
+
+      /* —— 氛围区：当前展点 + 全站展点完成进度 —— */
+      var ambient = document.createElement("div");
+      ambient.className = "quiz-ambient";
+      var lineA = document.createElement("p");
+      lineA.className = "quiz-ambient__line";
+      lineA.textContent = "⭐ 当前展点：" + (loc.title || "展点");
+      var lineB = document.createElement("p");
+      lineB.className = "quiz-ambient__line quiz-ambient__line--sub";
+      lineB.textContent =
+        "📊 展点完成进度（" +
+        (st && st.formatExhibitProgressFraction
+          ? st.formatExhibitProgressFraction(LOCATIONS)
+          : "?/4") +
+        "）";
+      ambient.appendChild(lineA);
+      ambient.appendChild(lineB);
+      card.appendChild(ambient);
+
+      var progressTop = document.createElement("div");
+      progressTop.className = "quiz-progress-meta";
+      progressTop.textContent =
+        "第 " + (state.idx + 1) + " / " + total + " 题";
+
+      var barWrap = document.createElement("div");
+      barWrap.className = "quiz-progress";
+      barWrap.setAttribute("role", "progressbar");
+      barWrap.setAttribute("aria-valuemin", "0");
+      barWrap.setAttribute("aria-valuemax", String(total));
+      barWrap.setAttribute("aria-valuenow", String(state.idx));
+      var barFill = document.createElement("div");
+      barFill.className = "quiz-progress__fill";
+      barFill.style.width = (100 * state.idx) / total + "%";
+      barWrap.appendChild(barFill);
+
+      var qText = document.createElement("p");
+      qText.className = "quiz-question";
+      qText.textContent = q.question || "";
+
+      var optsHost = document.createElement("div");
+      optsHost.className = "quiz-options";
+
+      var feedback = document.createElement("p");
+      feedback.className = "quiz-feedback";
+      feedback.setAttribute("aria-live", "polite");
+      feedback.hidden = true;
+
+      var medal = document.createElement("div");
+      medal.className = "quiz-score-medal";
+      medal.textContent = "🏆 当前得分：" + state.correct + "/" + total;
+
+      var nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = "btn btn-primary quiz-next-btn";
+      nextBtn.hidden = true;
+      nextBtn.textContent =
+        state.idx >= total - 1 ? "查看结果" : "下一题";
+
+      var correctIndex = parseInt(String(q.answer), 10);
+      if (!Number.isFinite(correctIndex)) correctIndex = 0;
+
+      var optionBtns = [];
+
+      function bumpOption(btn) {
+        btn.classList.remove("quiz-option--pop");
+        void btn.offsetWidth;
+        btn.classList.add("quiz-option--pop");
+        window.setTimeout(function () {
+          btn.classList.remove("quiz-option--pop");
+        }, 420);
+      }
+
+      function applyPick(choiceIndex) {
+        if (state.picked) return;
+        state.picked = true;
+        var btn = optionBtns[choiceIndex];
+        if (btn) bumpOption(btn);
+
+        var isCorrect = choiceIndex === correctIndex;
+        if (isCorrect) {
+          state.correct++;
+          optionBtns[choiceIndex].classList.add("quiz-option--correct");
+          feedback.textContent = "✅ 回答正确！";
+          feedback.className = "quiz-feedback quiz-feedback--ok";
+        } else {
+          optionBtns[choiceIndex].classList.add("quiz-option--wrong");
+          if (optionBtns[correctIndex]) {
+            optionBtns[correctIndex].classList.add("quiz-option--correct");
+          }
+          feedback.textContent = "❌ 回答错误";
+          feedback.className = "quiz-feedback quiz-feedback--bad";
+        }
+        medal.textContent = "🏆 当前得分：" + state.correct + "/" + total;
+        feedback.hidden = false;
+        barFill.style.width = (100 * (state.idx + 1)) / total + "%";
+        barWrap.setAttribute("aria-valuenow", String(state.idx + 1));
+        for (var d = 0; d < optionBtns.length; d++) {
+          optionBtns[d].disabled = true;
+        }
+        nextBtn.hidden = false;
+
+        /* 最后一题：立即锁定存储，避免用户在未点「查看结果」前刷新重答 */
+        if (state.idx === total - 1 && st && typeof st.lockExhibitQuiz === "function") {
+          var cmt = quizCommentForScore(state.correct, total);
+          lastLockResult = st.lockExhibitQuiz(
+            exhibitId,
+            state.correct,
+            total,
+            cmt,
+            LOCATIONS
+          );
+          updateAchievementLines(loc);
+          if (lastLockResult.allExhibitsComplete) {
+            showAchievementEntranceModal();
+          }
+        }
+      }
+
+      var options = Array.isArray(q.options) ? q.options : [];
+      for (var oi = 0; oi < options.length; oi++) {
+        (function (idx) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "quiz-option";
+          b.textContent = options[idx];
+          b.addEventListener("click", function () {
+            applyPick(idx);
+          });
+          optionBtns.push(b);
+          optsHost.appendChild(b);
+        })(oi);
+      }
+
+      nextBtn.addEventListener("click", function () {
+        if (!state.picked) return;
+        if (state.idx >= total - 1) {
+          showFinalResultPanel();
+          return;
+        }
+        state.idx++;
+        state.picked = false;
+        renderQuestion();
+      });
+
+      card.appendChild(progressTop);
+      card.appendChild(barWrap);
+      card.appendChild(qText);
+      card.appendChild(optsHost);
+      card.appendChild(feedback);
+      card.appendChild(medal);
+      card.appendChild(nextBtn);
+      root.appendChild(card);
+    }
+
+    renderQuestion();
+  }
+
   function updatePageContent(loc) {
     try {
       sessionStorage.setItem("wx_current_stop", String(normId(loc.id)));
@@ -346,6 +726,8 @@
     renderCarousel(loc);
     setupAudio(loc);
     setupVideo(loc);
+    updateAchievementLines(loc);
+    setupQuiz(loc);
 
     var btnNext = document.getElementById("btn-next-location");
     var nextLoc = findNextLocationCyclic(loc.id);

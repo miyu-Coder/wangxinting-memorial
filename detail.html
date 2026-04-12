@@ -18,6 +18,8 @@
       <p class="detail-kicker" id="detail-kicker">王新亭将军红色教育基地</p>
       <h1 class="site-title site-title--serif" id="detail-page-title">讲解详情</h1>
       <p class="site-subtitle" id="detail-subtitle">加载中…</p>
+      <p class="detail-exhibit-quiz-badge" id="detail-exhibit-quiz-badge" hidden aria-live="polite"></p>
+      <p class="detail-global-progress" id="detail-global-progress" hidden aria-live="polite"></p>
     </header>
 
     <main id="detail-main" hidden>
@@ -80,6 +82,12 @@
         <p class="video-caption" id="video-caption"></p>
       </section>
 
+      <section class="detail-block detail-quiz-block" id="block-quiz" hidden aria-labelledby="quiz-label">
+        <h2 id="quiz-label" class="quiz-section-title">知识问答</h2>
+        <p class="quiz-exhibit-status" id="quiz-exhibit-status" aria-live="polite"></p>
+        <div id="quiz-root" class="quiz-root"></div>
+      </section>
+
       <nav class="action-bar action-bar--single" aria-label="返回导航">
         <a class="btn btn-primary btn-home-only" href="index.html">返回首页</a>
       </nav>
@@ -98,6 +106,7 @@
   </div>
   <script src="js/nav-utils.js?v=3"></script>
   <script src="js/timeline.js?v=3"></script>
-  <script src="js/detail.js?v=3" defer></script>
+  <script src="js/storage.js?v=2"></script>
+  <script src="js/detail.js?v=6" defer></script>
 </body>
 </html>

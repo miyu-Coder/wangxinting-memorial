@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="王新亭将军红色教育基地 · 红色传承之旅成就总结" />
+  <title>红色传承之旅 · 成就总结</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/achievement.css" />
+</head>
+<body class="achievement-page">
+  <div class="page-shell page-shell--official achievement-shell">
+    <header class="achievement-hero">
+      <p class="achievement-hero__kicker">王新亭将军红色教育基地</p>
+      <h1 class="achievement-hero__title">您的红色传承之旅</h1>
+      <p class="achievement-hero__sub">行走四站展点 · 知识问答成就总结</p>
+      <figure class="achievement-hero__visual" aria-label="主视觉占位">
+        <figcaption class="achievement-hero__caption">将军肖像 / 基地主入口（可替换实拍）</figcaption>
+      </figure>
+    </header>
+
+    <main class="achievement-main" id="achievement-main" hidden>
+      <section class="achievement-stats" aria-labelledby="stats-heading">
+        <h2 id="stats-heading" class="achievement-section-title">成就统计</h2>
+        <div class="achievement-stats__grid">
+          <div class="achievement-stat-card">
+            <p class="achievement-stat-card__label">已完成展点</p>
+            <p class="achievement-stat-card__value" id="stat-completed">—</p>
+          </div>
+          <div class="achievement-stat-card">
+            <p class="achievement-stat-card__label">答题总得分</p>
+            <p class="achievement-stat-card__value achievement-stat-card__value--gold" id="stat-score">—</p>
+          </div>
+          <div class="achievement-stat-card achievement-stat-card--wide">
+            <p class="achievement-stat-card__label">获得称号</p>
+            <p class="achievement-stat-card__title" id="stat-title">—</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="achievement-list-section" aria-labelledby="list-heading">
+        <h2 id="list-heading" class="achievement-section-title">各展点得分</h2>
+        <div class="achievement-exhibit-list" id="achievement-exhibit-list"></div>
+      </section>
+
+      <section class="achievement-actions" aria-label="操作">
+        <button type="button" class="btn btn-primary achievement-btn-share" id="btn-share-poster">
+          分享我的成就
+        </button>
+        <p class="achievement-share-hint" id="share-hint" hidden>
+          若浏览器拦截下载，请长按海报图片另存。
+        </p>
+        <a class="btn btn-secondary achievement-btn-home" href="index.html">再访教育基地</a>
+      </section>
+    </main>
+
+    <div class="achievement-error" id="achievement-error" hidden role="alert"></div>
+
+    <footer class="site-footer site-footer--compact achievement-footer" role="contentinfo">
+      <p class="site-footer__name">王新亭将军红色教育基地</p>
+      <p class="site-footer__addr">湖北省孝感市孝南区朋兴乡北庙村</p>
+    </footer>
+  </div>
+
+  <!-- 离屏画布：生成分享海报 -->
+  <canvas id="poster-canvas" width="750" height="1200" class="poster-canvas" aria-hidden="true"></canvas>
+
+  <script src="js/storage.js?v=2"></script>
+  <script src="js/achievement.js?v=1" defer></script>
+</body>
+</html>

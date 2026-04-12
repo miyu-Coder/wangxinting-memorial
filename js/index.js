@@ -32,6 +32,18 @@
   }
 
   /** 根据规范 id 高亮卡片并滚动到视区（仅 #location-list-root 内） */
+  function updateHomeQuizProgress(locations) {
+    var el = document.getElementById("home-quiz-progress");
+    if (!el) return;
+    var st = window.wxQuizStorage;
+    if (!st || !Array.isArray(locations) || !locations.length) {
+      el.hidden = true;
+      return;
+    }
+    el.textContent = st.formatGlobalProgressLine(locations);
+    el.hidden = false;
+  }
+
   function applyUrlCardHighlight(normalizedId) {
     if (normalizedId == null) return;
     var want = parseInt(normalizedId, 10);
@@ -196,6 +208,7 @@
         renderCards(list);
         renderRouteTimeline(list, urlNorm);
         if (urlNorm) applyUrlCardHighlight(urlNorm);
+        updateHomeQuizProgress(list);
 
         if (hint) hint.textContent = "点击卡片或上方动线进入对应展点讲解。";
       })
@@ -207,6 +220,12 @@
         }
         fallbackStatic(ul, urlNorm);
         if (urlNorm) applyUrlCardHighlight(urlNorm);
+        updateHomeQuizProgress([
+          { id: 1, quiz: { questions: [1, 2, 3, 4] } },
+          { id: 2, quiz: { questions: [1, 2, 3, 4] } },
+          { id: 3, quiz: { questions: [1, 2, 3, 4] } },
+          { id: 4, quiz: { questions: [1, 2, 3, 4] } },
+        ]);
         if (hint) {
           hint.textContent =
             "无法加载 data.json（请用本地服务器打开）。已显示备用链接与动线。";
