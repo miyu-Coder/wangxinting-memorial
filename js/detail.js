@@ -520,7 +520,7 @@
         '  </div>' +
         '</div>' +
         '<button type="button" class="checkin-btn" id="btn-checkin">' +
-        '  <span class="checkin-btn-icon">📷</span> 打卡留念' +
+        '  <span class="checkin-btn-icon">🏆</span> 打卡留念' +
         '</button>';
 
       // 绑定打卡按钮事件
