@@ -460,6 +460,136 @@
   }
 
   /**
+   * 打卡功能：设置打卡区域
+   */
+  function setupCheckin(loc) {
+    var container = document.getElementById("checkin-container");
+    if (!container || !window.wxCheckin) return;
+
+    var exhibitId = normId(loc.id);
+    if (!exhibitId) return;
+
+    var isChecked = window.wxCheckin.isChecked(exhibitId);
+    var checkTime = window.wxCheckin.getCheckTime(exhibitId);
+
+    if (isChecked) {
+      // 已打卡状态
+      container.innerHTML =
+        '<div class="checkin-status checkin-status--checked">' +
+        '  <span>✅ 已打卡</span>' +
+        '</div>' +
+        '<div class="checkin-time">' + (checkTime ? '打卡时间：' + window.wxCheckin.formatTime(checkTime) : '') + '</div>';
+    } else {
+      // 未打卡状态
+      container.innerHTML =
+        '<div class="checkin-status checkin-status--unchecked">' +
+        '  您还未在此处打卡留念' +
+        '</div>' +
+        '<button type="button" class="checkin-btn" id="btn-checkin">' +
+        '  <span class="checkin-btn-icon">📷</span> 打卡留念' +
+        '</button>';
+
+      // 绑定打卡按钮事件
+      var btn = document.getElementById("btn-checkin");
+      if (btn) {
+        btn.addEventListener("click", function() {
+          onCheckinClick(exhibitId, loc.title);
+        });
+      }
+    }
+  }
+
+  /**
+   * 打卡按钮点击处理
+   */
+  function onCheckinClick(exhibitId, exhibitTitle) {
+    var btn = document.getElementById("btn-checkin");
+    if (!btn || !window.wxCheckin) return;
+
+    // 添加点击动画
+    btn.classList.add("checkin-shake-animation");
+
+    setTimeout(function() {
+      btn.classList.remove("checkin-shake-animation");
+
+      var result = window.wxCheckin.checkIn(exhibitId);
+
+      if (result.success) {
+        // 打卡成功动画
+        btn.classList.add("checkin-success-animation");
+
+        // 添加成功提示
+        var container = document.getElementById("checkin-container");
+        var successMsg = document.createElement("div");
+        successMsg.className = "checkin-checkin-time";
+        successMsg.textContent = "🎉 打卡成功！";
+        successMsg.style.color = "#4CAF50";
+        successMsg.style.textAlign = "center";
+        successMsg.style.marginBottom = "12px";
+        successMsg.style.animation = "fadeInDown 0.3s ease-out";
+
+        container.insertBefore(successMsg, btn);
+
+        // 1秒后刷新打卡状态
+        setTimeout(function() {
+          setupCheckin({ id: exhibitId, title: exhibitTitle });
+
+          // 如果是集齐四个展点，显示解锁提示
+          if (result.firstCompletion) {
+            showCheckinCompletionNotification();
+          }
+        }, 1000);
+      } else if (result.alreadyChecked) {
+        // 已经打过卡，刷新状态
+        setupCheckin({ id: exhibitId, title: exhibitTitle });
+      }
+    }, 500);
+  }
+
+  /**
+   * 显示集齐四个展点的解锁提示
+   */
+  function showCheckinCompletionNotification() {
+    var mask = document.createElement("div");
+    mask.className = "detail-quiz-done-mask";
+    mask.setAttribute("role", "dialog");
+    mask.setAttribute("aria-live", "polite");
+
+    var panel = document.createElement("div");
+    panel.className = "detail-quiz-done-panel";
+
+    var h = document.createElement("h3");
+    h.innerHTML = '🎉 <span style="color:#d4a843;">恭喜！</span>';
+
+    var p = document.createElement("p");
+    p.textContent = "您已完成全部展点打卡，解锁了红色足迹纪念证书！";
+
+    var row = document.createElement("div");
+    row.className = "detail-quiz-done-panel__actions";
+
+    var go = document.createElement("a");
+    go.className = "btn btn-primary";
+    go.href = "certificate.html";
+    go.textContent = "查看纪念证书";
+
+    var later = document.createElement("button");
+    later.type = "button";
+    later.className = "btn btn-secondary";
+    later.textContent = "稍后再看";
+    later.addEventListener("click", function () {
+      mask.remove();
+    });
+
+    row.appendChild(go);
+    row.appendChild(later);
+    panel.appendChild(h);
+    panel.appendChild(p);
+    panel.appendChild(row);
+    mask.appendChild(panel);
+    document.body.appendChild(mask);
+  }
+
+  /**
    * 知识问答：每展点仅一次作答；未完成时展示答题卡，已完成时展示回顾卡
    */
   function setupQuiz(loc) {
@@ -728,6 +858,7 @@
     setupVideo(loc);
     updateAchievementLines(loc);
     setupQuiz(loc);
+    setupCheckin(loc); // 添加打卡功能
 
     var btnNext = document.getElementById("btn-next-location");
     var nextLoc = findNextLocationCyclic(loc.id);

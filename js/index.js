@@ -44,6 +44,45 @@
     el.hidden = false;
   }
 
+  /**
+   * 更新打卡进度条
+   */
+  function updateCheckinProgress() {
+    var progressEl = document.getElementById("checkin-progress");
+    var titleEl = document.getElementById("checkin-progress-title");
+    var percentEl = document.getElementById("checkin-progress-percent");
+    var fillEl = document.getElementById("checkin-progress-fill");
+
+    if (!progressEl || !window.wxCheckin) return;
+
+    var total = window.wxCheckin.getTotalChecked();
+    var percent = window.wxCheckin.getProgressPercent();
+
+    // 更新标题
+    titleEl.textContent = "📍 打卡进度 " + total + "/4";
+
+    // 更新百分比
+    percentEl.textContent = percent + "%";
+
+    // 更新进度条
+    fillEl.style.width = percent + "%";
+
+    // 如果集齐四个展点，显示解锁提示
+    if (total === 4) {
+      var progressHeader = progressEl.querySelector(".checkin-progress-header");
+      var unlockedEl = document.createElement("div");
+      unlockedEl.className = "checkin-unlocked";
+      unlockedEl.innerHTML = "🎉 集齐";
+
+      // 先清空标题区域，然后添加新内容
+      var parent = titleEl.parentNode;
+      parent.innerHTML = "";
+      parent.appendChild(unlockedEl);
+    }
+
+    progressEl.hidden = false;
+  }
+
   function applyUrlCardHighlight(normalizedId) {
     if (normalizedId == null) return;
     var want = parseInt(normalizedId, 10);
@@ -209,6 +248,7 @@
         renderRouteTimeline(list, urlNorm);
         if (urlNorm) applyUrlCardHighlight(urlNorm);
         updateHomeQuizProgress(list);
+        updateCheckinProgress();
 
         if (hint) hint.textContent = "点击卡片或上方动线进入对应展点讲解。";
       })

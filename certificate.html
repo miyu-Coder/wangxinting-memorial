@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="王新亭将军红色教育基地 · 红色足迹纪念证书" />
+  <title>红色足迹纪念证书 · 王新亭将军红色教育基地</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/certificate.css" />
+</head>
+<body class="certificate-page">
+  <div class="page-shell page-shell--official certificate-shell">
+    <header class="certificate-hero">
+      <h1 class="certificate-title">王新亭将军红色教育基地</h1>
+      <h2 class="certificate-subtitle">红色足迹纪念证书</h2>
+    </header>
+
+    <main class="certificate-main" id="certificate-main">
+      <div class="certificate-badge">
+        <span class="certificate-badge-icon">🏅</span>
+        <span class="certificate-badge-text">红色足迹证明</span>
+      </div>
+
+      <p class="certificate-intro">恭喜您完成王新亭将军红色教育基地的全部参观打卡！</p>
+
+      <div class="certificate-user-info">
+        <p class="certificate-date-line" id="certificate-date">完成日期：<span>--年--月--日</span></p>
+        <p class="certificate-sites-count">已完成参观打卡展点 <strong>4</strong> 处</p>
+      </div>
+
+      <div class="certificate-sites-list" id="certificate-sites">
+        <h3 class="certificate-sites-title">已打卡展点：</h3>
+        <!-- 展点列表将通过JS动态渲染 -->
+      </div>
+
+      <div class="certificate-message">
+        <p>感谢您参观王新亭将军红色教育基地，</p>
+        <p>让我们一起传承红色基因，赓续红色血脉！</p>
+      </div>
+
+      <div class="certificate-actions">
+        <button type="button" class="btn btn-primary certificate-btn-save" id="btn-save-certificate">
+          保存纪念证书
+        </button>
+        <a class="btn btn-secondary certificate-btn-share" id="btn-share-certificate">
+          分享给好友
+        </a>
+        <a class="btn btn-secondary certificate-btn-home" href="index.html">
+          返回首页
+        </a>
+      </div>
+
+      <p class="certificate-share-hint" id="certificate-hint" hidden>
+        若浏览器拦截下载，请长按纪念证书图片另存。
+      </p>
+    </main>
+
+    <footer class="site-footer site-footer--compact certificate-footer" role="contentinfo">
+      <p class="site-footer__name">王新亭将军红色教育基地</p>
+      <p class="site-footer__addr">湖北省孝感市孝南区朋兴乡北庙村</p>
+    </footer>
+  </div>
+
+  <!-- 离屏画布：生成分享图片 -->
+  <canvas id="certificate-canvas" width="750" height="1200" class="certificate-canvas" aria-hidden="true"></canvas>
+
+  <script src="js/storage.js?v=2"></script>
+  <script src="js/checkin.js?v=1"></script>
+  <script src="js/certificate.js?v=1" defer></script>
+</body>
+</html>
