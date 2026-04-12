@@ -30,6 +30,25 @@
     return loc.quiz.questions.length;
   }
 
+  function getStatusIcon(score, maxScore) {
+    if (score >= maxScore) return "⭐";
+    if (score >= maxScore * 0.5) return "📚";
+    return "🌱";
+  }
+
+  function getStatusClass(score, maxScore) {
+    if (score >= maxScore) return "achievement-exhibit-item--perfect";
+    if (score >= maxScore * 0.5) return "achievement-exhibit-item--good";
+    return "achievement-exhibit-item--need-improve";
+  }
+
+  function getEncouragementText(totalScore, grandMax) {
+    if (totalScore >= grandMax) return "太棒了！您已成为红色传承人！";
+    if (totalScore >= 12) return "不错哦！再来一次冲击满分吧！";
+    if (totalScore >= 8) return "继续学习，您会收获更多！";
+    return "再参观一遍，重温将军的光辉历程！";
+  }
+
   function renderExhibitList(container, state) {
     container.innerHTML = "";
     for (var i = 0; i < LOCATIONS.length; i++) {
@@ -41,29 +60,28 @@
       var key = lid != null ? String(lid) : "";
       var row = state.exhibits && state.exhibits[key];
       var item = document.createElement("article");
-      item.className = "achievement-exhibit-item";
 
-      var name = document.createElement("h3");
-      name.className = "achievement-exhibit-item__name";
-      name.textContent = loc.title || "展点 " + key;
-
-      var scoreP = document.createElement("p");
-      scoreP.className = "achievement-exhibit-item__score";
-      var badge = document.createElement("p");
-      badge.className = "achievement-exhibit-item__badge";
+      var score = 0;
+      var statusClass = "achievement-exhibit-item--need-improve";
+      var icon = "🌱";
 
       if (row && row.completed) {
-        var sc = Math.floor(Number(row.score) || 0);
-        scoreP.textContent = "得分 " + sc + "/" + nq + " 分";
-        badge.textContent = sc >= nq ? "✅ 满分" : "✅ 已完成";
-      } else {
-        scoreP.textContent = "尚未完成问答";
-        badge.textContent = "— 待学习 —";
+        score = Math.floor(Number(row.score) || 0);
+        statusClass = getStatusClass(score, nq);
+        icon = getStatusIcon(score, nq);
       }
 
-      item.appendChild(name);
-      item.appendChild(scoreP);
-      item.appendChild(badge);
+      item.className = "achievement-exhibit-item " + statusClass;
+
+      var content = document.createElement("div");
+      content.innerHTML =
+        '<span class="achievement-exhibit-item__icon">' + icon + '</span>' +
+        '<h3 class="achievement-exhibit-item__name">' + (loc.routeShort || loc.title || "展点 " + key) + '</h3>' +
+        '<p class="achievement-exhibit-item__score">' +
+        (row && row.completed ? score + "/" + nq + "分" : "未完成") +
+        '</p>';
+
+      item.appendChild(content);
       container.appendChild(item);
     }
   }
@@ -148,13 +166,14 @@
     ctx.textAlign = "center";
     ctx.fillStyle = "#999999";
     ctx.font = "22px 'Noto Sans SC', sans-serif";
+
+    // 格式化日期为 YYYY年MM月DD日
+    var year = now.getFullYear();
+    var month = String(now.getMonth() + 1).padStart(2, '0');
+    var date = String(now.getDate()).padStart(2, '0');
+
     ctx.fillText(
-      now.getFullYear() +
-        "年" +
-        (now.getMonth() + 1) +
-        "月" +
-        now.getDate() +
-        "日",
+      year + "年" + month + "月" + date + "日",
       w / 2,
       h - 120
     );
@@ -189,6 +208,9 @@
     var main = document.getElementById("achievement-main");
     var errEl = document.getElementById("achievement-error");
     var listEl = document.getElementById("achievement-exhibit-list");
+    var encouragementEl = document.getElementById("achievement-encouragement");
+    var progressFillEl = document.getElementById("achievement-progress-fill");
+    var progressTextEl = document.getElementById("achievement-progress-text");
 
     loadLocations()
       .then(function () {
@@ -206,6 +228,28 @@
           state.totalScore + "/" + grandMax;
         document.getElementById("stat-title").textContent =
           state.title || "继续加油，完成全部展点问答";
+
+        // 为称号添加勋章图标（如果已获取称号）
+        var titleEl = document.getElementById("stat-title");
+        if (state.title && state.title.indexOf("红色传承人") !== -1) {
+          titleEl.innerHTML = '<span class="medal-icon">🏆</span> ' + state.title;
+        } else if (state.totalScore >= 12 && state.title) {
+          titleEl.innerHTML = '<span class="medal-icon">🎖️</span> ' + state.title;
+        }
+
+        // 设置鼓励文案
+        if (encouragementEl) {
+          encouragementEl.textContent = getEncouragementText(state.totalScore, grandMax);
+        }
+
+        // 设置进度条
+        if (progressFillEl && progressTextEl) {
+          var percentage = Math.round((state.totalScore / grandMax) * 100);
+          setTimeout(function() {
+            progressFillEl.style.width = percentage + "%";
+            progressTextEl.textContent = percentage + "%";
+          }, 300);
+        }
 
         renderExhibitList(listEl, state);
 

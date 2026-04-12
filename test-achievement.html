@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>测试成就页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 16px;
+            background: #c41e3a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #7a1528;
+        }
+        h1 {
+            color: #c41e3a;
+        }
+        .section {
+            margin: 20px 0;
+        }
+        .score-info {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>成就页面测试</h1>
+
+    <div class="section">
+        <h3>加载测试数据：</h3>
+        <button onclick="loadTestData('perfect')">满分（16分）</button>
+        <div class="score-info">⭐ 红色传承人</div>
+
+        <button onclick="loadTestData('good')">良好（14分）</button>
+        <div class="score-info">📚 好学奋进者</div>
+
+        <button onclick="loadTestData('average')">一般（10分）</button>
+        <div class="score-info">🌱 初心寻路人</div>
+
+        <button onclick="loadTestData('poor')">较差（6分）</button>
+        <div class="score-info">💪 笃行求知者</div>
+    </div>
+
+    <div class="section">
+        <button onclick="viewAchievement()" style="background: #d4a843;">查看成就页面</button>
+    </div>
+
+    <script>
+        function loadTestData(type) {
+            var data;
+
+            switch(type) {
+                case 'perfect':
+                    data = {
+                        version: 2,
+                        exhibits: {
+                            "1": { completed: true, score: 4, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "2": { completed: true, score: 4, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "3": { completed: true, score: 4, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "4": { completed: true, score: 4, maxScore: 4, comment: "", lockedAt: Date.now() }
+                        },
+                        totalCompleted: 4,
+                        totalScore: 16,
+                        title: "⭐ 红色传承人"
+                    };
+                    break;
+
+                case 'good':
+                    data = {
+                        version: 2,
+                        exhibits: {
+                            "1": { completed: true, score: 4, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "2": { completed: true, score: 3, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "3": { completed: true, score: 4, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "4": { completed: true, score: 3, maxScore: 4, comment: "", lockedAt: Date.now() }
+                        },
+                        totalCompleted: 4,
+                        totalScore: 14,
+                        title: "📚 好学奋进者"
+                    };
+                    break;
+
+                case 'average':
+                    data = {
+                        version: 2,
+                        exhibits: {
+                            "1": { completed: true, score: 3, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "2": { completed: true, score: 2, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "3": { completed: true, score: 3, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "4": { completed: true, score: 2, maxScore: 4, comment: "", lockedAt: Date.now() }
+                        },
+                        totalCompleted: 4,
+                        totalScore: 10,
+                        title: "🌱 初心寻路人"
+                    };
+                    break;
+
+                case 'poor':
+                    data = {
+                        version: 2,
+                        exhibits: {
+                            "1": { completed: true, score: 1, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "2": { completed: true, score: 2, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "3": { completed: true, score: 1, maxScore: 4, comment: "", lockedAt: Date.now() },
+                            "4": { completed: true, score: 2, maxScore: 4, comment: "", lockedAt: Date.now() }
+                        },
+                        totalCompleted: 4,
+                        totalScore: 6,
+                        title: "💪 笃行求知者"
+                    };
+                    break;
+            }
+
+            localStorage.setItem('wx_full_achievements', JSON.stringify(data));
+            alert(type === 'perfect' ? '已加载满分测试数据！' :
+                  type === 'good' ? '已加载良好测试数据！' :
+                  type === 'average' ? '已加载一般测试数据！' : '已加载较差测试数据！');
+        }
+
+        function viewAchievement() {
+            window.location.href = 'achievement.html';
+        }
+    </script>
+</body>
+</html>
