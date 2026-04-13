@@ -58,53 +58,37 @@
           </p>
           <audio id="detail-audio" preload="metadata" playsinline></audio>
           <div class="detail-audio-controls" id="detail-audio-controls">
+            <!-- 第一行：播放按钮 -->
             <div class="detail-audio-row detail-audio-row--main">
-              <button type="button" class="detail-audio-play" id="detail-audio-play" aria-pressed="false">
-                <span class="detail-audio-play-icon" aria-hidden="true">&#x25B6;&#xFE0F;</span>
+              <button type="button" class="detail-audio-play" id="detail-audio-play" aria-pressed="false" aria-label="播放">
+                <span class="detail-audio-play-icon" aria-hidden="true">▶</span>
               </button>
-              <div class="detail-audio-track-col">
-                <div class="detail-audio-seek-wrap">
-                  <div class="detail-audio-seek-rail" aria-hidden="true">
-                    <div class="detail-audio-seek-fill" id="detail-audio-seek-fill"></div>
-                  </div>
-                  <input
-                    type="range"
-                    class="detail-audio-seek"
-                    id="detail-audio-seek"
-                    min="0"
-                    max="1000"
-                    value="0"
-                    step="1"
-                    aria-label="播放进度"
-                  />
+            </div>
+            <!-- 第二行：进度条 -->
+            <div class="detail-audio-track-col">
+              <div class="detail-audio-seek-wrap">
+                <div class="detail-audio-seek-rail" aria-hidden="true">
+                  <div class="detail-audio-seek-fill" id="detail-audio-seek-fill"></div>
                 </div>
-                <div class="detail-audio-times">
-                  <span id="detail-audio-time-curr">00:00</span>
-                  <span class="detail-audio-times-sep" aria-hidden="true">/</span>
-                  <span id="detail-audio-time-dur">--:--</span>
-                </div>
+                <input
+                  type="range"
+                  class="detail-audio-seek"
+                  id="detail-audio-seek"
+                  min="0"
+                  max="1000"
+                  value="0"
+                  step="1"
+                  aria-label="播放进度"
+                />
               </div>
             </div>
+            <!-- 第三行：时间和倍速 -->
             <div class="detail-audio-row detail-audio-row--meta">
-              <button
-                type="button"
-                class="detail-audio-icon-btn detail-audio-mute"
-                id="detail-audio-mute"
-                aria-label="静音"
-                aria-pressed="false"
-              >
-                <span class="detail-audio-mute-icon" aria-hidden="true">&#x1F50A;&#xFE0F;</span>
-              </button>
-              <input
-                type="range"
-                class="detail-audio-vol"
-                id="detail-audio-vol"
-                min="0"
-                max="1"
-                value="1"
-                step="0.05"
-                aria-label="音量"
-              />
+              <div class="detail-audio-times">
+                <span id="detail-audio-time-curr">00:00</span>
+                <span class="detail-audio-times-sep" aria-hidden="true">/</span>
+                <span id="detail-audio-time-dur">--:--</span>
+              </div>
               <button type="button" class="detail-audio-rate" id="detail-audio-rate" aria-label="播放速度 1.0x">
                 1.0x
               </button>

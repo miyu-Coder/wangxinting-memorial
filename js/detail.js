@@ -633,9 +633,9 @@
         setTimeout(function() {
           setupCheckin({ id: exhibitId, title: exhibitTitle });
 
-          // 如果是集齐四个展点，显示解锁提示
+          // 如果是集齐四个展点，显示解锁弹窗
           if (result.firstCompletion) {
-            showCheckinCompletionNotification();
+            showCheckinCompletionModal();
           }
         }, 1000);
       } else if (result.alreadyChecked) {
@@ -646,8 +646,92 @@
   }
 
   /**
-   * 显示集齐四个展点的解锁提示
+   * 显示答题Toast提示
    */
+  function showQuizToast(message) {
+    // 移除已有的toast
+    var existingToast = document.querySelector(".quiz-toast");
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    var toast = document.createElement("div");
+    toast.className = "quiz-toast";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // 2秒后自动消失
+    setTimeout(function () {
+      if (toast.parentNode) {
+        toast.style.opacity = "0";
+        toast.style.transition = "opacity 0.3s ease";
+        setTimeout(function () {
+          if (toast.parentNode) {
+            toast.remove();
+          }
+        }, 300);
+      }
+    }, 2000);
+  }
+
+  /**
+   * 显示集齐四个展点的解锁提示 - 模态弹窗
+   */
+  function showCheckinCompletionModal() {
+    // 如果已经存在弹窗，不再创建
+    if (document.getElementById("checkin-completion-modal")) return;
+
+    var mask = document.createElement("div");
+    mask.id = "checkin-completion-modal";
+    mask.className = "checkin-completion-modal";
+    mask.setAttribute("role", "dialog");
+    mask.setAttribute("aria-modal", "true");
+    mask.setAttribute("aria-labelledby", "checkin-completion-title");
+
+    var panel = document.createElement("div");
+    panel.className = "checkin-completion-panel";
+
+    var h = document.createElement("h3");
+    h.id = "checkin-completion-title";
+    h.className = "checkin-completion-title";
+    h.textContent = "🎉 恭喜！您已完成全部展点打卡！";
+
+    var p = document.createElement("p");
+    p.className = "checkin-completion-text";
+    p.textContent = "纪念证书已解锁，是否立即查看？";
+
+    var row = document.createElement("div");
+    row.className = "checkin-completion-actions";
+
+    var go = document.createElement("a");
+    go.className = "btn btn-primary";
+    go.href = "certificate.html";
+    go.textContent = "查看纪念证书";
+
+    var later = document.createElement("button");
+    later.type = "button";
+    later.className = "btn btn-secondary";
+    later.textContent = "稍后";
+    later.addEventListener("click", function () {
+      mask.remove();
+    });
+
+    row.appendChild(go);
+    row.appendChild(later);
+    panel.appendChild(h);
+    panel.appendChild(p);
+    panel.appendChild(row);
+    mask.appendChild(panel);
+    document.body.appendChild(mask);
+
+    // 点击遮罩关闭弹窗
+    mask.addEventListener("click", function (e) {
+      if (e.target === mask) {
+        mask.remove();
+      }
+    });
+  }
+
   function spawnFlowerPetals(hostEl) {
     if (!hostEl) return;
     var n = 5;
@@ -747,45 +831,6 @@
     root.appendChild(card);
   }
 
-  function showCheckinCompletionNotification() {
-    var mask = document.createElement("div");
-    mask.className = "detail-quiz-done-mask";
-    mask.setAttribute("role", "dialog");
-    mask.setAttribute("aria-live", "polite");
-
-    var panel = document.createElement("div");
-    panel.className = "detail-quiz-done-panel";
-
-    var h = document.createElement("h3");
-    h.innerHTML = '🎉 <span style="color:#d4a843;">恭喜！</span>';
-
-    var p = document.createElement("p");
-    p.textContent = "您已完成全部展点打卡，解锁了红色足迹纪念证书！";
-
-    var row = document.createElement("div");
-    row.className = "detail-quiz-done-panel__actions";
-
-    var go = document.createElement("a");
-    go.className = "btn btn-primary";
-    go.href = "certificate.html";
-    go.textContent = "查看纪念证书";
-
-    var later = document.createElement("button");
-    later.type = "button";
-    later.className = "btn btn-secondary";
-    later.textContent = "稍后再看";
-    later.addEventListener("click", function () {
-      mask.remove();
-    });
-
-    row.appendChild(go);
-    row.appendChild(later);
-    panel.appendChild(h);
-    panel.appendChild(p);
-    panel.appendChild(row);
-    mask.appendChild(panel);
-    document.body.appendChild(mask);
-  }
 
   /**
    * 知识问答：每展点仅一次作答；未完成时展示答题卡，已完成时展示回顾卡
@@ -1005,7 +1050,11 @@
       }
 
       nextBtn.addEventListener("click", function () {
-        if (!state.picked) return;
+        if (!state.picked) {
+          // 未选择答案，显示Toast提示
+          showQuizToast("请先回答本题");
+          return;
+        }
         if (state.idx >= total - 1) {
           showFinalResultPanel();
           return;

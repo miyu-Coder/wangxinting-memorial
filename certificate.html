@@ -23,57 +23,44 @@
     </header>
 
     <main class="certificate-main" id="certificate-main">
-      <!-- 四角装饰 -->
-      <div class="certificate-corner certificate-corner--tl"></div>
-      <div class="certificate-corner certificate-corner--tr"></div>
-      <div class="certificate-corner certificate-corner--bl"></div>
-      <div class="certificate-corner certificate-corner--br"></div>
-      <div class="certificate-badge">
-        <span class="certificate-badge-icon">🏅</span>
-        <span class="certificate-badge-text">红色足迹证明</span>
-      </div>
+      <!-- 证书卡片容器 -->
+      <div class="certificate-card">
+        <!-- 四角装饰 -->
+        <div class="certificate-corner certificate-corner--tl"></div>
+        <div class="certificate-corner certificate-corner--tr"></div>
+        <div class="certificate-corner certificate-corner--bl"></div>
+        <div class="certificate-corner certificate-corner--br"></div>
 
-      <p class="certificate-intro">恭喜您完成王新亭将军红色教育基地的全部参观打卡！</p>
+        <!-- 证书标题 -->
+        <h2 class="certificate-card-title">红色足迹纪念证书</h2>
 
-      <div class="certificate-user-info">
-        <p class="certificate-date-line" id="certificate-date">完成日期：<span>--年--月--日</span></p>
-        <p class="certificate-sites-count">已完成参观打卡展点 <strong>4</strong> 处</p>
-      </div>
+        <!-- 证书内容 -->
+        <p class="certificate-card-intro">恭喜您完成王新亭将军红色教育基地的全部参观打卡！</p>
 
-      <div class="certificate-content">
-        <div class="certificate-badge">
-          <span class="certificate-badge-icon">🏅</span>
-          <span class="certificate-badge-text">红色足迹证明</span>
+        <!-- 完成信息 -->
+        <div class="certificate-card-info">
+          <p class="certificate-card-date" id="certificate-date">完成日期：<span>--年--月--日</span></p>
+          <p class="certificate-card-count">已完成参观打卡展点 <strong>4</strong> 处</p>
         </div>
 
-        <p class="certificate-intro">恭喜您完成王新亭将军红色教育基地的全部参观打卡！</p>
-
-        <div class="certificate-user-info">
-          <p class="certificate-date-line" id="certificate-date">完成日期：<span>--年--月--日</span></p>
-          <p class="certificate-sites-count">已完成参观打卡展点 <strong>4</strong> 处</p>
+        <!-- 展点列表 -->
+        <div class="certificate-card-sites" id="certificate-sites">
+          <!-- 展点列表将通过JS动态渲染 -->
         </div>
 
-        <div class="certificate-sites-list" id="certificate-sites">
-          <div class="certificate-sites-wrapper">
-            <h3 class="certificate-sites-title">已打卡展点：</h3>
-            <!-- 展点列表将通过JS动态渲染 -->
-          </div>
-        </div>
-
-        <div class="certificate-message">
-          <p>感谢您参观王新亭将军红色教育基地，</p>
+        <!-- 感谢语 -->
+        <div class="certificate-card-message">
+          <p>感谢您参观王新亭将军红色教育基地</p>
           <p>让我们一起传承红色基因，赓续红色血脉！</p>
         </div>
 
-      <div class="certificate-divider">
-        <span class="certificate-divider-icon">🎖️</span>
+        <!-- 印章 -->
+        <div class="certificate-card-seal">
+          <div class="certificate-card-seal-text">已完成</div>
+        </div>
       </div>
 
-      <div class="certificate-seal">
-        <div class="certificate-seal-text">已完成</div>
-      </div>
-    </main>
-
+      <!-- 按钮区域 -->
       <div class="certificate-actions">
         <button type="button" class="btn btn-primary certificate-btn-save" id="btn-save-certificate">
           保存纪念证书

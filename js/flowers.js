@@ -171,12 +171,38 @@
     document.body.appendChild(mask);
   }
 
+  /**
+   * 获取第一个未献花的展点ID
+   * @returns {string|null} 未献花展点ID，如果全部献花则返回null
+   */
+  function getFirstUnfloweredExhibit() {
+    var s = readState();
+    for (var i = 0; i < EXHIBIT_META.length; i++) {
+      var id = EXHIBIT_META[i].id;
+      if (!s.userFlowers[id]) {
+        return id;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 检查是否所有展点都已献花
+   * @returns {boolean}
+   */
+  function isAllFlowered() {
+    return getFirstUnfloweredExhibit() === null;
+  }
+
   function mountFlowerWallPage() {
     var totalEl = document.getElementById("flower-wall-total");
     var listEl = document.getElementById("flower-wall-exhibit-list");
+    var offerBtn = document.getElementById("btn-offer-flower");
+
     if (totalEl) {
       totalEl.textContent = String(getDisplayTotal());
     }
+
     if (listEl) {
       listEl.innerHTML = "";
       var rows = getExhibitList();
@@ -193,6 +219,30 @@
         li.appendChild(name);
         li.appendChild(st);
         listEl.appendChild(li);
+      }
+    }
+
+    // 更新"我也要献花"按钮状态
+    if (offerBtn) {
+      var firstUnflowered = getFirstUnfloweredExhibit();
+      if (firstUnflowered) {
+        // 有未献花的展点，跳转到第一个未献花的展点
+        offerBtn.href = "detail.html?id=" + firstUnflowered;
+        offerBtn.textContent = "\uD83C\uDF38 我也要献花";
+        offerBtn.classList.remove("btn-disabled");
+      } else {
+        // 所有展点都已献花，按钮置灰
+        offerBtn.href = "javascript:void(0);";
+        offerBtn.textContent = "\u2705 已完成献花";
+        offerBtn.classList.add("btn-disabled");
+        offerBtn.style.background = "#cccccc";
+        offerBtn.style.color = "#666666";
+        offerBtn.style.cursor = "not-allowed";
+        offerBtn.style.boxShadow = "none";
+        offerBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          showThankDialog();
+        });
       }
     }
   }
@@ -219,6 +269,8 @@
     normExhibitId: normExhibitId,
     setBaseCount: setBaseCount,
     getBaseCount: getBaseCount,
+    getFirstUnfloweredExhibit: getFirstUnfloweredExhibit,
+    isAllFlowered: isAllFlowered,
   };
 
   function autoMountWall() {

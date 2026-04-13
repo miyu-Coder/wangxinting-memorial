@@ -71,10 +71,10 @@
       dateEl.textContent = window.wxCheckin.formatTime(new Date(latestTime));
     }
 
-    // 渲染展点列表和改进的展点布局
+    // 渲染展点列表
     var sitesList = document.getElementById("certificate-sites");
     if (sitesList && LOCATIONS.length > 0) {
-      var listHtml = '<div class="certificate-sites-wrapper"><h3 class="certificate-sites-title">已打卡展点：</h3>';
+      var listHtml = '';
 
       for (var i = 0; i < 4; i++) {
         var loc = LOCATIONS[i];
@@ -87,12 +87,9 @@
         var checked = time ? true : false;
 
         listHtml += '<div class="certificate-site-item">';
-        listHtml += '<div class="certificate-site-icon">' + (checked ? '✅' : '🏛️') + '</div>';
+        listHtml += '<div class="certificate-site-icon">🏠</div>';
         listHtml += '<div class="certificate-site-info">';
-        listHtml += '<div class="certificate-site-name">';
-        listHtml += '<span class="certificate-site-number">' + (i + 1) + '</span>';
-        listHtml += (loc.routeShort || loc.title);
-        listHtml += '</div>';
+        listHtml += '<div class="certificate-site-name">' + (loc.routeShort || loc.title) + '</div>';
         if (checked && time) {
           listHtml += '<p class="certificate-site-time">' + window.wxCheckin.formatTime(new Date(time)) + '</p>';
         } else {
@@ -102,13 +99,8 @@
         listHtml += '</div>';
       }
 
-      listHtml += '</div>';
       sitesList.innerHTML = listHtml;
     }
-
-    // 添加证书印章
-    listHtml += '<div class="certificate-seal"><div class="certificate-seal-text">已完成</div></div>';
-    if (sitesList) sitesList.innerHTML = listHtml;
 
     // 显示证书内容
     var main = document.getElementById("certificate-main");
@@ -325,30 +317,171 @@
   }
 
   /**
-   * 分享证书（简化为复制当前页面链接）
+   * 检测是否为移动端
+   */
+  function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+
+  /**
+   * 显示分享弹窗（移动端不支持原生分享时使用）
+   */
+  function showShareModal() {
+    // 如果已经存在弹窗，不再创建
+    if (document.getElementById("share-modal")) return;
+
+    var url = window.location.href;
+
+    var mask = document.createElement("div");
+    mask.id = "share-modal";
+    mask.className = "share-modal";
+    mask.setAttribute("role", "dialog");
+    mask.setAttribute("aria-modal", "true");
+
+    var panel = document.createElement("div");
+    panel.className = "share-panel";
+
+    var h = document.createElement("h3");
+    h.className = "share-title";
+    h.textContent = "分享给好友";
+
+    var hint = document.createElement("p");
+    hint.className = "share-hint";
+    hint.textContent = "点击复制链接，分享给好友";
+
+    var linkBox = document.createElement("div");
+    linkBox.className = "share-link-box";
+    linkBox.textContent = url;
+
+    var row = document.createElement("div");
+    row.className = "share-actions";
+
+    var copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "share-btn-copy";
+    copyBtn.textContent = "复制链接";
+
+    var closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "share-btn-close";
+    closeBtn.textContent = "关闭";
+
+    // 复制链接功能
+    copyBtn.addEventListener("click", function () {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function () {
+          showShareToast("链接已复制，可粘贴分享");
+          setTimeout(function () {
+            mask.remove();
+          }, 1000);
+        }).catch(function () {
+          // 降级方案
+          fallbackCopyText(url);
+        });
+      } else {
+        fallbackCopyText(url);
+      }
+    });
+
+    // 关闭弹窗
+    closeBtn.addEventListener("click", function () {
+      mask.remove();
+    });
+
+    // 点击遮罩关闭
+    mask.addEventListener("click", function (e) {
+      if (e.target === mask) {
+        mask.remove();
+      }
+    });
+
+    row.appendChild(copyBtn);
+    row.appendChild(closeBtn);
+    panel.appendChild(h);
+    panel.appendChild(hint);
+    panel.appendChild(linkBox);
+    panel.appendChild(row);
+    mask.appendChild(panel);
+    document.body.appendChild(mask);
+  }
+
+  /**
+   * 降级复制方案
+   */
+  function fallbackCopyText(text) {
+    var textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      var success = document.execCommand("copy");
+      if (success) {
+        showShareToast("链接已复制，可粘贴分享");
+      } else {
+        showShareToast("复制失败，请手动复制");
+      }
+    } catch (e) {
+      showShareToast("复制失败，请手动复制");
+    }
+    document.body.removeChild(textarea);
+  }
+
+  /**
+   * 显示分享Toast
+   */
+  function showShareToast(message) {
+    // 移除已有的toast
+    var existingToast = document.querySelector(".share-toast");
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    var toast = document.createElement("div");
+    toast.className = "share-toast";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(function () {
+      if (toast.parentNode) {
+        toast.remove();
+      }
+    }, 2000);
+  }
+
+  /**
+   * 分享证书
    */
   function shareCertificate() {
     var title = "红色足迹纪念证书 - 王新亭将军红色教育基地";
     var text = "我刚完成了王新亭将军红色教育基地的全部参观打卡，快来一起了解将军的光辉事迹！";
     var url = window.location.href;
 
-    if (navigator.share) {
+    // 优先尝试使用原生分享API
+    if (navigator.share && !isMobile()) {
+      // 电脑端支持原生分享时使用
       navigator.share({
         title: title,
         text: text,
         url: url
       }).catch(function(err) {
-        console.log('分享失败:', err);
+        // 用户取消或其他错误，静默处理
+        console.log('分享取消或失败:', err);
       });
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(url).then(function() {
-        alert("页面链接已复制到剪贴板！");
+    } else if (navigator.share) {
+      // 移动端支持原生分享
+      navigator.share({
+        title: title,
+        text: text,
+        url: url
       }).catch(function(err) {
-        console.log('复制失败:', err);
-        alert("分享功能暂不可用，请手动复制页面链接");
+        // 如果原生分享失败，显示弹窗
+        showShareModal();
       });
     } else {
-      alert("分享功能暂不可用，请手动复制页面链接");
+      // 不支持原生分享，显示弹窗
+      showShareModal();
     }
   }
 
