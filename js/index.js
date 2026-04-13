@@ -47,6 +47,13 @@
   /**
    * 更新打卡进度条 - 移动到展点卡片上方
    */
+  function updateFlowerWallEntry() {
+    if (!window.wxFlowers || typeof window.wxFlowers.updateHomeCountEl !== "function") {
+      return;
+    }
+    window.wxFlowers.updateHomeCountEl();
+  }
+
   function updateCheckinProgress() {
     var sectionEl = document.getElementById("checkin-progress-section");
     if (!sectionEl || !window.wxCheckin) return;
@@ -252,6 +259,7 @@
         if (urlNorm) applyUrlCardHighlight(urlNorm);
         updateHomeQuizProgress(list);
         updateCheckinProgress();
+        updateFlowerWallEntry();
 
         if (hint) hint.textContent = "点击卡片或上方动线进入对应展点讲解。";
       })
@@ -273,6 +281,7 @@
           hint.textContent =
             "无法加载 data.json（请用本地服务器打开）。已显示备用链接与动线。";
         }
+        updateFlowerWallEntry();
       });
   }
 

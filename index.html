@@ -5,12 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="孝感市王新亭将军红色教育基地官方导览 · 湖北省爱国主义教育基地" />
   <title>王新亭将军红色教育基地 · 孝感</title>
+  <link rel="stylesheet" href="css/loading-progress.css" />
+  <script src="js/loading-progress.js"></script>
+  <script src="js/font-size.js?v=1"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <button type="button" class="wx-font-toggle" id="wx-font-toggle">Aa</button>
   <div class="page-shell page-shell--official">
     <header class="site-header site-header--official">
       <div class="site-brand-line" aria-hidden="true"></div>
@@ -34,6 +38,17 @@
             <p class="checkin-progress-msg">集齐四个展点解锁纪念证书</p>
           </div>
         </div>
+      </div>
+
+      <div class="home-flower-wall" id="home-flower-wall-wrap">
+        <a class="home-flower-wall__link" href="flower-wall.html" id="home-flower-wall-link" aria-label="打开献花墙">
+          <span class="home-flower-wall__icon" aria-hidden="true">&#x1F338;</span>
+          <span class="home-flower-wall__text">
+            <span class="home-flower-wall__title">献花墙</span>
+            <span class="home-flower-wall__count" id="home-flower-count"></span>
+          </span>
+          <span class="home-flower-wall__arrow" aria-hidden="true">&#8594;</span>
+        </a>
       </div>
     </header>
 
@@ -149,6 +164,8 @@
   <script src="js/timeline.js?v=3"></script>
   <script src="js/storage.js?v=2"></script>
   <script src="js/checkin.js?v=1"></script>
-  <script src="js/index.js?v=7" defer></script>
+  <script src="js/flowers.js?v=1"></script>
+  <script src="js/index.js?v=8" defer></script>
+  <script src="js/lazy-load.js?v=1" defer></script>
 </body>
 </html>

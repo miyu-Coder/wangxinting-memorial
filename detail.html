@@ -5,12 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="孝感市王新亭将军红色教育基地 · 展点讲解" />
   <title>展点讲解 · 王新亭将军红色教育基地</title>
+  <link rel="stylesheet" href="css/loading-progress.css" />
+  <script src="js/loading-progress.js"></script>
+  <script src="js/font-size.js?v=1"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <button type="button" class="wx-font-toggle" id="wx-font-toggle">Aa</button>
   <div class="page-shell">
     <div class="banner-error" id="detail-error" hidden role="alert"></div>
 
@@ -36,11 +40,90 @@
         </button>
       </section>
 
+      <section
+        class="detail-block detail-audio-block"
+        id="block-detail-audio"
+        hidden
+        aria-labelledby="detail-audio-heading"
+      >
+        <h2 id="detail-audio-heading" class="section-title section-title--serif">语音讲解</h2>
+        <p class="detail-audio-tip" id="detail-audio-unsupported" hidden role="status">
+          您的浏览器不支持音频播放
+        </p>
+        <p class="detail-audio-tip" id="detail-audio-coming" hidden role="status">音频即将上线</p>
+        <div class="detail-audio-player-card" id="detail-audio-player-wrap" hidden>
+          <p class="detail-audio-load-msg" id="detail-audio-load-msg" hidden role="alert">音频暂时无法播放</p>
+          <p class="detail-audio-hint-soft" id="detail-audio-hint-soft">
+            受浏览器策略影响，请点击播放；参观时请佩戴耳机，勿外放干扰他人。
+          </p>
+          <audio id="detail-audio" preload="metadata" playsinline></audio>
+          <div class="detail-audio-controls" id="detail-audio-controls">
+            <div class="detail-audio-row detail-audio-row--main">
+              <button type="button" class="detail-audio-play" id="detail-audio-play" aria-pressed="false">
+                <span class="detail-audio-play-icon" aria-hidden="true">&#x25B6;&#xFE0F;</span>
+              </button>
+              <div class="detail-audio-track-col">
+                <div class="detail-audio-seek-wrap">
+                  <div class="detail-audio-seek-rail" aria-hidden="true">
+                    <div class="detail-audio-seek-fill" id="detail-audio-seek-fill"></div>
+                  </div>
+                  <input
+                    type="range"
+                    class="detail-audio-seek"
+                    id="detail-audio-seek"
+                    min="0"
+                    max="1000"
+                    value="0"
+                    step="1"
+                    aria-label="播放进度"
+                  />
+                </div>
+                <div class="detail-audio-times">
+                  <span id="detail-audio-time-curr">00:00</span>
+                  <span class="detail-audio-times-sep" aria-hidden="true">/</span>
+                  <span id="detail-audio-time-dur">--:--</span>
+                </div>
+              </div>
+            </div>
+            <div class="detail-audio-row detail-audio-row--meta">
+              <button
+                type="button"
+                class="detail-audio-icon-btn detail-audio-mute"
+                id="detail-audio-mute"
+                aria-label="静音"
+                aria-pressed="false"
+              >
+                <span class="detail-audio-mute-icon" aria-hidden="true">&#x1F50A;&#xFE0F;</span>
+              </button>
+              <input
+                type="range"
+                class="detail-audio-vol"
+                id="detail-audio-vol"
+                min="0"
+                max="1"
+                value="1"
+                step="0.05"
+                aria-label="音量"
+              />
+              <button type="button" class="detail-audio-rate" id="detail-audio-rate" aria-label="播放速度 1.0x">
+                1.0x
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="detail-block" aria-labelledby="carousel-label">
         <p id="carousel-label" class="placeholder-label">图片展示</p>
         <div class="carousel" id="detail-carousel" hidden>
           <div class="carousel-viewport" id="carousel-viewport">
-            <img id="carousel-image" class="carousel-image" src="" alt="" hidden />
+            <img
+              id="carousel-image"
+              class="carousel-image lazy-image"
+              alt=""
+              loading="lazy"
+              hidden
+            />
             <div id="carousel-placeholder-slide" class="carousel-placeholder-slide" hidden>
               <span id="carousel-placeholder-text" class="carousel-placeholder-text"></span>
             </div>
@@ -59,22 +142,16 @@
         <div class="section-body detail-text-scroll" id="detail-text"></div>
       </section>
 
-      <section class="detail-block" aria-labelledby="audio-label">
-        <p id="audio-label" class="placeholder-label">音频讲解</p>
-        <p class="audio-hint" id="audio-hint">
-          受浏览器策略影响，语音可能需手动点击播放。参观时请佩戴耳机，勿外放干扰他人。
-        </p>
-        <audio id="detail-audio" preload="metadata" playsinline></audio>
-        <div class="audio-controls">
-          <button type="button" class="btn btn-primary btn-audio" id="btn-audio-toggle">播放讲解</button>
-        </div>
-      </section>
-
       <section class="detail-block detail-checkin-block" id="block-checkin" aria-labelledby="checkin-label">
         <h2 id="checkin-label" class="section-title section-title--serif">参观打卡</h2>
         <div class="checkin-container" id="checkin-container">
           <!-- 打卡状态将通过JS动态渲染 -->
         </div>
+      </section>
+
+      <section class="detail-block flower-tribute-block" id="block-flower-tribute" aria-labelledby="flower-tribute-label">
+        <h2 id="flower-tribute-label" class="section-title section-title--serif">献花致敬</h2>
+        <div id="flower-tribute-root"></div>
       </section>
 
       <section class="detail-block" id="block-video" hidden aria-labelledby="video-label">
@@ -115,6 +192,9 @@
   <script src="js/timeline.js?v=3"></script>
   <script src="js/storage.js?v=2"></script>
   <script src="js/checkin.js?v=1"></script>
-  <script src="js/detail.js?v=7" defer></script>
+  <script src="js/flowers.js?v=1"></script>
+  <script src="js/audio-player.js?v=1"></script>
+  <script src="js/detail.js?v=10" defer></script>
+  <script src="js/lazy-load.js?v=1" defer></script>
 </body>
 </html>

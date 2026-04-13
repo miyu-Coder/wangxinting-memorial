@@ -3,14 +3,42 @@
  * 与首页一致的暖白底 + 中国红 + 金色强调
  */
 
+html.achievement-doc {
+  height: 100%;
+  overflow: hidden;
+}
+
 .achievement-page {
   background: var(--color-page-bg);
+  min-height: 0;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .achievement-shell {
   max-width: 520px;
   margin: 0 auto;
-  padding-bottom: 32px;
+  height: 100%;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: contain;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+}
+
+.achievement-shell > * {
+  flex-shrink: 0;
 }
 
 /* —— 头部主视觉 —— */
@@ -207,13 +235,15 @@
 /* —— 进度条 —— */
 .achievement-progress-container {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
   margin-bottom: 24px;
 }
 
 .achievement-progress-bar {
-  flex: 1;
+  width: 100%;
+  flex: none;
   height: 20px;
   background: #e0e0e0;
   border-radius: 10px;
@@ -258,8 +288,9 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--color-red-deep);
-  min-width: 40px;
-  text-align: right;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* —— 展点网格布局 —— */

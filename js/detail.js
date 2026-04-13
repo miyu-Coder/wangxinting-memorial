@@ -11,6 +11,37 @@
     carouselIndex: 0,
   };
 
+  var detailAudioPlayer = null;
+
+  function destroyDetailAudioPlayer() {
+    if (detailAudioPlayer && typeof detailAudioPlayer.destroy === "function") {
+      detailAudioPlayer.destroy();
+    }
+    detailAudioPlayer = null;
+  }
+
+  function canUseHtmlAudio() {
+    if (typeof HTMLAudioElement === "undefined") return false;
+    try {
+      var a = document.createElement("audio");
+      return a instanceof HTMLAudioElement && typeof a.play === "function";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * none：无音频（隐藏整块）；pending：占位文案；url：播放地址
+   */
+  function resolveAudioForLocation(loc) {
+    if (loc && loc.audioPending === true) return { kind: "pending" };
+    var raw = loc ? loc.audio : null;
+    if (raw === "pending" || raw === "__pending__") return { kind: "pending" };
+    var s = raw != null ? String(raw).trim() : "";
+    if (s === "" || s === "-") return { kind: "none" };
+    return { kind: "url", url: s };
+  }
+
   function normId(v) {
     if (v == null || v === "") return NaN;
     var n = parseInt(String(v).trim(), 10);
@@ -118,69 +149,86 @@
     return findLocationById(id);
   }
 
-  function setAudioButtonPlaying(playing) {
-    var btn = document.getElementById("btn-audio-toggle");
-    if (!btn) return;
-    btn.textContent = playing ? "暂停讲解" : "播放讲解";
-    btn.setAttribute("aria-pressed", playing ? "true" : "false");
-  }
-
   function setupAudio(loc) {
+    destroyDetailAudioPlayer();
+
+    var block = document.getElementById("block-detail-audio");
+    var unsupported = document.getElementById("detail-audio-unsupported");
+    var coming = document.getElementById("detail-audio-coming");
+    var wrap = document.getElementById("detail-audio-player-wrap");
+    var loadMsg = document.getElementById("detail-audio-load-msg");
+    var hintSoft = document.getElementById("detail-audio-hint-soft");
     var audio = document.getElementById("detail-audio");
-    var btn = document.getElementById("btn-audio-toggle");
-    var hint = document.getElementById("audio-hint");
-    if (!audio || !btn) return;
 
-    audio.pause();
-    audio.removeAttribute("src");
-    audio.load();
+    if (!block || !audio) return;
 
-    var src = loc.audio && String(loc.audio).trim();
-    if (src) {
-      audio.src = src;
-      btn.disabled = false;
-      if (hint) {
-        hint.hidden = false;
-        hint.textContent =
-          "受浏览器策略影响，语音可能需手动点击播放。参观时请佩戴耳机，勿外放干扰他人。";
-      }
-    } else {
-      btn.disabled = true;
-      setAudioButtonPlaying(false);
-      if (hint) {
-        hint.hidden = false;
-        hint.textContent = "本展点暂无音频资源。";
-      }
+    function hidePanels() {
+      if (unsupported) unsupported.hidden = true;
+      if (coming) coming.hidden = true;
+      if (wrap) wrap.hidden = true;
+      if (loadMsg) loadMsg.hidden = true;
     }
 
-    btn.onclick = function () {
-      if (btn.disabled) return;
-      if (audio.paused) {
-        var p = audio.play();
-        if (p && typeof p.catch === "function") {
-          p.catch(function () {
-            if (hint) {
-              hint.textContent =
-                "无法播放：请确认使用 http(s) 访问，且音频路径正确。";
-            }
-          });
-        }
-      } else {
-        audio.pause();
+    hidePanels();
+    block.hidden = true;
+
+    if (!canUseHtmlAudio()) {
+      block.hidden = false;
+      if (unsupported) unsupported.hidden = false;
+      return;
+    }
+
+    var meta = resolveAudioForLocation(loc);
+    if (meta.kind === "none") {
+      return;
+    }
+
+    block.hidden = false;
+
+    if (meta.kind === "pending") {
+      if (coming) coming.hidden = false;
+      return;
+    }
+
+    if (wrap) wrap.hidden = false;
+    if (hintSoft) hintSoft.hidden = false;
+    if (loadMsg) loadMsg.hidden = true;
+
+    var els = {
+      playBtn: document.getElementById("detail-audio-play"),
+      seekRange: document.getElementById("detail-audio-seek"),
+      fill: document.getElementById("detail-audio-seek-fill"),
+      timeCur: document.getElementById("detail-audio-time-curr"),
+      timeDur: document.getElementById("detail-audio-time-dur"),
+      muteBtn: document.getElementById("detail-audio-mute"),
+      volRange: document.getElementById("detail-audio-vol"),
+      rateBtn: document.getElementById("detail-audio-rate"),
+      loadMsg: loadMsg,
+    };
+
+    if (typeof window.WxDetailAudioPlayer !== "function") {
+      if (unsupported) {
+        unsupported.textContent = "音频模块未加载";
+        unsupported.hidden = false;
+        if (wrap) wrap.hidden = true;
       }
-    };
+      return;
+    }
 
-    audio.onplay = function () {
-      setAudioButtonPlaying(true);
-    };
-    audio.onpause = function () {
-      setAudioButtonPlaying(false);
-    };
-    audio.onended = function () {
-      setAudioButtonPlaying(false);
-    };
+    detailAudioPlayer = new window.WxDetailAudioPlayer({
+      audioEl: audio,
+      els: els,
+      onPlaybackError: function () {
+        if (loadMsg) {
+          loadMsg.hidden = false;
+          loadMsg.textContent = "\u97F3\u9891\u6682\u65F6\u65E0\u6CD5\u64AD\u653E";
+        }
+        if (hintSoft) hintSoft.hidden = true;
+      },
+    });
 
-    setAudioButtonPlaying(false);
+    detailAudioPlayer.resetTransport();
+    detailAudioPlayer.loadUrl(meta.url);
   }
 
   function setupVideo(loc) {
@@ -254,12 +302,29 @@
       if (s.kind === "image" && imgEl && phEl) {
         imgEl.hidden = false;
         phEl.hidden = true;
-        imgEl.src = s.src;
+        imgEl.classList.add("lazy-image");
+        imgEl.classList.remove("lazy-loaded");
+        imgEl.removeAttribute("src");
+        imgEl.setAttribute("data-src", s.src);
+        imgEl.setAttribute("loading", "lazy");
         imgEl.alt = loc.title + " — 配图 " + (state.carouselIndex + 1);
+        if (
+          window.wxLazyLoadInstance &&
+          typeof window.wxLazyLoadInstance.loadImage === "function"
+        ) {
+          window.wxLazyLoadInstance.loadImage(imgEl);
+        } else {
+          imgEl.src = s.src;
+          imgEl.classList.remove("lazy-image");
+          imgEl.classList.add("lazy-loaded");
+          imgEl.removeAttribute("data-src");
+        }
       } else if (s.kind === "placeholder" && imgEl && phEl && phText) {
         imgEl.hidden = true;
         imgEl.removeAttribute("src");
+        imgEl.removeAttribute("data-src");
         imgEl.removeAttribute("alt");
+        imgEl.classList.remove("lazy-image", "lazy-loaded");
         phEl.hidden = false;
         phText.textContent = s.label || "图片占位";
       }
@@ -583,6 +648,105 @@
   /**
    * 显示集齐四个展点的解锁提示
    */
+  function spawnFlowerPetals(hostEl) {
+    if (!hostEl) return;
+    var n = 5;
+    for (var i = 0; i < n; i++) {
+      (function (idx) {
+        var p = document.createElement("span");
+        p.className = "flower-tribute-petal";
+        p.textContent = "\uD83C\uDF38";
+        p.setAttribute("aria-hidden", "true");
+        var x = (idx - (n - 1) / 2) * 22 + (Math.random() * 10 - 5);
+        p.style.left = "calc(50% + " + Math.round(x) + "px)";
+        p.style.bottom = "24px";
+        p.style.setProperty("--petal-x", x + "px");
+        hostEl.appendChild(p);
+        window.setTimeout(function () {
+          if (p.parentNode) p.parentNode.removeChild(p);
+        }, 950);
+      })(i);
+    }
+  }
+
+  /**
+   * 献花致敬区域（localStorage wx_flowers）
+   */
+  function setupFlowerTribute(loc) {
+    var root = document.getElementById("flower-tribute-root");
+    var block = document.getElementById("block-flower-tribute");
+    if (!root || !block) return;
+    if (!window.wxFlowers) {
+      block.hidden = true;
+      return;
+    }
+    block.hidden = false;
+    var exhibitId = normId(loc.id);
+    if (!window.wxFlowers.normExhibitId(exhibitId)) {
+      block.hidden = true;
+      return;
+    }
+    var done = window.wxFlowers.hasFlowered(exhibitId);
+    var total = window.wxFlowers.getDisplayTotal();
+
+    root.innerHTML = "";
+    var card = document.createElement("div");
+    card.className = "flower-tribute-card";
+
+    var iconWrap = document.createElement("div");
+    iconWrap.className = "flower-tribute-card__icon";
+    var iconSpan = document.createElement("span");
+    iconSpan.textContent = "\uD83C\uDF38";
+    iconSpan.setAttribute("aria-hidden", "true");
+    iconWrap.appendChild(iconSpan);
+
+    var tag = document.createElement("p");
+    tag.className = "flower-tribute-card__tagline";
+    tag.textContent = "\u5411\u738B\u65B0\u4EAD\u5C06\u519B\u81F4\u656C\uFF01";
+
+    var countP = document.createElement("p");
+    countP.className = "flower-tribute-card__count";
+    countP.innerHTML =
+      "\u5DF2\u6709 <strong>" +
+      total +
+      "</strong> \u4EBA\u732E\u82B1";
+
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "flower-tribute-btn" + (done ? " flower-tribute-btn--done" : "");
+    btn.disabled = done;
+    btn.textContent = done
+      ? "\u2705 \u5DF2\u732E\u82B1"
+      : "\uD83C\uDF38 \u732E\u82B1\u81F4\u656C";
+
+    if (!done) {
+      btn.addEventListener("click", function () {
+        if (btn.disabled) return;
+        var res = window.wxFlowers.offerFlower(exhibitId);
+        if (res.ok) {
+          btn.classList.add("flower-tribute-btn--pop");
+          spawnFlowerPetals(card);
+          window.setTimeout(function () {
+            btn.classList.remove("flower-tribute-btn--pop");
+          }, 600);
+          if (typeof window.wxFlowers.updateHomeCountEl === "function") {
+            window.wxFlowers.updateHomeCountEl();
+          }
+          window.wxFlowers.showThankDialog();
+          window.setTimeout(function () {
+            setupFlowerTribute(loc);
+          }, 850);
+        }
+      });
+    }
+
+    card.appendChild(iconWrap);
+    card.appendChild(tag);
+    card.appendChild(countP);
+    card.appendChild(btn);
+    root.appendChild(card);
+  }
+
   function showCheckinCompletionNotification() {
     var mask = document.createElement("div");
     mask.className = "detail-quiz-done-mask";
@@ -893,6 +1057,7 @@
     updateAchievementLines(loc);
     setupQuiz(loc);
     setupCheckin(loc); // 添加打卡功能
+    setupFlowerTribute(loc);
 
     var btnNext = document.getElementById("btn-next-location");
     var nextLoc = findNextLocationCyclic(loc.id);

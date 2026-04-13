@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="王新亭将军红色教育基地 · 致敬将军献花墙" />
+  <title>致敬将军 · 献花墙</title>
+  <link rel="stylesheet" href="css/loading-progress.css" />
+  <script src="js/loading-progress.js"></script>
+  <script src="js/font-size.js?v=1"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/flowers.css" />
+</head>
+<body class="flower-wall-page">
+  <button type="button" class="wx-font-toggle" id="wx-font-toggle">Aa</button>
+  <div class="page-shell flower-wall-shell">
+    <header class="flower-wall-hero">
+      <p class="flower-wall-hero__kicker">王新亭将军红色教育基地</p>
+      <h1 class="flower-wall-hero__title">致敬将军 · 献花墙</h1>
+      <div class="flower-wall-hero__decor" aria-hidden="true">
+        <span class="flower-wall-hero__bloom">&#x1F338;</span>
+        <span class="flower-wall-hero__bloom">&#x1F338;</span>
+        <span class="flower-wall-hero__bloom">&#x1F338;</span>
+      </div>
+    </header>
+
+    <main class="flower-wall-main">
+      <section class="flower-wall-total-card" aria-labelledby="flower-wall-total-label">
+        <h2 id="flower-wall-total-label" class="visually-hidden">累计献花</h2>
+        <p class="flower-wall-total__hint">累计献花</p>
+        <p class="flower-wall-total__number" id="flower-wall-total">—</p>
+        <p class="flower-wall-total__sub">人数含展示用历史基数与本地致敬记录</p>
+      </section>
+
+      <p class="flower-wall-slogan">将军精神永存，红色基因代代传</p>
+
+      <section class="flower-wall-exhibits" aria-labelledby="flower-wall-exhibits-h">
+        <h2 id="flower-wall-exhibits-h" class="flower-wall-section-title">各展点献花状态</h2>
+        <p class="flower-wall-exhibits__note">以下为当前设备上的致敬记录</p>
+        <ul class="flower-wall-exhibit-list" id="flower-wall-exhibit-list"></ul>
+      </section>
+
+      <div class="flower-wall-actions">
+        <a class="btn btn-primary flower-wall-btn-primary" href="index.html">&#x1F338; 我也要献花</a>
+        <a class="btn btn-secondary flower-wall-btn-back" href="index.html">← 返回首页</a>
+      </div>
+    </main>
+
+    <footer class="site-footer site-footer--compact flower-wall-footer" role="contentinfo">
+      <p class="site-footer__name">王新亭将军红色教育基地</p>
+      <p class="site-footer__addr">湖北省孝感市孝南区朋兴乡北庙村</p>
+    </footer>
+  </div>
+
+  <script src="js/flowers.js?v=1"></script>
+  <script src="js/lazy-load.js?v=1" defer></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+/**
+ * 顶部页面加载进度条（由 js/loading-progress.js 注入 #wx-loading-progress）
+ */
+#wx-loading-progress.loading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 0%;
+  height: 3px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(90deg, #c41e3a, #e85d75);
+  box-shadow: 0 0 8px rgba(196, 30, 58, 0.4);
+  z-index: 2147483000;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  opacity: 1;
+}
+
+#wx-loading-progress.loading-progress.is-done {
+  width: 100% !important;
+}
+
+#wx-loading-progress.loading-progress.is-hidden {
+  opacity: 0;
+}
