@@ -3,7 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>二维码生成 · 王新亭将军红色教育基地</title>
+  <meta name="description" content="生成各展点专属二维码，便于现场布设，扫码直达对应讲解页面。" />
+  <title>展点二维码生成 · 王新亭将军红色教育基地</title>
+
+  <!-- Open Graph 标签（微信/QQ分享用） -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="展点二维码生成" />
+  <meta property="og:description" content="生成各展点专属二维码，便于现场布设，扫码直达对应讲解页面。" />
+  <meta property="og:image" content="images/portrait.jpg" />
+  <meta property="og:url" content="" id="og-url" />
+  <meta property="og:site_name" content="王新亭将军红色教育基地" />
+
   <link rel="stylesheet" href="css/loading-progress.css" />
   <script src="js/loading-progress.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -98,6 +108,15 @@
     </main>
   </div>
 
+  <script>
+    // 动态更新 Open Graph URL
+    (function() {
+      var ogUrl = document.getElementById("og-url");
+      if (ogUrl) {
+        ogUrl.setAttribute("content", window.location.href);
+      }
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
   <script>
     (function () {

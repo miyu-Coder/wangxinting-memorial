@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="孝感市王新亭将军红色教育基地官方导览 · 湖北省爱国主义教育基地" />
-  <title>王新亭将军红色教育基地 · 孝感</title>
+  <meta name="description" content="湖北省爱国主义教育基地，位于孝感市孝南区。包含陈列馆、故居、广场、装备展区，提供语音讲解与知识问答。" />
+  <title>王新亭将军红色教育基地 · 官方导览</title>
+
+  <!-- Open Graph 标签（微信/QQ分享用） -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="王新亭将军红色教育基地" />
+  <meta property="og:description" content="湖北省爱国主义教育基地，位于孝感市孝南区。包含陈列馆、故居、广场、装备展区，提供语音讲解与知识问答。" />
+  <meta property="og:image" content="images/portrait.jpg" />
+  <meta property="og:url" content="" id="og-url" />
+  <meta property="og:site_name" content="王新亭将军红色教育基地" />
+
   <link rel="stylesheet" href="css/loading-progress.css" />
   <script src="js/loading-progress.js"></script>
   <script src="js/font-size.js?v=1"></script>
@@ -160,6 +169,15 @@
       <p class="site-footer__note">本页面为导览辅助，展陈内容以馆内说明与主管单位审定为准。</p>
     </footer>
   </div>
+  <script>
+    // 动态更新 Open Graph URL
+    (function() {
+      var ogUrl = document.getElementById("og-url");
+      if (ogUrl) {
+        ogUrl.setAttribute("content", window.location.href);
+      }
+    })();
+  </script>
   <script src="js/nav-utils.js?v=3"></script>
   <script src="js/timeline.js?v=3"></script>
   <script src="js/storage.js?v=2"></script>

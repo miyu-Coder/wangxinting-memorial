@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="王新亭将军红色教育基地 · 致敬将军献花墙" />
-  <title>致敬将军 · 献花墙</title>
+  <meta name="description" content="向王新亭将军献花致敬，铭记革命先辈，传承红色精神。" />
+  <title>致敬将军 · 献花墙 · 王新亭将军红色教育基地</title>
+
+  <!-- Open Graph 标签（微信/QQ分享用） -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="致敬将军 · 献花墙" />
+  <meta property="og:description" content="向王新亭将军献花致敬，铭记革命先辈，传承红色精神。" />
+  <meta property="og:image" content="images/portrait.jpg" />
+  <meta property="og:url" content="" id="og-url" />
+  <meta property="og:site_name" content="王新亭将军红色教育基地" />
+
   <link rel="stylesheet" href="css/loading-progress.css" />
   <script src="js/loading-progress.js"></script>
   <script src="js/font-size.js?v=1"></script>
@@ -55,6 +64,15 @@
     </footer>
   </div>
 
+  <script>
+    // 动态更新 Open Graph URL
+    (function() {
+      var ogUrl = document.getElementById("og-url");
+      if (ogUrl) {
+        ogUrl.setAttribute("content", window.location.href);
+      }
+    })();
+  </script>
   <script src="js/flowers.js?v=1"></script>
   <script src="js/lazy-load.js?v=1" defer></script>
 </body>

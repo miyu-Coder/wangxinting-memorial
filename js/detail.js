@@ -1185,6 +1185,39 @@
     renderQuestion();
   }
 
+  /**
+   * 更新页面 meta 标签（标题、描述、Open Graph）
+   */
+  function updatePageMeta(loc) {
+    var exhibitTitle = loc.title || "展点";
+    var baseTitle = "王新亭将军红色教育基地";
+    var fullTitle = exhibitTitle + " · " + baseTitle;
+
+    // 更新页面标题
+    document.title = fullTitle;
+
+    // 更新 meta description
+    var descMeta = document.querySelector('meta[name="description"]');
+    if (descMeta) {
+      descMeta.setAttribute("content", "参观王新亭将军" + exhibitTitle + "，了解将军生平事迹，参与知识问答，打卡留念。");
+    }
+
+    // 更新 Open Graph 标签
+    var ogTitle = document.getElementById("og-title");
+    var ogDesc = document.getElementById("og-description");
+    var ogUrl = document.getElementById("og-url");
+
+    if (ogTitle) {
+      ogTitle.setAttribute("content", fullTitle);
+    }
+    if (ogDesc) {
+      ogDesc.setAttribute("content", "参观王新亭将军" + exhibitTitle + "，了解将军生平事迹，参与知识问答，打卡留念。");
+    }
+    if (ogUrl) {
+      ogUrl.setAttribute("content", window.location.href);
+    }
+  }
+
   function updatePageContent(loc) {
     try {
       sessionStorage.setItem("wx_current_stop", String(normId(loc.id)));
@@ -1195,7 +1228,9 @@
     var textEl = document.getElementById("detail-text");
 
     if (titleEl) titleEl.textContent = loc.title || "";
-    document.title = (loc.title || "展点讲解") + " · 王新亭将军红色教育基地";
+
+    // 调用更新页面 meta 的函数
+    updatePageMeta(loc);
 
     var curNum = normId(loc.id);
     var total = LOCATIONS.length;
