@@ -1612,6 +1612,117 @@ body {
   filter: brightness(0.97);
 }
 
+.btn-map-nav {
+  background: linear-gradient(135deg, #d42845 0%, #c41e3a 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(196, 30, 58, 0.24);
+  border-radius: 999px;
+  min-height: 52px;
+  padding: 0 22px;
+}
+
+.btn-map-nav:hover {
+  background: linear-gradient(135deg, #c41e3a 0%, #a51c2d 100%);
+}
+
+.btn-map-nav:active {
+  filter: brightness(0.95);
+}
+
+.btn-full-width {
+  width: 100%;
+}
+
+.map-entry {
+  padding: 0 0 18px;
+}
+
+.map-chooser-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10060;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.map-chooser-panel {
+  width: min(100%, 420px);
+  background: #ffffff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+}
+
+.map-chooser-header {
+  padding: 22px 20px 16px;
+  text-align: center;
+  border-bottom: 1px solid rgba(196, 30, 58, 0.1);
+}
+
+.map-chooser-title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #7a1528;
+}
+
+.map-chooser-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #777777;
+  line-height: 1.5;
+}
+
+.map-chooser-list {
+  display: grid;
+  gap: 1px;
+  background: rgba(196, 30, 58, 0.08);
+}
+
+.map-chooser-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #ffffff;
+  color: #3d1818;
+  font-size: 1rem;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.map-chooser-item:hover {
+  background: #fff5eb;
+}
+
+.map-chooser-note {
+  padding: 14px 20px 20px;
+  font-size: 0.92rem;
+  color: #777777;
+  background: #fff8ef;
+  line-height: 1.6;
+}
+
+.map-chooser-close {
+  width: 100%;
+  padding: 16px 20px;
+  border: none;
+  background: #f5ebe0;
+  color: #7a1528;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.map-chooser-close:hover {
+  background: #ebdfd4;
+}
+
 .btn-secondary {
   background: #ffffff;
   color: var(--color-text-title);
