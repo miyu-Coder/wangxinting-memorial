@@ -379,10 +379,118 @@
     }
   }
 
+  /**
+   * 渲染顶部进度条（替代原参观动线卡片）
+   * 格式：📍 展点 X/4 · 展点1 → 展点2 → 展点3 → 展点4
+   */
+  function renderProgressBar(loc) {
+    var progressBar = document.getElementById("detail-progress-bar");
+    if (!progressBar) return;
+
+    var currentIndex = -1;
+    var currentId = normId(loc.id);
+
+    // 找到当前展点的索引
+    for (var i = 0; i < LOCATIONS.length; i++) {
+      if (normId(LOCATIONS[i].id) === currentId) {
+        currentIndex = i;
+        break;
+      }
+    }
+
+    var total = LOCATIONS.length;
+
+    // 构建进度条 HTML
+    var html = '<div class="detail-progress-bar__content">';
+
+    // 左侧：展点计数
+    html += '<span class="detail-progress-bar__counter">📍 展点 ' + (currentIndex + 1) + '/' + total + '</span>';
+
+    // 右侧：展点名称列表
+    html += '<span class="detail-progress-bar__locations">';
+
+    for (var i = 0; i < LOCATIONS.length; i++) {
+      var isCurrent = (i === currentIndex);
+      var location = LOCATIONS[i];
+      var locId = normId(location.id);
+      var locTitle = location.title || ('展点' + locId);
+
+      // 添加展点链接
+      if (isCurrent) {
+        html += '<span class="detail-progress-bar__location detail-progress-bar__location--current">' + locTitle + '</span>';
+      } else {
+        html += '<a class="detail-progress-bar__location" href="' + detailUrlWithId(locId) + '">' + locTitle + '</a>';
+      }
+
+      // 如果不是最后一个，添加箭头
+      if (i < LOCATIONS.length - 1) {
+        html += '<span class="detail-progress-bar__arrow">→</span>';
+      }
+    }
+
+    html += '</span></div>';
+
+    progressBar.innerHTML = html;
+  }
+
+  /**
+   * 渲染底部导航按钮（上一展点/下一展点）
+   */
+  function renderNavButtons(loc) {
+    var btnPrev = document.getElementById("btn-prev-location");
+    var btnNext = document.getElementById("btn-next-location");
+    if (!btnPrev || !btnNext) return;
+
+    var currentIndex = -1;
+    var currentId = normId(loc.id);
+
+    // 找到当前展点的索引
+    for (var i = 0; i < LOCATIONS.length; i++) {
+      if (normId(LOCATIONS[i].id) === currentId) {
+        currentIndex = i;
+        break;
+      }
+    }
+
+    // 设置上一展点按钮
+    if (currentIndex <= 0) {
+      // 第一个展点：置灰不可点击
+      btnPrev.disabled = true;
+      btnPrev.classList.add("btn-nav--disabled");
+      btnPrev.removeAttribute("onclick");
+    } else {
+      var prevLoc = LOCATIONS[currentIndex - 1];
+      var prevId = normId(prevLoc.id);
+      btnPrev.disabled = false;
+      btnPrev.classList.remove("btn-nav--disabled");
+      btnPrev.onclick = function () {
+        window.location.assign(detailUrlWithId(prevId));
+      };
+    }
+
+    // 设置下一展点按钮
+    if (currentIndex >= LOCATIONS.length - 1) {
+      // 最后一个展点：置灰不可点击
+      btnNext.disabled = true;
+      btnNext.classList.add("btn-nav--disabled");
+      btnNext.removeAttribute("onclick");
+    } else {
+      var nextLoc = LOCATIONS[currentIndex + 1];
+      var nextId = normId(nextLoc.id);
+      btnNext.disabled = false;
+      btnNext.classList.remove("btn-nav--disabled");
+      btnNext.onclick = function () {
+        window.location.assign(detailUrlWithId(nextId));
+      };
+    }
+  }
+
+  /**
+   * 原有函数保留用于向后兼容，但内部调用新的渲染函数
+   */
   function renderRouteStrip(loc) {
-    var strip = document.getElementById("detail-route-strip");
-    if (!strip || typeof window.renderExhibitTimeline !== "function") return;
-    window.renderExhibitTimeline(strip, LOCATIONS, normId(loc.id));
+    renderProgressBar(loc);
+    renderNavButtons(loc);
   }
 
   function updateAchievementLines(loc) {
@@ -1107,19 +1215,6 @@
     setupQuiz(loc);
     setupCheckin(loc); // 添加打卡功能
     setupFlowerTribute(loc);
-
-    var btnNext = document.getElementById("btn-next-location");
-    var nextLoc = findNextLocationCyclic(loc.id);
-    if (btnNext && nextLoc) {
-      btnNext.disabled = false;
-      var nextNum = normId(nextLoc.id);
-      var nextTitle = nextLoc.title || "下一展点";
-      btnNext.textContent = "下一展点：" + nextTitle;
-      btnNext.setAttribute("aria-label", "前往下一展点：" + nextTitle);
-      btnNext.onclick = function () {
-        window.location.assign(detailUrlWithId(nextNum));
-      };
-    }
 
     var main = document.getElementById("detail-main");
     if (main) main.hidden = false;

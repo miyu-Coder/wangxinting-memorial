@@ -785,7 +785,138 @@ body {
   margin-bottom: 18px;
 }
 
-/* —— 详情页：动线区 + 下一展点 —— */
+/* —— 详情页：顶部进度条（替代原参观动线卡片） —— */
+.detail-progress-bar {
+  background: #FDF8F2;
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(196, 30, 58, 0.1);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.detail-progress-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.detail-progress-bar__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: min-content;
+  white-space: nowrap;
+}
+
+.detail-progress-bar__counter {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-red);
+  flex-shrink: 0;
+}
+
+.detail-progress-bar__locations {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.detail-progress-bar__location {
+  color: #666666;
+  text-decoration: none;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.detail-progress-bar__location:hover {
+  color: var(--color-red);
+}
+
+.detail-progress-bar__location--current {
+  color: var(--color-red);
+  font-weight: 700;
+  cursor: default;
+}
+
+.detail-progress-bar__arrow {
+  color: var(--color-gold);
+  margin: 0 4px;
+  font-weight: 500;
+}
+
+/* —— 详情页：底部导航按钮 —— */
+.detail-nav-buttons {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0 16px;
+  padding: 0 4px;
+}
+
+.detail-nav-buttons .btn {
+  flex: 1;
+  min-height: 48px;
+  padding: 0 20px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 30px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 上一展点按钮：白底、红色边框、红色文字 */
+.btn-nav-prev {
+  background: #ffffff;
+  color: var(--color-red);
+  border: 2px solid var(--color-red);
+  box-shadow: 0 2px 8px rgba(196, 30, 58, 0.12);
+}
+
+.btn-nav-prev:hover:not(:disabled) {
+  background: rgba(196, 30, 58, 0.05);
+  box-shadow: 0 4px 12px rgba(196, 30, 58, 0.18);
+}
+
+.btn-nav-prev:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* 下一展点按钮：红色渐变背景、白色文字 */
+.btn-nav-next {
+  background: linear-gradient(135deg, var(--color-red-bright), var(--color-red));
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 16px rgba(196, 30, 58, 0.28);
+}
+
+.btn-nav-next:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-red-hover), var(--color-red-deep));
+  box-shadow: 0 6px 20px rgba(196, 30, 58, 0.32);
+}
+
+.btn-nav-next:active:not(:disabled) {
+  transform: scale(0.98);
+  filter: brightness(0.98);
+}
+
+/* 置灰不可点击状态 */
+.btn-nav--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #e0e0e0 !important;
+  border-color: #e0e0e0 !important;
+  color: #999999 !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+
+/* —— 详情页：动线区 + 下一展点（已弃用，保留样式以备后用） —— */
 .detail-block--route {
   padding-bottom: 14px;
 }

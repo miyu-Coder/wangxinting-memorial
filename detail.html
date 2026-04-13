@@ -27,18 +27,8 @@
     </header>
 
     <main id="detail-main" hidden>
-      <section class="detail-block detail-block--route" aria-labelledby="detail-route-label">
-        <p id="detail-route-label" class="placeholder-label">参观动线</p>
-        <div
-          id="detail-route-strip"
-          class="route-timeline route-timeline--compact"
-          role="navigation"
-          aria-label="四展点动线，当前展点已高亮"
-        ></div>
-        <button type="button" class="btn btn-next-cycle" id="btn-next-location">
-          下一展点
-        </button>
-      </section>
+      <!-- 顶部进度条（替代原参观动线卡片） -->
+      <div class="detail-progress-bar" id="detail-progress-bar" role="navigation" aria-label="展点进度导航"></div>
 
       <section
         class="detail-block detail-audio-block"
@@ -155,6 +145,16 @@
         <p class="quiz-exhibit-status" id="quiz-exhibit-status" aria-live="polite"></p>
         <div id="quiz-root" class="quiz-root"></div>
       </section>
+
+      <!-- 底部导航按钮 -->
+      <nav class="detail-nav-buttons" id="detail-nav-buttons" role="navigation" aria-label="展点导航">
+        <button type="button" class="btn btn-nav-prev" id="btn-prev-location">
+          ← 上一展点
+        </button>
+        <button type="button" class="btn btn-nav-next" id="btn-next-location">
+          下一展点 →
+        </button>
+      </nav>
 
       <nav class="action-bar action-bar--single" aria-label="返回导航">
         <a class="btn btn-primary btn-home-only" href="index.html">返回首页</a>
