@@ -12,31 +12,57 @@
    * @returns {Promise<string>} - 返回 Data URL
    */
   function generateQRCode(text, size) {
+    console.log('📱 ========== 二维码生成调试 ==========');
+    console.log('📱 1. 传入的 URL:', text);
+    console.log('📱 2. URL 类型:', typeof text);
+    console.log('📱 3. URL 长度:', text ? text.length : 0);
+
     return new Promise(function (resolve, reject) {
-      if (typeof QRCode === 'undefined') {
-        reject(new Error('QRCode 库未加载'));
-        return;
+      if (typeof window.QRCode === 'undefined') {
+        console.error('📱 ❌ QRCode 库未加载');
+        throw new Error('QRCode 库未加载');
       }
 
-      // 创建临时 canvas
+      // 创建临时 canvas 并设置尺寸为正方形
       var canvas = document.createElement('canvas');
+      var qrSize = 200;
+      canvas.width = qrSize;
+      canvas.height = qrSize;
+
       var config = window.APP_CONFIG ? window.APP_CONFIG.qrCode : {
-        size: 200,
+        size: qrSize,
         margin: 2,
         color: { dark: '#C41E3A', light: '#FFFFFF' }
       };
 
-      QRCode.toCanvas(canvas, text, {
-        width: size || config.size,
+      var qrOptions = {
+        width: qrSize,
         margin: config.margin,
         color: config.color
-      }, function (error) {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(canvas.toDataURL('image/png'));
-        }
-      });
+      };
+
+      try {
+        console.log('📱 4. 二维码配置:', JSON.stringify(qrOptions));
+        console.log('📱 5. 二维码 Canvas 尺寸 (设置后):', canvas.width, 'x', canvas.height);
+        console.log('📱 6. 二维码 Canvas 上下文:', !!canvas.getContext);
+
+        QRCode.toCanvas(canvas, text, qrOptions, function (error) {
+          if (error) {
+            console.error('📱 ❌ 生成二维码时出错:', error);
+            console.error('📱 错误堆栈:', error && error.stack);
+            reject(error);
+          } else {
+            console.log('📱 7. 二维码生成成功');
+            resolve(canvas);
+          }
+        });
+      } catch (error) {
+        console.error('📱 ❌ 生成二维码时出错:', error);
+        console.error('📱 错误堆栈:', error && error.stack);
+        reject(error);
+      }
+    }).finally(function () {
+      console.log('📱 ========== 调试结束 ==========');
     });
   }
 
@@ -49,6 +75,9 @@
     var config = window.APP_CONFIG || { poster: { achievement: { width: 750, height: 1100 } } };
     var width = options.width || config.poster.achievement.width;
     var height = options.height || config.poster.achievement.height;
+
+    console.log('🖼️ 绘制海报背景:', width, 'x', height);
+    console.log('🖼️ 海报配置:', JSON.stringify(options).slice(0, 300));
 
     // 创建海报容器
     var poster = document.createElement('div');
@@ -213,18 +242,27 @@
 
     // 二维码区域
     var qrSection = document.createElement('div');
+    qrSection.className = 'qr-code-container';
     qrSection.style.cssText = [
-      'text-align: center',
-      'margin-bottom: 20px'
+      'display: flex',
+      'justify-content: center',
+      'align-items: center',
+      'width: 100%',
+      'margin: 15px 0',
+      'text-align: center'
     ].join(';');
 
     var qrPlaceholder = document.createElement('div');
     qrPlaceholder.id = 'poster-qr-placeholder';
     qrPlaceholder.style.cssText = [
-      'display: inline-block',
+      'display: inline-flex',
+      'justify-content: center',
+      'align-items: center',
+      'width: 220px',
+      'height: 220px',
       'padding: 10px',
       'background: #FFFFFF',
-      'border-radius: 12px',
+      'border-radius: 16px',
       'box-shadow: 0 4px 16px rgba(61, 24, 24, 0.1)'
     ].join(';');
     qrSection.appendChild(qrPlaceholder);
@@ -297,27 +335,38 @@
    * @returns {Promise<string>} - 返回海报图片 Data URL
    */
   function generatePoster(options) {
+    console.log('🎨 ========== 海报生成调试 ==========');
+    console.log('🎨 1. 海报类型:', options && options.type);
+    console.log('🎨 2. 传入数据:', JSON.stringify(options).slice(0, 200));
+
     var baseUrl = window.APP_CONFIG ? window.APP_CONFIG.baseUrl : 'https://wangxinting-memorial-mqgevub0.edgeone.cool';
 
     // 创建海报元素
     var poster = createPosterElement(options);
+    poster.id = 'poster-container';
     document.body.appendChild(poster);
+    console.log('🎨 3. 主海报 DOM 已创建，准备生成二维码');
 
     // 生成二维码
     return generateQRCode(baseUrl, 200)
-      .then(function (qrDataUrl) {
-        // 将二维码添加到海报中
+      .then(function (qrCanvas) {
+        console.log('🎨 4. 准备调用二维码生成函数');
+        console.log('🎨 5. 二维码 Canvas 返回类型:', qrCanvas && qrCanvas.constructor && qrCanvas.constructor.name);
+        console.log('🎨 6. 二维码 Canvas 实际尺寸:', qrCanvas.width, 'x', qrCanvas.height);
+
+        // 将二维码 Canvas 添加到海报 DOM
         var qrPlaceholder = document.getElementById('poster-qr-placeholder');
         if (qrPlaceholder) {
-          var qrImg = document.createElement('img');
-          qrImg.src = qrDataUrl;
-          qrImg.style.cssText = [
-            'display: block',
-            'width: 180px',
-            'height: 180px'
-          ].join(';');
           qrPlaceholder.innerHTML = '';
-          qrPlaceholder.appendChild(qrImg);
+          qrCanvas.style.cssText = [
+            'display: block',
+            'width: 200px',
+            'height: 200px'
+          ].join(';');
+          qrPlaceholder.appendChild(qrCanvas);
+          console.log('🎨 7. 二维码 Canvas 已插入到海报 DOM');
+        } else {
+          console.warn('🎨 ⚠️ 未找到二维码占位元素 poster-qr-placeholder');
         }
 
         // 使用 html2canvas 生成截图
@@ -325,26 +374,52 @@
           throw new Error('html2canvas 库未加载');
         }
 
+        console.log('🎨 8. 开始调用 html2canvas 生成截图');
         return html2canvas(poster, {
           scale: 2,
           useCORS: true,
           allowTaint: true,
           backgroundColor: null
+        }).then(function (mainCanvas) {
+          console.log('🎨 9. html2canvas 生成完成，Canvas 尺寸:', mainCanvas.width, 'x', mainCanvas.height);
+
+          var finalCanvas = document.createElement('canvas');
+          finalCanvas.width = mainCanvas.width;
+          finalCanvas.height = mainCanvas.height;
+          var finalCtx = finalCanvas.getContext('2d');
+          finalCtx.drawImage(mainCanvas, 0, 0, finalCanvas.width, finalCanvas.height);
+
+          var qrCanvasElement = poster.querySelector('.qr-code-container canvas');
+          var posterRect = poster.getBoundingClientRect();
+          if (qrCanvasElement) {
+            var qrRect = qrCanvasElement.getBoundingClientRect();
+            var scale = mainCanvas.width / posterRect.width;
+            var qrX = (qrRect.left - posterRect.left) * scale;
+            var qrY = (qrRect.top - posterRect.top) * scale;
+            var qrWidth = qrRect.width * scale;
+            var qrHeight = qrRect.height * scale;
+
+            console.log('🎨 10. 手动绘制二维码到 finalCanvas');
+            console.log('   - 位置:', qrX, qrY);
+            console.log('   - 尺寸:', qrWidth, qrHeight);
+            finalCtx.drawImage(qrCanvasElement, qrX, qrY, qrWidth, qrHeight);
+          } else {
+            console.warn('🎨 ⚠️ 未找到 poster 中的二维码 canvas 元素');
+          }
+
+          return finalCanvas.toDataURL('image/png');
         });
       })
-      .then(function (canvas) {
-        // 移除临时元素
-        document.body.removeChild(poster);
-
-        // 返回图片 Data URL
-        return canvas.toDataURL('image/png');
-      })
       .catch(function (error) {
-        // 清理临时元素
+        console.error('🎨 ❌ 海报生成过程中出错:', error);
+        console.error('🎨 错误堆栈:', error && error.stack);
+        throw error;
+      })
+      .finally(function () {
         if (poster.parentNode) {
           document.body.removeChild(poster);
         }
-        throw error;
+        console.log('🎨 ========== 调试结束 ==========');
       });
   }
 
