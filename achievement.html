@@ -88,6 +88,10 @@
   <!-- 离屏画布：生成分享海报 -->
   <canvas id="poster-canvas" width="750" height="1200" class="poster-canvas" aria-hidden="true"></canvas>
 
+  <!-- html2canvas 用于生成海报截图 -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
+
   <script>
     // 动态更新 Open Graph URL
     (function() {
@@ -97,8 +101,10 @@
       }
     })();
   </script>
+  <script src="js/config.js"></script>
   <script src="js/storage.js?v=2"></script>
-  <script src="js/achievement.js?v=1" defer></script>
+  <script src="js/poster-generator.js"></script>
+  <script src="js/achievement.js?v=2" defer></script>
   <script src="js/lazy-load.js?v=1" defer></script>
 </body>
 </html>

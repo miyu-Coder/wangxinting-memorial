@@ -280,9 +280,14 @@
       });
     }
 
+    var detailItems = siteList.map(function (site) {
+      return '🏠 ' + site.name + '  ' + site.time;
+    });
+
     return {
       userDate: formattedDate,
-      sites: siteList
+      sites: siteList,
+      detailItems: detailItems
     };
   }
 
@@ -290,29 +295,169 @@
    * 保存证书图片
    */
   function saveCertificate() {
+    generateCertificatePosterWithQR();
+  }
+
+  function generateCertificatePosterWithQR() {
     var checkData = prepareCheckData();
     if (!checkData) return;
+    if (!window.PosterGenerator) {
+      showPosterError('海报生成器未加载，请刷新页面重试');
+      return;
+    }
 
-    var canvas = drawCertificateCanvas(checkData);
-    if (!canvas) return;
+    showLoadingToast();
+    window.PosterGenerator.generateCertificatePoster(checkData, checkData.detailItems)
+      .then(function (dataUrl) {
+        hideLoadingToast();
+        showCertificatePreview(dataUrl);
+      })
+      .catch(function (error) {
+        hideLoadingToast();
+        console.error('海报生成失败:', error);
+        showPosterError('海报生成失败，请重试');
+      });
+  }
 
-    try {
-      var url = canvas.toDataURL("image/png");
-      var a = document.createElement("a");
-      a.href = url;
+  function showCertificatePreview(dataUrl) {
+    var existingModal = document.getElementById('certificate-poster-preview');
+    if (existingModal) {
+      existingModal.remove();
+    }
 
-      // 生成文件名，包含日期
-      var now = new Date();
-      var timeStamp = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') +
-                      String(now.getDate()).padStart(2, '0');
-      a.download = "王新亭将军红色教育基地-纪念证书-" + timeStamp + ".png";
+    var mask = document.createElement('div');
+    mask.id = 'certificate-poster-preview';
+    mask.className = 'poster-preview-modal';
+    mask.setAttribute('role', 'dialog');
+    mask.setAttribute('aria-modal', 'true');
 
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } catch (e) {
-      var hint = document.getElementById("certificate-hint");
-      if (hint) hint.hidden = false;
+    var panel = document.createElement('div');
+    panel.className = 'poster-preview-panel';
+
+    var title = document.createElement('h3');
+    title.className = 'poster-preview-title';
+    title.textContent = '🎉 纪念证书已生成';
+
+    var imgContainer = document.createElement('div');
+    imgContainer.className = 'poster-preview-image';
+
+    var img = document.createElement('img');
+    img.src = dataUrl;
+    img.alt = '纪念证书海报';
+    img.className = 'poster-preview-img';
+    imgContainer.appendChild(img);
+
+    var actions = document.createElement('div');
+    actions.className = 'poster-preview-actions';
+
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'btn btn-primary poster-preview-btn-save';
+    saveBtn.textContent = '保存图片';
+
+    var shareBtn = document.createElement('button');
+    shareBtn.type = 'button';
+    shareBtn.className = 'btn btn-secondary poster-preview-btn-share';
+    shareBtn.textContent = '分享给好友';
+
+    saveBtn.addEventListener('click', function () {
+      try {
+        var a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = '王新亭红色教育基地-纪念证书.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showSaveSuccessToast();
+      } catch (e) {
+        showPosterError('保存失败，请长按图片保存');
+      }
+    });
+
+    shareBtn.addEventListener('click', function () {
+      sharePoster();
+    });
+
+    mask.addEventListener('click', function (e) {
+      if (e.target === mask) {
+        mask.remove();
+      }
+    });
+
+    actions.appendChild(saveBtn);
+    actions.appendChild(shareBtn);
+    panel.appendChild(title);
+    panel.appendChild(imgContainer);
+    panel.appendChild(actions);
+    mask.appendChild(panel);
+    document.body.appendChild(mask);
+  }
+
+  function sharePoster() {
+    var title = '红色足迹纪念证书 - 王新亭将军红色教育基地';
+    var url = window.location.href;
+
+    if (navigator.share) {
+      navigator.share({
+        title: title,
+        text: '我完成了王新亭将军红色教育基地的打卡纪念证书，快来一起参观！',
+        url: url
+      }).catch(function (err) {
+        console.log('分享取消或失败:', err);
+        showShareToast('分享未完成，可复制链接分享');
+      });
+    } else {
+      showShareModal();
+    }
+  }
+
+  function showLoadingToast() {
+    hideLoadingToast();
+    var toast = document.createElement('div');
+    toast.id = 'poster-loading-toast';
+    toast.className = 'poster-loading-toast';
+    toast.textContent = '正在生成海报...';
+    document.body.appendChild(toast);
+  }
+
+  function hideLoadingToast() {
+    var toast = document.getElementById('poster-loading-toast');
+    if (toast) {
+      toast.remove();
+    }
+  }
+
+  function showSaveSuccessToast() {
+    var toast = document.createElement('div');
+    toast.className = 'poster-success-toast';
+    toast.textContent = '图片已保存';
+    document.body.appendChild(toast);
+
+    setTimeout(function () {
+      if (toast.parentNode) {
+        toast.remove();
+      }
+    }, 2000);
+  }
+
+  function showShareToast(message) {
+    var toast = document.createElement('div');
+    toast.className = 'poster-share-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(function () {
+      if (toast.parentNode) {
+        toast.remove();
+      }
+    }, 2000);
+  }
+
+  function showPosterError(message) {
+    var hint = document.getElementById('certificate-hint');
+    if (hint) {
+      hint.textContent = message;
+      hint.hidden = false;
     }
   }
 
@@ -454,35 +599,7 @@
    * 分享证书
    */
   function shareCertificate() {
-    var title = "红色足迹纪念证书 - 王新亭将军红色教育基地";
-    var text = "我刚完成了王新亭将军红色教育基地的全部参观打卡，快来一起了解将军的光辉事迹！";
-    var url = window.location.href;
-
-    // 优先尝试使用原生分享API
-    if (navigator.share && !isMobile()) {
-      // 电脑端支持原生分享时使用
-      navigator.share({
-        title: title,
-        text: text,
-        url: url
-      }).catch(function(err) {
-        // 用户取消或其他错误，静默处理
-        console.log('分享取消或失败:', err);
-      });
-    } else if (navigator.share) {
-      // 移动端支持原生分享
-      navigator.share({
-        title: title,
-        text: text,
-        url: url
-      }).catch(function(err) {
-        // 如果原生分享失败，显示弹窗
-        showShareModal();
-      });
-    } else {
-      // 不支持原生分享，显示弹窗
-      showShareModal();
-    }
+    generateCertificatePosterWithQR();
   }
 
   /**

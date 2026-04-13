@@ -593,6 +593,74 @@
   }
 }
 
+.poster-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(12, 8, 10, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.poster-preview-panel {
+  width: min(100%, 520px);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  padding: 20px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+  text-align: center;
+}
+
+.poster-preview-title {
+  margin: 0 0 18px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #c41e3a;
+}
+
+.poster-preview-image {
+  margin-bottom: 20px;
+}
+
+.poster-preview-img {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.poster-preview-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.poster-preview-btn-save,
+.poster-preview-btn-share {
+  min-width: 140px;
+}
+
+.poster-loading-toast,
+.poster-success-toast,
+.poster-share-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  border-radius: 999px;
+  z-index: 12000;
+  font-size: 0.95rem;
+}
+
 /* 响应式 */
 @media (max-width: 360px) {
   .certificate-hero {
