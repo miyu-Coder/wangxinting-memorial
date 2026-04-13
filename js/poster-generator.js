@@ -87,12 +87,13 @@
       'top: 0',
       'width: ' + width + 'px',
       'height: ' + height + 'px',
-      'background: linear-gradient(180deg, #FDF8F2 0%, #FFF5EB 50%, #F5E6D8 100%)',
+      'background: linear-gradient(135deg, #C41E3A 0%, #9A1628 100%)',
       'padding: 40px',
       'box-sizing: border-box',
       'font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif',
       'color: #333333',
-      'z-index: 9999'
+      'z-index: 9999',
+      'overflow: hidden'
     ].join(';');
 
     // 边框
@@ -103,24 +104,65 @@
       'left: 24px',
       'right: 24px',
       'bottom: 24px',
-      'border: 6px solid rgba(196, 30, 58, 0.35)',
-      'border-radius: 16px',
+      'border: 6px solid rgba(255, 255, 255, 0.15)',
+      'border-radius: 20px',
       'pointer-events: none'
     ].join(';');
     poster.appendChild(border);
+
+    // 四角装饰
+    var corners = [
+      { top: 16, left: 16 },
+      { top: 16, right: 16 },
+      { bottom: 16, left: 16 },
+      { bottom: 16, right: 16 }
+    ];
+    corners.forEach(function (pos) {
+      var dot = document.createElement('div');
+      dot.style.cssText = [
+        'position: absolute',
+        'width: 12px',
+        'height: 12px',
+        'background: #D4A843',
+        'border-radius: 50%',
+        'box-shadow: 0 0 18px rgba(212, 168, 67, 0.45)'
+      ].join(';');
+      if (pos.top !== undefined) dot.style.top = pos.top + 'px';
+      if (pos.bottom !== undefined) dot.style.bottom = pos.bottom + 'px';
+      if (pos.left !== undefined) dot.style.left = pos.left + 'px';
+      if (pos.right !== undefined) dot.style.right = pos.right + 'px';
+      poster.appendChild(dot);
+    });
+
+    // 海报卡片
+    var card = document.createElement('div');
+    card.style.cssText = [
+      'position: relative',
+      'width: calc(100% - 40px)',
+      'min-height: calc(100% - 40px)',
+      'margin: 20px auto',
+      'padding: 36px 32px',
+      'box-sizing: border-box',
+      'background: #FDF8F2',
+      'border-radius: 32px',
+      'box-shadow: 0 28px 70px rgba(0, 0, 0, 0.18)',
+      'overflow: hidden'
+    ].join(';');
+    poster.appendChild(card);
 
     // 标题区域
     var header = document.createElement('div');
     header.style.cssText = [
       'text-align: center',
-      'margin-bottom: 30px'
+      'margin-bottom: 24px'
     ].join(';');
 
     var siteName = document.createElement('div');
     siteName.style.cssText = [
-      'font-size: 36px',
-      'font-weight: bold',
-      'color: #7A1528',
+      'font-size: 28px',
+      'font-weight: 800',
+      'color: #D4A843',
+      'letter-spacing: 0.08em',
       'margin-bottom: 10px'
     ].join(';');
     siteName.textContent = '王新亭将军红色教育基地';
@@ -129,11 +171,10 @@
     if (options.subtitle) {
       var subtitle = document.createElement('div');
       subtitle.style.cssText = [
-        'font-size: 28px',
-        'font-weight: bold',
+        'font-size: 20px',
+        'font-weight: 700',
         'color: #C41E3A',
-        'font-family: "Noto Serif SC", "SimSun", serif',
-        'margin-bottom: 8px'
+        'margin-bottom: 10px'
       ].join(';');
       subtitle.textContent = options.subtitle;
       header.appendChild(subtitle);
@@ -143,101 +184,200 @@
       var type = document.createElement('div');
       type.style.cssText = [
         'font-size: 24px',
-        'color: #555555'
+        'font-weight: 700',
+        'color: #7A1528',
+        'margin-bottom: 16px'
       ].join(';');
       type.textContent = options.type;
       header.appendChild(type);
     }
 
-    poster.appendChild(header);
+    var divider = document.createElement('div');
+    divider.style.cssText = [
+      'width: 180px',
+      'height: 2px',
+      'margin: 0 auto',
+      'background: linear-gradient(90deg, #D4A843, rgba(212, 168, 67, 0.12), transparent)'
+    ].join(';');
+    header.appendChild(divider);
+    card.appendChild(header);
 
-    // 主要内容区域
-    var mainContent = document.createElement('div');
-    mainContent.style.cssText = [
-      'margin-bottom: 30px',
-      'min-height: 200px'
+    // 内容区
+    var body = document.createElement('div');
+    body.style.cssText = [
+      'display: flex',
+      'flex-direction: column',
+      'gap: 22px'
     ].join(';');
 
-    // 称号/标题
-    if (options.userData && options.userData.title) {
-      var title = document.createElement('div');
-      title.style.cssText = [
+    // 证书页和成就页的差异化区块
+    if (options.showSeal) {
+      var intro = document.createElement('div');
+      intro.style.cssText = [
         'text-align: center',
-        'font-size: 42px',
-        'font-weight: bold',
-        'color: #D4A843',
-        'margin-bottom: 30px'
+        'font-size: 18px',
+        'color: #7A1528',
+        'margin-bottom: 8px'
       ].join(';');
-      title.textContent = options.userData.title;
-      mainContent.appendChild(title);
-    }
+      intro.textContent = '恭喜您完成全部参观打卡！';
+      body.appendChild(intro);
 
-    // 用户数据（得分、进度等）
-    if (options.userData && options.userData.stats) {
-      var stats = document.createElement('div');
-      stats.style.cssText = [
-        'text-align: center',
-        'margin-bottom: 20px'
-      ].join(';');
-
-      options.userData.stats.forEach(function (stat) {
-        var statLine = document.createElement('div');
-        statLine.style.cssText = [
-          'font-size: 28px',
-          'color: #333333',
-          'margin-bottom: 12px'
+      if (options.userData && options.userData.userDate) {
+        var dateInfo = document.createElement('div');
+        dateInfo.style.cssText = [
+          'display: flex',
+          'justify-content: space-between',
+          'align-items: center',
+          'padding: 16px 18px',
+          'background: rgba(196, 30, 58, 0.06)',
+          'border-radius: 16px',
+          'font-size: 18px',
+          'color: #7A1528'
         ].join(';');
-        statLine.textContent = stat.label + '  ' + stat.value;
-        stats.appendChild(statLine);
-      });
-
-      mainContent.appendChild(stats);
-    }
-
-    // 详情列表（各展点得分/打卡记录）
-    if (options.detailItems && options.detailItems.length > 0) {
-      var detailTitle = document.createElement('div');
-      detailTitle.style.cssText = [
-        'font-size: 26px',
-        'font-weight: bold',
-        'color: #C41E3A',
-        'margin-bottom: 15px'
-      ].join(';');
-      detailTitle.textContent = options.detailTitle || '详情';
-      mainContent.appendChild(detailTitle);
+        dateInfo.innerHTML = '<span>完成日期：' + options.userData.userDate + '</span>' +
+                             '<span>已完成参观打卡展点 ' + (options.userData.sites ? options.userData.sites.length : options.detailItems.length) + ' 处</span>';
+        body.appendChild(dateInfo);
+      }
 
       var detailList = document.createElement('div');
       detailList.style.cssText = [
-        'font-size: 22px',
-        'line-height: 1.6'
+        'display: grid',
+        'gap: 12px'
       ].join(';');
 
       options.detailItems.forEach(function (item) {
         var detailItem = document.createElement('div');
         detailItem.style.cssText = [
-          'padding: 8px 0',
-          'color: #444444'
+          'display: flex',
+          'justify-content: space-between',
+          'align-items: center',
+          'padding: 12px',
+          'background: rgba(196, 30, 58, 0.08)',
+          'border-radius: 12px',
+          'font-size: 18px',
+          'color: #5E2A2A'
         ].join(';');
         detailItem.textContent = item;
         detailList.appendChild(detailItem);
       });
 
-      mainContent.appendChild(detailList);
+      body.appendChild(detailList);
+    } else {
+      if (options.userData && options.userData.title) {
+        var titleBlock = document.createElement('div');
+        titleBlock.style.cssText = [
+          'text-align: center',
+          'padding: 18px 20px',
+          'background: linear-gradient(135deg, rgba(212, 168, 67, 0.15), rgba(196, 30, 58, 0.08))',
+          'border-radius: 20px',
+          'box-shadow: inset 0 0 0 1px rgba(212, 168, 67, 0.18)'
+        ].join(';');
+
+        var titleLabel = document.createElement('div');
+        titleLabel.style.cssText = [
+          'font-size: 18px',
+          'color: #7A1528',
+          'margin-bottom: 10px'
+        ].join(';');
+        titleLabel.textContent = '我的专属称号';
+        titleBlock.appendChild(titleLabel);
+
+        var titleText = document.createElement('div');
+        titleText.style.cssText = [
+          'font-size: 44px',
+          'font-weight: 900',
+          'color: #D4A843',
+          'line-height: 1.1',
+          'letter-spacing: 0.03em'
+        ].join(';');
+        titleText.textContent = '🏅 ' + options.userData.title;
+        titleBlock.appendChild(titleText);
+        body.appendChild(titleBlock);
+      }
+
+      if (options.userData && options.userData.stats) {
+        var statBlock = document.createElement('div');
+        statBlock.style.cssText = [
+          'display: grid',
+          'grid-template-columns: repeat(2, minmax(0, 1fr))',
+          'gap: 12px'
+        ].join(';');
+
+        options.userData.stats.forEach(function (stat, index) {
+          var statCard = document.createElement('div');
+          statCard.style.cssText = [
+            'padding: 18px',
+            'border-radius: 18px',
+            'background: rgba(196, 30, 58, 0.08)',
+            'min-height: 110px',
+            'display: flex',
+            'flex-direction: column',
+            'justify-content: center',
+            'gap: 6px'
+          ].join(';');
+
+          var statLabel = document.createElement('div');
+          statLabel.style.cssText = [
+            'color: #7A1528',
+            'font-size: 16px'
+          ].join(';');
+          statLabel.textContent = stat.label;
+          statCard.appendChild(statLabel);
+
+          var statValue = document.createElement('div');
+          statValue.style.cssText = [
+            'font-size: 32px',
+            'font-weight: 800',
+            'color: #D4A843'
+          ].join(';');
+          statValue.textContent = stat.value;
+          statCard.appendChild(statValue);
+
+          statBlock.appendChild(statCard);
+        });
+
+        body.appendChild(statBlock);
+      }
+
+      if (options.detailItems && options.detailItems.length > 0) {
+        var detailGrid = document.createElement('div');
+        detailGrid.style.cssText = [
+          'display: grid',
+          'grid-template-columns: repeat(2, minmax(0, 1fr))',
+          'gap: 12px'
+        ].join(';');
+
+        options.detailItems.forEach(function (item) {
+          var detailItem = document.createElement('div');
+          detailItem.style.cssText = [
+            'padding: 14px',
+            'background: rgba(196, 30, 58, 0.08)',
+            'border-radius: 16px',
+            'min-height: 90px',
+            'font-size: 18px',
+            'color: #5E2A2A',
+            'line-height: 1.4'
+          ].join(';');
+          detailItem.textContent = item;
+          detailGrid.appendChild(detailItem);
+        });
+
+        body.appendChild(detailGrid);
+      }
     }
 
-    poster.appendChild(mainContent);
+    card.appendChild(body);
 
-    // 日期
     if (options.date) {
       var date = document.createElement('div');
       date.style.cssText = [
         'text-align: center',
-        'font-size: 20px',
-        'color: #999999',
-        'margin-bottom: 30px'
+        'font-size: 18px',
+        'color: #8C6A50',
+        'margin: 0 0 12px'
       ].join(';');
       date.textContent = options.date;
-      poster.appendChild(date);
+      card.appendChild(date);
     }
 
     // 二维码区域
@@ -248,9 +388,32 @@
       'justify-content: center',
       'align-items: center',
       'width: 100%',
-      'margin: 15px 0',
+      'margin: 10px 0 14px',
       'text-align: center'
     ].join(';');
+
+    var qrWrapper = document.createElement('div');
+    qrWrapper.style.cssText = [
+      'display: flex',
+      'flex-direction: column',
+      'align-items: center',
+      'padding: 18px',
+      'background: #FFFFFF',
+      'border-radius: 22px',
+      'box-shadow: 0 16px 40px rgba(61, 24, 24, 0.12)',
+      'max-width: 260px',
+      'width: 100%'
+    ].join(';');
+
+    var qrLabel = document.createElement('div');
+    qrLabel.style.cssText = [
+      'font-size: 18px',
+      'font-weight: 700',
+      'color: #8C6A50',
+      'margin-bottom: 14px'
+    ].join(';');
+    qrLabel.textContent = '扫码参观 · 传承精神';
+    qrWrapper.appendChild(qrLabel);
 
     var qrPlaceholder = document.createElement('div');
     qrPlaceholder.id = 'poster-qr-placeholder';
@@ -260,38 +423,36 @@
       'align-items: center',
       'width: 220px',
       'height: 220px',
-      'padding: 10px',
       'background: #FFFFFF',
       'border-radius: 16px',
-      'box-shadow: 0 4px 16px rgba(61, 24, 24, 0.1)'
+      'box-shadow: inset 0 0 0 1px rgba(196, 30, 58, 0.1)'
     ].join(';');
-    qrSection.appendChild(qrPlaceholder);
+    qrWrapper.appendChild(qrPlaceholder);
+    qrSection.appendChild(qrWrapper);
+    card.appendChild(qrSection);
 
-    poster.appendChild(qrSection);
-
-    // 二维码引导语
     if (options.qrCodeText) {
       var qrText = document.createElement('div');
       qrText.style.cssText = [
         'text-align: center',
-        'font-size: 22px',
+        'font-size: 18px',
         'color: #666666',
         'margin-bottom: 20px'
       ].join(';');
       qrText.textContent = options.qrCodeText;
-      poster.appendChild(qrText);
+      card.appendChild(qrText);
     }
 
-    // 底部地址
     if (options.footerText) {
       var footer = document.createElement('div');
       footer.style.cssText = [
         'text-align: center',
-        'font-size: 18px',
-        'color: #999999'
+        'font-size: 16px',
+        'color: #999999',
+        'margin-top: 8px'
       ].join(';');
       footer.textContent = options.footerText;
-      poster.appendChild(footer);
+      card.appendChild(footer);
     }
 
     // 印章（证书页）
@@ -299,17 +460,17 @@
       var seal = document.createElement('div');
       seal.style.cssText = [
         'position: absolute',
-        'bottom: 80px',
-        'right: 60px',
+        'bottom: 36px',
+        'right: 36px',
         'width: 100px',
         'height: 100px',
-        'border: 4px solid #C41E3A',
+        'border: 6px solid rgba(196, 30, 58, 0.9)',
         'border-radius: 50%',
         'display: flex',
         'align-items: center',
         'justify-content: center',
         'transform: rotate(-15deg)',
-        'opacity: 0.8'
+        'background: rgba(255, 255, 255, 0.85)'
       ].join(';');
 
       var sealText = document.createElement('div');
@@ -318,12 +479,12 @@
         'font-size: 16px',
         'font-weight: bold',
         'font-family: "Noto Serif SC", serif',
-        'writing-mode: vertical-rl',
-        'letter-spacing: 4px'
+        'letter-spacing: 4px',
+        'transform: rotate(15deg)'
       ].join(';');
       sealText.textContent = '已完成';
       seal.appendChild(sealText);
-      poster.appendChild(seal);
+      card.appendChild(seal);
     }
 
     return poster;
