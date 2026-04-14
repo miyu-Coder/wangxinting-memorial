@@ -3,6 +3,18 @@
   "private": true,
   "description": "基于二维码的纪念地数字化展播静态站点",
   "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
     "serve": "npx --yes serve . -l 3000"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
