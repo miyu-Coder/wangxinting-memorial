@@ -47,6 +47,35 @@
     return null;
   }
 
+  // ========== 自定义弹窗（与献花弹窗风格一致） ==========
+  function showMessageDialog(title, btnText) {
+    var mask = document.createElement('div');
+    mask.className = 'flower-tribute-modal-mask';
+    mask.setAttribute('role', 'dialog');
+    mask.setAttribute('aria-modal', 'true');
+
+    var panel = document.createElement('div');
+    panel.className = 'flower-tribute-modal-panel';
+
+    var h = document.createElement('p');
+    h.className = 'flower-tribute-modal-title';
+    h.textContent = title;
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-primary flower-tribute-modal-btn';
+    btn.textContent = btnText || '确定';
+
+    function close() { mask.remove(); }
+    btn.addEventListener('click', close);
+    mask.addEventListener('click', function (ev) { if (ev.target === mask) close(); });
+
+    panel.appendChild(h);
+    panel.appendChild(btn);
+    mask.appendChild(panel);
+    document.body.appendChild(mask);
+  }
+
   var LIST_SELECTORS = ['#messageList', '#messages-list', '.messages-list', '#message-list', '.message-list'];
   var NICK_SELECTORS = ['#nicknameInput', '#nickname', '#msg-nickname', 'input[name="nickname"]'];
   var CONTENT_SELECTORS = ['#messageInput', '#content', '#msg-content', 'textarea[name="content"]'];
@@ -116,11 +145,11 @@
     nickname = (nickname || '').trim() || '游客';
     content = (content || '').trim();
     if (!content) {
-      alert('留言内容不能为空');
+      showMessageDialog('留言内容不能为空', '知道了');
       return Promise.resolve({ success: false, message: '留言内容不能为空' });
     }
     if (countChars(content) > 200) {
-      alert('留言不能超过 200 字');
+      showMessageDialog('留言不能超过 200 字', '知道了');
       return Promise.resolve({ success: false, message: '超过长度限制' });
     }
 
@@ -133,14 +162,14 @@
     }).then(function (body) {
       if (body && body.success) {
         if (contentEl) contentEl.value = '';
-        alert('留言提交成功，等待审核');
+        showMessageDialog('留言提交成功，等待审核', '好的');
         return { success: true };
       }
       var msg = (body && body.message) || '提交失败，请稍后重试';
-      alert(msg);
+      showMessageDialog(msg, '知道了');
       return { success: false, message: msg };
     }).catch(function () {
-      alert('提交失败，请稍后重试');
+      showMessageDialog('提交失败，请稍后重试', '知道了');
       return { success: false, message: '网络错误' };
     });
   }

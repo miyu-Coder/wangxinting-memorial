@@ -3202,3 +3202,106 @@ img.lazy-error {
 .carousel-image.lazy-image:not(.lazy-loaded) {
   min-height: 160px;
 }
+/* ========== 留言模块样式 ========== */
+.message-module {
+  background: #fff;
+  padding: 16px;
+  border: 1px solid rgba(196, 30, 58, 0.08);
+  border-left: 6px solid #d4a843;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.message-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message-inputs input,
+.message-inputs textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #eee;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.message-inputs textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.message-list {
+  margin-top: 16px;
+}
+
+.message-item {
+  background: #fff;
+  border: 1px solid rgba(196, 30, 58, 0.06);
+  border-left: 4px solid #d4a843;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+}
+
+.message-item__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #c41e3a;
+}
+
+.message-item__time {
+  color: #999;
+  font-weight: normal;
+  font-size: 0.85rem;
+}
+
+.message-item__content {
+  margin: 0;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.messages-empty {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+  font-size: 0.9rem;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0 10px;
+  color: #c41e3a;
+  font-size: 0.9rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #d4a843, transparent);
+}
+
+.divider span {
+  margin: 0 12px;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  color: #7a1528;
+  margin: 10px 0 15px;
+  padding-left: 10px;
+  border-left: 4px solid #d4a843;
+}
