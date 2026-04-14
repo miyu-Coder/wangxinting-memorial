@@ -58,12 +58,6 @@
     .stat-value { font-size: 2.25rem; font-weight: 700; color: var(--color-red); line-height: 1.2; }
     .chart-section { background: var(--color-surface); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 24px; border: 1px solid var(--color-border); }
     .chart-section h3 { font-size: 1rem; color: var(--color-text); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--color-border); font-weight: 600; }
-    .stat-item { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
-    .stat-item:last-child { margin-bottom: 0; }
-    .stat-name { min-width: 80px; font-weight: 500; color: var(--color-text); font-size: 0.95rem; }
-    .stat-bar { flex: 1; height: 8px; background: #F0F0F0; border-radius: 4px; overflow: hidden; }
-    .stat-bar-fill { display: block; height: 100%; background: linear-gradient(90deg, var(--color-gold), var(--color-red)); border-radius: 4px; transition: width 0.4s ease; min-width: 4px; }
-    .stat-num { min-width: 40px; text-align: right; font-weight: 600; color: var(--color-red); font-size: 0.95rem; }
     .message-filter { display: flex; gap: 8px; margin-bottom: 20px; padding: 4px; background: #F0F0F0; border-radius: var(--radius-sm); width: fit-content; }
     .filter-btn { padding: 10px 20px; border: none; background: transparent; border-radius: 6px; color: var(--color-text-secondary); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
     .filter-btn:hover { color: var(--color-text); }
@@ -152,13 +146,13 @@
         </div>
 
         <div class="chart-section">
-          <h3>各展点打卡人数</h3>
-          <div class="checkin-list" id="checkinList"></div>
+          <h3>各展点献花数（单位：人）</h3>
+          <div id="flowerChart" style="width: 100%; height: 250px;"></div>
         </div>
 
         <div class="chart-section">
-          <h3>各展点献花数</h3>
-          <div class="flower-list" id="flowerList"></div>
+          <h3>各展点打卡人数（单位：次）</h3>
+          <div id="checkinChart" style="width: 100%; height: 250px;"></div>
         </div>
       </section>
 
@@ -175,11 +169,14 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
   <script>
     const ADMIN_PASSWORD = 'admin123';
     const SESSION_KEY = 'adminSession';
     let currentFilter = 'pending';
     let allMessagesData = [];
+    let flowerChart = null;
+    let checkinChart = null;
 
     function checkLogin() {
       const session = localStorage.getItem(SESSION_KEY);
@@ -243,19 +240,197 @@
       });
     });
 
+    function initCharts() {
+      if (!flowerChart) {
+        flowerChart = echarts.init(document.getElementById('flowerChart'));
+      }
+      if (!checkinChart) {
+        checkinChart = echarts.init(document.getElementById('checkinChart'));
+      }
+    }
+
+    function renderFlowerChart(data) {
+      if (!flowerChart) return;
+      const total = data.reduce((a, b) => a + b, 0);
+      const maxValue = Math.max(...data);
+      
+      const dataWithStyle = data.map((value, index) => {
+        let itemStyle;
+        if (value === 0) {
+          itemStyle = { color: '#E0E0E0' };
+        } else if (value === maxValue && maxValue > 0) {
+          itemStyle = { 
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#7A1528' },
+              { offset: 1, color: '#C41E3A' }
+            ])
+          };
+        } else {
+          itemStyle = { 
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#D4A843' },
+              { offset: 1, color: '#C41E3A' }
+            ])
+          };
+        }
+        return { value: value, itemStyle: itemStyle };
+      });
+
+      const option = {
+        backgroundColor: 'transparent',
+        grid: { left: '12%', right: '10%', top: '15%', bottom: '15%' },
+        xAxis: {
+          type: 'category',
+          data: ['展点1', '展点2', '展点3', '展点4'],
+          axisLine: { lineStyle: { color: '#E8E8E8' } },
+          axisLabel: { color: '#666666', fontSize: 12 }
+        },
+        yAxis: {
+          type: 'value',
+          minInterval: 1,
+          axisLine: { show: false },
+          splitLine: { lineStyle: { color: '#F0F0F0' } },
+          axisLabel: { color: '#666666' }
+        },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#E8E8E8',
+          textStyle: { color: '#333333' },
+          formatter: function(params) {
+            const val = params[0].value;
+            const percent = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+            return `<strong>${params[0].name}</strong><br/>数量：${val} 人<br/>占比：${percent}%`;
+          }
+        },
+        series: [{
+          type: 'bar',
+          data: dataWithStyle,
+          barWidth: 40,
+          barGap: '20%',
+          itemStyle: { borderRadius: [4, 4, 0, 0] },
+          label: { show: true, position: 'top', color: '#C41E3A', fontWeight: 600, fontSize: 12 }
+        }]
+      };
+
+      if (total === 0) {
+        option.graphic = {
+          type: 'text',
+          left: 'center',
+          top: 'middle',
+          style: {
+            text: '暂无数据',
+            fontSize: 16,
+            fill: '#999999'
+          }
+        };
+      }
+
+      flowerChart.setOption(option);
+    }
+
+    function renderCheckinChart(data) {
+      if (!checkinChart) return;
+      const total = data.reduce((a, b) => a + b, 0);
+      const maxValue = Math.max(...data);
+      
+      const dataWithStyle = data.map((value, index) => {
+        let itemStyle;
+        if (value === 0) {
+          itemStyle = { color: '#E0E0E0' };
+        } else if (value === maxValue && maxValue > 0) {
+          itemStyle = { 
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#7A1528' },
+              { offset: 1, color: '#C41E3A' }
+            ])
+          };
+        } else {
+          itemStyle = { 
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#D4A843' },
+              { offset: 1, color: '#C41E3A' }
+            ])
+          };
+        }
+        return { value: value, itemStyle: itemStyle };
+      });
+
+      const option = {
+        backgroundColor: 'transparent',
+        grid: { left: '12%', right: '10%', top: '15%', bottom: '15%' },
+        xAxis: {
+          type: 'category',
+          data: ['展点1', '展点2', '展点3', '展点4'],
+          axisLine: { lineStyle: { color: '#E8E8E8' } },
+          axisLabel: { color: '#666666', fontSize: 12 }
+        },
+        yAxis: {
+          type: 'value',
+          minInterval: 1,
+          axisLine: { show: false },
+          splitLine: { lineStyle: { color: '#F0F0F0' } },
+          axisLabel: { color: '#666666' }
+        },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#E8E8E8',
+          textStyle: { color: '#333333' },
+          formatter: function(params) {
+            const val = params[0].value;
+            const percent = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+            return `<strong>${params[0].name}</strong><br/>数量：${val} 次<br/>占比：${percent}%`;
+          }
+        },
+        series: [{
+          type: 'bar',
+          data: dataWithStyle,
+          barWidth: 40,
+          barGap: '20%',
+          itemStyle: { borderRadius: [4, 4, 0, 0] },
+          label: { show: true, position: 'top', color: '#C41E3A', fontWeight: 600, fontSize: 12 }
+        }]
+      };
+
+      if (total === 0) {
+        option.graphic = {
+          type: 'text',
+          left: 'center',
+          top: 'middle',
+          style: {
+            text: '暂无数据',
+            fontSize: 16,
+            fill: '#999999'
+          }
+        };
+      }
+
+      checkinChart.setOption(option);
+    }
+
+    window.addEventListener('resize', function () {
+      if (flowerChart) flowerChart.resize();
+      if (checkinChart) checkinChart.resize();
+    });
+
     async function loadDashboard() {
       try {
         let totalFlowers = 0;
+        let flowerData = [];
         for (let i = 1; i <= 4; i++) {
           const res = await fetch(`/api/flower/${i}`);
           const data = await res.json();
-          totalFlowers += data.totalCount || 0;
+          const count = data.totalCount || 0;
+          totalFlowers += count;
+          flowerData.push(count);
         }
         document.getElementById('totalFlowers').textContent = totalFlowers;
 
         const checkinRes = await fetch('/api/checkin/stats');
         const checkinData = await checkinRes.json();
         const stats = checkinData.stats || { '1': 0, '2': 0, '3': 0, '4': 0 };
+        const checkinDataArr = [stats['1'], stats['2'], stats['3'], stats['4']];
         const totalCheckins = Object.values(stats).reduce((a, b) => a + b, 0);
         document.getElementById('totalCheckins').textContent = totalCheckins;
 
@@ -266,35 +441,9 @@
         document.getElementById('totalMessages').textContent = allMessages.length;
         document.getElementById('pendingMessages').textContent = pendingMsgs.length;
 
-        const checkinHtml = ['1', '2', '3', '4']
-          .map((id) => `
-            <div class="stat-item">
-              <span class="stat-name">展点 ${id}</span>
-              <span class="stat-bar">
-                <span class="stat-bar-fill" style="width: ${Math.min((stats[id] / 10) * 100, 100)}%"></span>
-              </span>
-              <span class="stat-num">${stats[id]}</span>
-            </div>`)
-          .join('');
-        document.getElementById('checkinList').innerHTML = checkinHtml;
-
-        let flowerStats = { '1': 0, '2': 0, '3': 0, '4': 0 };
-        for (let i = 1; i <= 4; i++) {
-          const res = await fetch(`/api/flower/${i}`);
-          const data = await res.json();
-          flowerStats[i] = data.totalCount || 0;
-        }
-        const flowerHtml = ['1', '2', '3', '4']
-          .map((id) => `
-            <div class="stat-item">
-              <span class="stat-name">展点 ${id}</span>
-              <span class="stat-bar">
-                <span class="stat-bar-fill" style="width: ${Math.min((flowerStats[id] / 20) * 100, 100)}%"></span>
-              </span>
-              <span class="stat-num">${flowerStats[id]}</span>
-            </div>`)
-          .join('');
-        document.getElementById('flowerList').innerHTML = flowerHtml;
+        initCharts();
+        renderFlowerChart(flowerData);
+        renderCheckinChart(checkinDataArr);
       } catch (err) {
         console.error('Error loading dashboard:', err);
       }
