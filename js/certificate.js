@@ -603,28 +603,81 @@
   }
 
   /**
+   * 显示跳转提示Toast
+   */
+  function showRedirectToast(message) {
+    var toast = document.createElement("div");
+    toast.className = "certificate-redirect-toast";
+    toast.textContent = message;
+    toast.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.75);color:#fff;padding:16px 24px;border-radius:8px;font-size:1rem;z-index:9999;text-align:center;max-width:80%;";
+    document.body.appendChild(toast);
+    return toast;
+  }
+
+  /**
+   * 检查打卡状态（通过API）
+   */
+  function checkCheckinStatus() {
+    return fetch("/api/checkin/stats", {
+      credentials: "include"
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data.success) {
+          throw new Error(data.message || "获取打卡状态失败");
+        }
+        return data.data || data;
+      });
+  }
+
+  /**
    * 主函数：加载数据并渲染证书
    */
   function run() {
     var main = document.getElementById("certificate-main");
     if (main) main.hidden = true;
 
-    loadLocations().then(function () {
-      renderCertificate();
+    checkCheckinStatus()
+      .then(function (stats) {
+        var checkedCount = 0;
+        if (stats && stats.stats) {
+          for (var i = 1; i <= 4; i++) {
+            if (stats.stats[i] && stats.stats[i].checked) {
+              checkedCount++;
+            }
+          }
+        } else if (stats && typeof stats.checkedCount === "number") {
+          checkedCount = stats.checkedCount;
+        }
 
-      // 绑定按钮事件
-      var saveBtn = document.getElementById("btn-save-certificate");
-      var shareBtn = document.getElementById("btn-share-certificate");
+        if (checkedCount < 4) {
+          var toast = showRedirectToast("请先完成全部展点打卡");
+          setTimeout(function () {
+            window.location.href = "index.html";
+          }, 1500);
+          return;
+        }
 
-      if (saveBtn) {
-        saveBtn.addEventListener("click", saveCertificate);
-      }
-      if (shareBtn) {
-        shareBtn.addEventListener("click", shareCertificate);
-      }
-    }).catch(function (e) {
-      showError(e && e.message || "加载失败");
-    });
+        return loadLocations().then(function () {
+          renderCertificate();
+
+          var saveBtn = document.getElementById("btn-save-certificate");
+          var shareBtn = document.getElementById("btn-share-certificate");
+
+          if (saveBtn) {
+            saveBtn.addEventListener("click", saveCertificate);
+          }
+          if (shareBtn) {
+            shareBtn.addEventListener("click", shareCertificate);
+          }
+        });
+      })
+      .catch(function (e) {
+        showError(e && e.message || "加载失败");
+      });
   }
 
   if (document.readyState === "loading") {
