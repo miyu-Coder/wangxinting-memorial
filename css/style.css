@@ -2763,16 +2763,37 @@ body {
 }
 
 .checkin-btn--disabled {
-  background: #ccc;
+  background: #E0E0E0;
+  color: #999999;
+  border: none;
+  border-radius: 8px;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
 .checkin-btn--disabled:hover {
-  background: #ccc;
+  background: #E0E0E0;
+  color: #999999;
   transform: none;
   box-shadow: none;
+}
+
+.checkin-btn--checked {
+  background: linear-gradient(135deg, #C41E3A, #A01830) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 30px;
+  box-shadow: 0 4px 16px rgba(196, 30, 58, 0.3);
+  cursor: default;
+  transform: none;
+}
+
+.checkin-btn--checked:hover {
+  background: linear-gradient(135deg, #C41E3A, #A01830) !important;
+  color: #ffffff !important;
+  transform: none;
+  box-shadow: 0 4px 16px rgba(196, 30, 58, 0.3);
 }
 
 @keyframes checkinSuccess {
@@ -3032,19 +3053,25 @@ body {
 
 .flower-tribute-btn:disabled,
 .flower-tribute-btn--done {
-  background: #cccccc;
-  color: #555555;
+  background: #E0E0E0 !important;
+  color: #999999 !important;
+  border: none !important;
+  border-radius: 8px;
   box-shadow: none;
-  cursor: default;
+  cursor: not-allowed;
   pointer-events: none;
 }
 
-/* 视觉上为已献花（灰色），但仍允许点击以弹出提示。
-   用于在详情页表示当前用户已献花但仍需响应点击提示。 */
 .flower-tribute-btn--locked {
-  background: #cccccc;
-  color: #555555;
-  box-shadow: none;
+  width: auto !important;
+  min-height: auto !important;
+  padding: 12px 32px !important;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #C41E3A, #A01830) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 30px;
+  box-shadow: 0 4px 16px rgba(196, 30, 58, 0.3);
   cursor: default;
   pointer-events: auto;
 }

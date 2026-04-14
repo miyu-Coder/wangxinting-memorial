@@ -173,11 +173,56 @@
     document.body.appendChild(mask);
   }
 
+  function showAllFloweredDialog() {
+    var mask = document.createElement('div');
+    mask.className = 'flower-tribute-modal-mask';
+    mask.setAttribute('role', 'dialog');
+    mask.setAttribute('aria-modal', 'true');
+    mask.setAttribute('aria-label', '致敬提示');
+
+    var panel = document.createElement('div');
+    panel.className = 'flower-tribute-modal-panel';
+
+    var h = document.createElement('p');
+    h.className = 'flower-tribute-modal-title';
+    h.textContent = '您已向所有展点献花致敬！';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-primary flower-tribute-modal-btn';
+    btn.textContent = '好的';
+
+    function close() { mask.remove(); }
+    btn.addEventListener('click', close);
+    mask.addEventListener('click', function (ev) { if (ev.target === mask) close(); });
+
+    panel.appendChild(h);
+    panel.appendChild(btn);
+    mask.appendChild(panel);
+    document.body.appendChild(mask);
+  }
+
+  function findFirstUnfloweredExhibit() {
+    var results = [false, false, false, false];
+    var promises = EXHIBIT_META.map(function (m, idx) {
+      return getUserFlowered(m.id).then(function (flowered) {
+        results[idx] = flowered;
+      });
+    });
+    return Promise.all(promises).then(function () {
+      for (var i = 0; i < results.length; i++) {
+        if (!results[i]) {
+          return EXHIBIT_META[i].id;
+        }
+      }
+      return null;
+    });
+  }
+
   function mountFlowerWallPage() {
     var totalEl = document.getElementById('flower-wall-total');
     var listEl = document.getElementById('flower-wall-exhibit-list');
     var offerBtn = document.getElementById('btn-offer-flower');
-    // 更新累计献花（所有展点之和）
     if (totalEl) {
       totalEl.textContent = '…';
       getTotalsForAllExhibits().then(function (sum) {
@@ -185,7 +230,6 @@
       }).catch(function () { totalEl.textContent = '—'; });
     }
 
-    // 渲染每个展点并异步填充各自的献花次数
     if (listEl) {
       listEl.innerHTML = '';
       var rows = getExhibitList();
@@ -203,7 +247,6 @@
           li.appendChild(st);
           listEl.appendChild(li);
 
-          // 异步获取该展点的总数并更新状态
           getExhibitTotal(r.id).then(function (n) {
             if (n == null) {
               st.textContent = '\u2014';
@@ -221,36 +264,53 @@
     }
 
     if (offerBtn) {
-      // 拦截点击，尝试调用后端献花；如果 URL 中没有 id，则保留原有跳转行为
       offerBtn.addEventListener('click', function (ev) {
         var id = getQueryParam('id');
-        if (!id) return; // 保持默认跳转到 detail.html
-        ev.preventDefault();
-        offerBtn.classList.add('btn-disabled');
-        offerBtn.setAttribute('aria-disabled', 'true');
-        offerBtn.style.pointerEvents = 'none';
+        if (id) {
+          ev.preventDefault();
+          offerBtn.classList.add('btn-disabled');
+          offerBtn.setAttribute('aria-disabled', 'true');
+          offerBtn.style.pointerEvents = 'none';
 
-        offerFlower(id).then(function (res) {
-          if (res.ok) {
-            if (totalEl && typeof res.displayTotal === 'number') {
-              totalEl.textContent = String(res.displayTotal);
-            }
-            showThankDialog();
-          } else if (res.already) {
-            if (typeof window.wxFlowers.showAlreadyDialog === 'function') window.wxFlowers.showAlreadyDialog();
-          } else {
-            if (typeof window.wxFlowers.showAlreadyDialog === 'function') {
-              // reuse as generic failure dialog if needed
-              alert('献花失败，请稍后重试');
+          offerFlower(id).then(function (res) {
+            if (res.ok) {
+              if (totalEl && typeof res.displayTotal === 'number') {
+                totalEl.textContent = String(res.displayTotal);
+              }
+              showThankDialog();
+            } else if (res.already) {
+              if (typeof window.wxFlowers.showAlreadyDialog === 'function') window.wxFlowers.showAlreadyDialog();
             } else {
-              alert('献花失败，请稍后重试');
+              if (typeof window.wxFlowers.showAlreadyDialog === 'function') {
+                alert('献花失败，请稍后重试');
+              } else {
+                alert('献花失败，请稍后重试');
+              }
             }
-          }
-        }).finally(function () {
-          offerBtn.classList.remove('btn-disabled');
-          offerBtn.removeAttribute('aria-disabled');
-          offerBtn.style.pointerEvents = '';
-        });
+          }).finally(function () {
+            offerBtn.classList.remove('btn-disabled');
+            offerBtn.removeAttribute('aria-disabled');
+            offerBtn.style.pointerEvents = '';
+          });
+        } else {
+          ev.preventDefault();
+          offerBtn.classList.add('btn-disabled');
+          offerBtn.setAttribute('aria-disabled', 'true');
+          offerBtn.style.pointerEvents = 'none';
+
+          findFirstUnfloweredExhibit().then(function (unfloweredId) {
+            if (unfloweredId) {
+              window.location.href = 'detail.html?id=' + unfloweredId;
+            } else {
+              showAllFloweredDialog();
+              offerBtn.classList.remove('btn-disabled');
+              offerBtn.removeAttribute('aria-disabled');
+              offerBtn.style.pointerEvents = '';
+            }
+          }).catch(function () {
+            window.location.href = 'detail.html?id=1';
+          });
+        }
       });
     }
   }
@@ -276,6 +336,8 @@
     updateHomeCountEl: updateHomeCountEl,
     showThankDialog: showThankDialog,
     showAlreadyDialog: showAlreadyDialog,
+    showAllFloweredDialog: showAllFloweredDialog,
+    findFirstUnfloweredExhibit: findFirstUnfloweredExhibit,
     formatHomeLine: formatHomeLine
   };
 
