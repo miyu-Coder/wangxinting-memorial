@@ -36,9 +36,13 @@
   --font-serif: "Noto Serif SC", "Source Han Serif SC", "SimSun", "Songti SC", serif;
   --font-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
 
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-lg: 12px;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-lg: 16px;
+  --radius-btn: 30px;
+  --radius-btn-sm: 8px;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.08);
   --safe-bottom: env(safe-area-inset-bottom, 14px);
 
   /* 兼容旧变量名（避免遗漏选择器） */
@@ -473,7 +477,7 @@ body {
   border-radius: var(--radius);
   border: 1px solid var(--color-border);
   border-left: 5px solid var(--color-red);
-  box-shadow: 0 4px 18px rgba(196, 30, 58, 0.07);
+  box-shadow: var(--shadow-card);
 }
 
 .life-card::before {
@@ -539,12 +543,12 @@ body {
   height: 100%;
   min-height: 140px;
   background: var(--color-surface);
-  border-radius: 12px;
+  border-radius: var(--radius);
   border: 1px solid var(--color-border);
   border-left: 5px solid #c41e3a;
   color: inherit;
   text-decoration: none;
-  box-shadow: 0 4px 18px rgba(196, 30, 58, 0.07);
+  box-shadow: var(--shadow-card);
   transition:
     border-color 0.2s,
     background 0.2s,
@@ -1045,6 +1049,47 @@ body {
 .section--admin {
   padding-top: 16px;
   border-top: none;
+}
+
+.admin-entry-card {
+  background: #F8F4ED;
+  border: 1px dashed #D4A843;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  text-align: center;
+}
+
+.admin-entry-card__title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #7A1528;
+}
+
+.admin-entry-card__desc {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+.admin-entry-card__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: auto;
+  padding: 8px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #C41E3A, #A01830);
+  color: #ffffff;
+  border-radius: var(--radius-btn);
+  box-shadow: 0 4px 12px rgba(196, 30, 58, 0.25);
+}
+
+.admin-entry-card__btn:hover {
+  background: linear-gradient(135deg, #A01830, #7A1528);
+  box-shadow: 0 6px 16px rgba(196, 30, 58, 0.3);
 }
 
 .section--admin.section--admin {
@@ -1590,7 +1635,7 @@ body {
   font-family: var(--font-sans);
   font-weight: 500;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-btn-sm);
   cursor: pointer;
   text-decoration: none;
   text-align: center;
@@ -1601,6 +1646,7 @@ body {
   color: #ffffff;
   box-shadow: 0 4px 16px rgba(196, 30, 58, 0.25);
   transition: background 0.2s, box-shadow 0.2s, filter 0.15s;
+  border-radius: var(--radius-btn);
 }
 
 .btn-primary:hover {
@@ -3271,7 +3317,8 @@ img.lazy-error {
   border-left: 4px solid #d4a843;
   padding: 12px;
   margin-bottom: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
 }
 
 .message-item__meta {
