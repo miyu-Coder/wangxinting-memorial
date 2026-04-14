@@ -324,6 +324,40 @@ app.post('/api/admin/messages/:id/approve', async (req, res) => {
   }
 });
 
+// POST /api/admin/messages/:id/reject - 将 status 置为 2（拒绝/软删除）
+app.post('/api/admin/messages/:id/reject', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ success: false, message: '无效的 id' });
+  try {
+    await db.runAsync('UPDATE messages SET status = 2 WHERE id = ?', [id]);
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Reject message error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// 测试日志
+console.log('About to register /admin route, __dirname=' + __dirname);
+
+// 管理后台页面
+app.get('/admin', (req, res) => {
+  console.log('Admin route handler called');
+  const adminPath = __dirname + '/server/admin/index.html';
+  console.log('Serving file from:', adminPath);
+  res.sendFile(adminPath, (err) => {
+    if (err) {
+      console.error('sendFile error:', err);
+      res.status(500).json({ error: 'Failed to serve admin page', details: err.message });
+    }
+  });
+});
+
+console.log('Registered /admin route');
+
+// 管理后台资源
+app.use('/admin', express.static(__dirname + '/server/admin'));
+
 // 静态文件服务（必须在所有 API 路由之后）
 app.use(express.static(__dirname));
 
