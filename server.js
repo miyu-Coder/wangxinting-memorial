@@ -231,23 +231,71 @@ app.get('/api/stats/overview', async (req, res) => {
     );
     const todayVisits = todayRow ? todayRow.cnt : 0;
     
-    const hotExhibitRow = await db.getAsync(
-      `SELECT page, COUNT(*) AS cnt FROM page_views 
-       WHERE page LIKE 'detail_%' 
-       GROUP BY page 
-       ORDER BY cnt DESC 
-       LIMIT 1`
-    );
+    const exhibitNames = {
+      '1': '陈列馆',
+      '2': '故居',
+      '3': '纪念园',
+      '4': '将军铜像'
+    };
     
+    // 调试：查看page_views原始数据
+    const debugPageViews = await db.allAsync(
+      "SELECT page, COUNT(*) as cnt FROM page_views WHERE page LIKE 'detail_%' GROUP BY page"
+    );
+    console.log('[DEBUG] page_views detail pages:', debugPageViews);
+    
+    // 调试：查看visits原始数据
+    const debugVisits = await db.allAsync(
+      "SELECT exhibit_id, COUNT(*) as cnt FROM visits GROUP BY exhibit_id"
+    );
+    console.log('[DEBUG] visits by exhibit:', debugVisits);
+    
+    // 分别查询打卡数和访问数
+    const checkinStats = await db.allAsync(`
+      SELECT exhibit_id, COUNT(DISTINCT user_identifier) as checkin_count
+      FROM visits
+      GROUP BY exhibit_id
+    `);
+    console.log('[DEBUG] checkinStats:', checkinStats);
+    
+    const viewStats = await db.allAsync(`
+      SELECT 
+        CAST(REPLACE(page, 'detail_', '') AS INTEGER) as exhibit_id,
+        COUNT(DISTINCT session_id) as view_count
+      FROM page_views 
+      WHERE page LIKE 'detail_%'
+      GROUP BY CAST(REPLACE(page, 'detail_', '') AS INTEGER)
+    `);
+    console.log('[DEBUG] viewStats:', viewStats);
+    
+    // 合并计算转化率
     let hotExhibit = null;
-    if (hotExhibitRow) {
-      const exhibitId = hotExhibitRow.page.replace('detail_', '');
-      hotExhibit = {
-        id: exhibitId,
-        name: `展点${exhibitId}`,
-        count: hotExhibitRow.cnt
-      };
+    let maxConversionRate = -1;
+    
+    for (const checkin of checkinStats) {
+      const viewStat = viewStats.find(v => v.exhibit_id === checkin.exhibit_id);
+      const viewCount = viewStat ? viewStat.view_count : 0;
+      const checkinCount = checkin.checkin_count || 0;
+      const conversionRate = viewCount > 0 ? Math.round(checkinCount * 1000 / viewCount) / 10 : 0;
+      
+      console.log(`[DEBUG] Exhibit ${checkin.exhibit_id}: checkin=${checkinCount}, views=${viewCount}, rate=${conversionRate}%`);
+      
+      // 按转化率降序，相同则按打卡数降序
+      if (conversionRate > maxConversionRate || 
+          (conversionRate === maxConversionRate && hotExhibit && checkinCount > hotExhibit.checkinCount)) {
+        maxConversionRate = conversionRate;
+        const exhibitId = String(checkin.exhibit_id);
+        hotExhibit = {
+          id: exhibitId,
+          name: exhibitNames[exhibitId] || `展点${exhibitId}`,
+          checkinCount: checkinCount,
+          viewCount: viewCount,
+          conversionRate: conversionRate
+        };
+      }
     }
+    
+    console.log('[DEBUG] hotExhibit result:', hotExhibit);
     
     return res.json({
       success: true,

@@ -61,6 +61,7 @@
     .stat-value { font-size: 2.25rem; font-weight: 700; color: var(--color-red); line-height: 1.2; }
     .stat-value--small { font-size: 1.5rem; }
     .stat-sublabel { font-size: 0.8rem; color: #999; margin-top: 4px; }
+    .stat-conversion { font-size: 0.75rem; color: var(--color-gold); margin-top: 2px; font-weight: 500; }
     .chart-section { background: var(--color-surface); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 24px; border: 1px solid var(--color-border); }
     .chart-section h3 { font-size: 1rem; color: var(--color-text); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--color-border); font-weight: 600; }
     .message-filter { display: flex; gap: 8px; margin-bottom: 20px; padding: 4px; background: #F0F0F0; border-radius: var(--radius-sm); width: fit-content; }
@@ -165,6 +166,7 @@
             <p class="stat-label">最热展点</p>
             <p class="stat-value stat-value--small" id="hotExhibit">—</p>
             <p class="stat-sublabel" id="hotExhibitCount"></p>
+            <p class="stat-conversion" id="hotExhibitConversion"></p>
           </div>
         </div>
 
@@ -483,10 +485,12 @@
           document.getElementById('todayVisits').textContent = overviewData.todayVisits || 0;
           if (overviewData.hotExhibit) {
             document.getElementById('hotExhibit').textContent = overviewData.hotExhibit.name;
-            document.getElementById('hotExhibitCount').textContent = `${overviewData.hotExhibit.count} 次访问`;
+            document.getElementById('hotExhibitCount').textContent = `${overviewData.hotExhibit.checkinCount || 0} 人打卡`;
+            document.getElementById('hotExhibitConversion').textContent = `转化率 ${overviewData.hotExhibit.conversionRate || 0}%`;
           } else {
             document.getElementById('hotExhibit').textContent = '暂无数据';
             document.getElementById('hotExhibitCount').textContent = '';
+            document.getElementById('hotExhibitConversion').textContent = '';
           }
         }
 
