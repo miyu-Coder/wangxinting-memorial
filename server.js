@@ -5,7 +5,11 @@ const crypto = require('crypto');
 const app = express();
 app.use(express.json());
 
-// 生成用户标识
+///app.use((req, res, next) => {
+  ///res.setHeader('Content-Type', 'text/html; charset=utf-8');
+ // next();
+//});
+
 app.use((req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress || '127.0.0.1';
   const ua = req.get('User-Agent') || '';
