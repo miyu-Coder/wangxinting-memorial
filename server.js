@@ -84,6 +84,21 @@ function initDatabase() {
       console.log('Table flowers ready');
     }
   });
+  db.run(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nickname TEXT NOT NULL,
+      content TEXT NOT NULL,
+      status INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Failed to create messages table:', err.message);
+    } else {
+      console.log('Table messages ready');
+    }
+  });
 }
 
 // ===== 打卡 (checkin) 接口 =====
@@ -202,6 +217,85 @@ app.get('/api/flower/:exhibitId', async (req, res) => {
     res.json({ exhibitId: Number(exhibitId), totalCount: row.count });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== 留言板 (messages) 接口 =====
+// POST /api/messages
+app.post('/api/messages', async (req, res) => {
+  const { nickname, content } = req.body || {};
+
+  // 基本存在性校验
+  if (!nickname || typeof nickname !== 'string' || !nickname.trim()) {
+    return res.status(400).json({ success: false, message: '昵称不能为空' });
+  }
+  if (!content || typeof content !== 'string' || !content.trim()) {
+    return res.status(400).json({ success: false, message: '留言内容不能为空' });
+  }
+
+  const nick = nickname.trim();
+  const cont = content.trim();
+
+  // 使用 Array.from 以正确计数 Unicode 字符
+  const nickLen = Array.from(nick).length;
+  const contLen = Array.from(cont).length;
+
+  if (nickLen > 20) {
+    return res.status(400).json({ success: false, message: '昵称不能超过20字' });
+  }
+  if (contLen > 200) {
+    return res.status(400).json({ success: false, message: '内容不能超过200字' });
+  }
+
+  try {
+    await db.runAsync(
+      "INSERT INTO messages (nickname, content, created_at) VALUES (?, ?, datetime('now'))",
+      [nick, cont]
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Message insert error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// GET /api/messages - 仅返回已审核(status=1)留言，按 id 倒序
+app.get('/api/messages', async (req, res) => {
+  try {
+    const rows = await db.allAsync(
+      'SELECT id, nickname, content, created_at FROM messages WHERE status = 1 ORDER BY id DESC'
+    );
+    return res.json({ success: true, list: rows });
+  } catch (err) {
+    console.error('Messages query error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// 管理端接口（临时无验证）
+// GET /api/admin/messages - 返回全部留言
+app.get('/api/admin/messages', async (req, res) => {
+  try {
+    const rows = await db.allAsync(
+      'SELECT id, nickname, content, status, created_at FROM messages ORDER BY id DESC'
+    );
+    return res.json({ success: true, list: rows });
+  } catch (err) {
+    console.error('Admin messages query error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// POST /api/admin/messages/:id/approve - 将 status 置为 1
+app.post('/api/admin/messages/:id/approve', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ success: false, message: '无效的 id' });
+  try {
+    await db.runAsync('UPDATE messages SET status = 1 WHERE id = ?', [id]);
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Approve message error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
 
