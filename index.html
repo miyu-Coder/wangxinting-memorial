@@ -192,5 +192,19 @@
   <script src="js/map-navigation.js" defer></script>
   <script src="js/index.js?v=8" defer></script>
   <script src="js/lazy-load.js?v=1" defer></script>
+  <script>
+    (function() {
+      var sessionId = localStorage.getItem('visitor_session_id');
+      if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        localStorage.setItem('visitor_session_id', sessionId);
+      }
+      fetch('/api/track/page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 'index', session_id: sessionId })
+      }).catch(function() {});
+    })();
+  </script>
 </body>
 </html>

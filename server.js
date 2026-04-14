@@ -103,6 +103,20 @@ function initDatabase() {
       console.log('Table messages ready');
     }
   });
+  db.run(`
+    CREATE TABLE IF NOT EXISTS page_views (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      page VARCHAR(50),
+      session_id VARCHAR(32),
+      visit_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Failed to create page_views table:', err.message);
+    } else {
+      console.log('Table page_views ready');
+    }
+  });
 }
 
 // ===== 打卡 (checkin) 接口 =====
@@ -162,6 +176,86 @@ app.get('/api/checkin/:exhibitId', async (req, res) => {
     return res.json({ success: true, hasCheckedIn: !!row, visited_at: row ? row.visited_at : null });
   } catch (err) {
     console.error('Checkin status error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// ===== 页面访问统计接口 =====
+// POST /api/track/page - 记录页面访问
+app.post('/api/track/page', async (req, res) => {
+  const { page, session_id } = req.body;
+  
+  const validPages = ['index', 'detail_1', 'detail_2', 'detail_3', 'detail_4', 'flower-wall'];
+  if (!page || !validPages.includes(page)) {
+    return res.status(400).json({ success: false, message: '无效的页面标识' });
+  }
+  
+  if (!session_id || typeof session_id !== 'string') {
+    return res.status(400).json({ success: false, message: '缺少 session_id' });
+  }
+
+  try {
+    const recentVisit = await db.getAsync(
+      `SELECT id FROM page_views 
+       WHERE page = ? AND session_id = ? 
+       AND visit_time > datetime('now', '-10 minutes')
+       ORDER BY visit_time DESC LIMIT 1`,
+      [page, session_id]
+    );
+    
+    if (recentVisit) {
+      return res.json({ success: true, message: '10分钟内已记录，跳过' });
+    }
+    
+    await db.runAsync(
+      "INSERT INTO page_views (page, session_id, visit_time) VALUES (?, ?, datetime('now'))",
+      [page, session_id]
+    );
+    
+    return res.json({ success: true, message: '访问已记录' });
+  } catch (err) {
+    console.error('Track page error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// GET /api/stats/overview - 获取访问统计概览
+app.get('/api/stats/overview', async (req, res) => {
+  try {
+    const totalRow = await db.getAsync('SELECT COUNT(*) AS cnt FROM page_views');
+    const totalVisits = totalRow ? totalRow.cnt : 0;
+    
+    const todayRow = await db.getAsync(
+      "SELECT COUNT(*) AS cnt FROM page_views WHERE DATE(visit_time) = DATE('now')"
+    );
+    const todayVisits = todayRow ? todayRow.cnt : 0;
+    
+    const hotExhibitRow = await db.getAsync(
+      `SELECT page, COUNT(*) AS cnt FROM page_views 
+       WHERE page LIKE 'detail_%' 
+       GROUP BY page 
+       ORDER BY cnt DESC 
+       LIMIT 1`
+    );
+    
+    let hotExhibit = null;
+    if (hotExhibitRow) {
+      const exhibitId = hotExhibitRow.page.replace('detail_', '');
+      hotExhibit = {
+        id: exhibitId,
+        name: `展点${exhibitId}`,
+        count: hotExhibitRow.cnt
+      };
+    }
+    
+    return res.json({
+      success: true,
+      totalVisits,
+      todayVisits,
+      hotExhibit
+    });
+  } catch (err) {
+    console.error('Stats overview error:', err);
     return res.status(500).json({ success: false, message: '服务器错误' });
   }
 });

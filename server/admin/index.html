@@ -52,10 +52,15 @@
     .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
     .stat-card--warning { border: 2px solid var(--color-orange); background: linear-gradient(135deg, #FFF8F0 0%, var(--color-surface) 100%); }
     .stat-card--warning .stat-value { color: var(--color-orange); }
+    .stat-card--gold { border: 2px solid var(--color-gold); background: linear-gradient(135deg, #FFFDF5 0%, var(--color-surface) 100%); }
+    .stat-card--gold .stat-value { color: var(--color-gold); }
+    .stat-card--gold .stat-icon { background: linear-gradient(135deg, rgba(212, 168, 67, 0.2) 0%, rgba(212, 168, 67, 0.05) 100%); }
     .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px; background: linear-gradient(135deg, rgba(196, 30, 58, 0.1) 0%, rgba(212, 168, 67, 0.1) 100%); }
     .stat-card--warning .stat-icon { background: linear-gradient(135deg, rgba(255, 152, 0, 0.15) 0%, rgba(255, 152, 0, 0.05) 100%); }
     .stat-label { font-size: 0.9rem; color: var(--color-text-secondary); font-weight: 500; margin-bottom: 8px; }
     .stat-value { font-size: 2.25rem; font-weight: 700; color: var(--color-red); line-height: 1.2; }
+    .stat-value--small { font-size: 1.5rem; }
+    .stat-sublabel { font-size: 0.8rem; color: #999; margin-top: 4px; }
     .chart-section { background: var(--color-surface); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 24px; border: 1px solid var(--color-border); }
     .chart-section h3 { font-size: 1rem; color: var(--color-text); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--color-border); font-weight: 600; }
     .message-filter { display: flex; gap: 8px; margin-bottom: 20px; padding: 4px; background: #F0F0F0; border-radius: var(--radius-sm); width: fit-content; }
@@ -142,6 +147,25 @@
             <div class="stat-icon">⏳</div>
             <p class="stat-label">待审核数量</p>
             <p class="stat-value" id="pendingMessages">—</p>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="stat-card">
+            <div class="stat-icon">👀</div>
+            <p class="stat-label">总访问量</p>
+            <p class="stat-value" id="totalVisits">—</p>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <p class="stat-label">今日访问</p>
+            <p class="stat-value" id="todayVisits">—</p>
+          </div>
+          <div class="stat-card stat-card--gold">
+            <div class="stat-icon">🔥</div>
+            <p class="stat-label">最热展点</p>
+            <p class="stat-value stat-value--small" id="hotExhibit">—</p>
+            <p class="stat-sublabel" id="hotExhibitCount"></p>
           </div>
         </div>
 
@@ -440,6 +464,20 @@
         const pendingMsgs = allMessages.filter((m) => m.status === 0);
         document.getElementById('totalMessages').textContent = allMessages.length;
         document.getElementById('pendingMessages').textContent = pendingMsgs.length;
+
+        const overviewRes = await fetch('/api/stats/overview');
+        const overviewData = await overviewRes.json();
+        if (overviewData.success) {
+          document.getElementById('totalVisits').textContent = overviewData.totalVisits || 0;
+          document.getElementById('todayVisits').textContent = overviewData.todayVisits || 0;
+          if (overviewData.hotExhibit) {
+            document.getElementById('hotExhibit').textContent = overviewData.hotExhibit.name;
+            document.getElementById('hotExhibitCount').textContent = `${overviewData.hotExhibit.count} 次访问`;
+          } else {
+            document.getElementById('hotExhibit').textContent = '暂无数据';
+            document.getElementById('hotExhibitCount').textContent = '';
+          }
+        }
 
         initCharts();
         renderFlowerChart(flowerData);
