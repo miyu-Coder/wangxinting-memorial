@@ -1,12 +1,9 @@
 /**
- * 献花墙：localStorage key wx_flowers
- * 总献花数 = baseCount + totalUserFlowers（每展点每位用户仅计 1 次）
+ * 献花：前端调用后端 API /api/flower
+ * 说明：移除 localStorage 实现，改为基于后端接口获取与上报献花数据。
  */
 (function (global) {
   "use strict";
-
-  var STORAGE_KEY = "wx_flowers";
-  var DEFAULT_BASE = 1280;
 
   var EXHIBIT_META = [
     { id: "1", name: "陈列馆", full: "将军生平事迹陈列馆" },
@@ -16,154 +13,130 @@
   ];
 
   function normExhibitId(v) {
+    if (v == null) return null;
     var n = parseInt(String(v).trim(), 10);
     if (!Number.isFinite(n) || n < 1 || n > 4) return null;
     return String(n);
   }
 
-  function defaultState() {
-    return {
-      baseCount: DEFAULT_BASE,
-      userFlowers: { "1": false, "2": false, "3": false, "4": false },
-      totalUserFlowers: 0,
-    };
-  }
-
-  function safeParse(raw) {
-    if (raw == null || raw === "") return null;
+  function getQueryParam(name) {
     try {
-      var o = JSON.parse(raw);
-      return typeof o === "object" && o ? o : null;
+      var u = new URL(window.location.href);
+      var v = u.searchParams.get(name);
+      if (v != null && String(v).trim() !== "") return String(v).trim();
     } catch (e) {
-      return null;
+      /* fallback */
     }
+    var m = new RegExp('[?&#]' + name + '=(\\d+)').exec(window.location.href);
+    if (m) return m[1];
+    return null;
   }
 
-  function normalizeState(raw) {
-    var d = defaultState();
-    if (!raw || typeof raw !== "object") return d;
-    var bc = parseInt(String(raw.baseCount), 10);
-    d.baseCount = Number.isFinite(bc) && bc >= 0 ? bc : DEFAULT_BASE;
-    var uf = raw.userFlowers;
-    if (uf && typeof uf === "object") {
-      for (var i = 0; i < EXHIBIT_META.length; i++) {
-        var k = EXHIBIT_META[i].id;
-        d.userFlowers[k] = !!uf[k];
+  function fetchJson(url, opts) {
+    return fetch(url, Object.assign({ cache: "no-store" }, opts || {})).then(function (res) {
+      if (!res) return Promise.reject(new Error("no response"));
+      if (res.headers && res.headers.get && res.headers.get("content-type") && res.headers.get("content-type").indexOf("application/json") !== -1) {
+        return res.json().then(function (body) { return { res: res, body: body }; });
       }
-    }
-    var counted = 0;
-    for (var j = 0; j < EXHIBIT_META.length; j++) {
-      if (d.userFlowers[EXHIBIT_META[j].id]) counted++;
-    }
-    d.totalUserFlowers = counted;
-    return d;
-  }
-
-  function readState() {
-    try {
-      return normalizeState(safeParse(localStorage.getItem(STORAGE_KEY)));
-    } catch (e) {
-      return defaultState();
-    }
-  }
-
-  function writeState(state) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e2) {}
-  }
-
-  /** 调整展示用历史基数（写入 localStorage） */
-  function setBaseCount(n) {
-    var bc = parseInt(String(n), 10);
-    if (!Number.isFinite(bc) || bc < 0) return false;
-    var state = readState();
-    state.baseCount = bc;
-    writeState(state);
-    return true;
-  }
-
-  function getBaseCount() {
-    return readState().baseCount;
-  }
-
-  function getDisplayTotal() {
-    var s = readState();
-    return s.baseCount + s.totalUserFlowers;
-  }
-
-  function hasFlowered(exhibitId) {
-    var id = normExhibitId(exhibitId);
-    if (!id) return false;
-    return !!readState().userFlowers[id];
+      return { res: res, body: null };
+    });
   }
 
   /**
-   * @returns {{ ok: boolean, already?: boolean, displayTotal?: number }}
+   * 获取指定展点的献花总数，返回 Promise<number|null>
+   */
+  function getExhibitTotal(exhibitId) {
+    var id = normExhibitId(exhibitId);
+    if (!id) return Promise.resolve(null);
+    return fetchJson('/api/flower/' + encodeURIComponent(id)).then(function (r) {
+      if (r && r.res && r.res.ok && r.body && typeof r.body.totalCount === 'number') return r.body.totalCount;
+      return null;
+    }).catch(function () { return null; });
+  }
+
+  function getTotalsForAllExhibits() {
+    var promises = EXHIBIT_META.map(function (m) { return getExhibitTotal(m.id); });
+    return Promise.all(promises).then(function (arr) {
+      var sum = 0;
+      for (var i = 0; i < arr.length; i++) {
+        var v = arr[i];
+        if (typeof v === 'number' && Number.isFinite(v)) sum += v;
+      }
+      return sum;
+    });
+  }
+
+  /**
+   * 向后端发起献花请求，返回 Promise<{ ok:boolean, already?:boolean, displayTotal?:number }>
    */
   function offerFlower(exhibitId) {
     var id = normExhibitId(exhibitId);
-    if (!id) return { ok: false };
-    var state = readState();
-    if (state.userFlowers[id]) {
-      return { ok: false, already: true, displayTotal: state.baseCount + state.totalUserFlowers };
-    }
-    state.userFlowers[id] = true;
-    var counted = 0;
-    for (var i = 0; i < EXHIBIT_META.length; i++) {
-      if (state.userFlowers[EXHIBIT_META[i].id]) counted++;
-    }
-    state.totalUserFlowers = counted;
-    writeState(state);
-    return {
-      ok: true,
-      displayTotal: state.baseCount + state.totalUserFlowers,
-    };
+    if (!id) return Promise.resolve({ ok: false });
+    return fetch('/api/flower', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ exhibitId: Number(id) })
+    }).then(function (res) {
+      if (res.ok) {
+        // 请求成功后再拉取最新总数
+        return getExhibitTotal(id).then(function (total) {
+          return { ok: true, displayTotal: total };
+        });
+      }
+      if (res.status === 409) {
+        return { ok: false, already: true };
+      }
+      return { ok: false };
+    }).catch(function () {
+      return { ok: false };
+    });
   }
 
   function getExhibitList() {
-    var s = readState();
     return EXHIBIT_META.map(function (m) {
-      return {
-        id: m.id,
-        name: m.name,
-        full: m.full,
-        flowered: !!s.userFlowers[m.id],
-      };
+      return { id: m.id, name: m.name, full: m.full };
     });
   }
 
-  function formatHomeLine() {
-    var n = getDisplayTotal();
-    return "\uD83C\uDF38 " + n + "+ \u4EBA\u5DF2\u732E\u82B1";
+  /**
+   * 查询当前用户是否已对该展点献花，返回 Promise<boolean>
+   */
+  function getUserFlowered(exhibitId) {
+    var id = normExhibitId(exhibitId);
+    if (!id) return Promise.resolve(false);
+    return fetchJson('/api/flower/user/' + encodeURIComponent(id)).then(function (r) {
+      if (r && r.res && r.res.ok && r.body && typeof r.body.hasFlowered !== 'undefined') return !!r.body.hasFlowered;
+      return false;
+    }).catch(function () { return false; });
+  }
+
+  function formatHomeLine(total) {
+    if (total == null || !Number.isFinite(total)) return '\uD83C\uDF38 - 人已献花';
+    return '\uD83C\uDF38 ' + String(total) + '+ \u4EBA\u5DF2\u732E\u82B1';
   }
 
   function showThankDialog() {
-    var mask = document.createElement("div");
-    mask.className = "flower-tribute-modal-mask";
-    mask.setAttribute("role", "dialog");
-    mask.setAttribute("aria-modal", "true");
-    mask.setAttribute("aria-label", "致敬提示");
+    var mask = document.createElement('div');
+    mask.className = 'flower-tribute-modal-mask';
+    mask.setAttribute('role', 'dialog');
+    mask.setAttribute('aria-modal', 'true');
+    mask.setAttribute('aria-label', '致敬提示');
 
-    var panel = document.createElement("div");
-    panel.className = "flower-tribute-modal-panel";
+    var panel = document.createElement('div');
+    panel.className = 'flower-tribute-modal-panel';
 
-    var h = document.createElement("p");
-    h.className = "flower-tribute-modal-title";
-    h.textContent = "感谢您的致敬！";
+    var h = document.createElement('p');
+    h.className = 'flower-tribute-modal-title';
+    h.textContent = '感谢您的致敬！';
 
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn btn-primary flower-tribute-modal-btn";
-    btn.textContent = "好的";
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-primary flower-tribute-modal-btn';
+    btn.textContent = '好的';
 
-    function close() {
-      mask.remove();
-    }
-    btn.addEventListener("click", close);
-    mask.addEventListener("click", function (ev) {
-      if (ev.target === mask) close();
-    });
+    function close() { mask.remove(); }
+    btn.addEventListener('click', close);
+    mask.addEventListener('click', function (ev) { if (ev.target === mask) close(); });
 
     panel.appendChild(h);
     panel.appendChild(btn);
@@ -171,117 +144,150 @@
     document.body.appendChild(mask);
   }
 
-  /**
-   * 获取第一个未献花的展点ID
-   * @returns {string|null} 未献花展点ID，如果全部献花则返回null
-   */
-  function getFirstUnfloweredExhibit() {
-    var s = readState();
-    for (var i = 0; i < EXHIBIT_META.length; i++) {
-      var id = EXHIBIT_META[i].id;
-      if (!s.userFlowers[id]) {
-        return id;
-      }
-    }
-    return null;
-  }
+  function showAlreadyDialog() {
+    var mask = document.createElement('div');
+    mask.className = 'flower-tribute-modal-mask';
+    mask.setAttribute('role', 'dialog');
+    mask.setAttribute('aria-modal', 'true');
+    mask.setAttribute('aria-label', '致敬提示');
 
-  /**
-   * 检查是否所有展点都已献花
-   * @returns {boolean}
-   */
-  function isAllFlowered() {
-    return getFirstUnfloweredExhibit() === null;
+    var panel = document.createElement('div');
+    panel.className = 'flower-tribute-modal-panel';
+
+    var h = document.createElement('p');
+    h.className = 'flower-tribute-modal-title';
+    h.textContent = '您已经献过花了';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-primary flower-tribute-modal-btn';
+    btn.textContent = '知道了';
+
+    function close() { mask.remove(); }
+    btn.addEventListener('click', close);
+    mask.addEventListener('click', function (ev) { if (ev.target === mask) close(); });
+
+    panel.appendChild(h);
+    panel.appendChild(btn);
+    mask.appendChild(panel);
+    document.body.appendChild(mask);
   }
 
   function mountFlowerWallPage() {
-    var totalEl = document.getElementById("flower-wall-total");
-    var listEl = document.getElementById("flower-wall-exhibit-list");
-    var offerBtn = document.getElementById("btn-offer-flower");
-
+    var totalEl = document.getElementById('flower-wall-total');
+    var listEl = document.getElementById('flower-wall-exhibit-list');
+    var offerBtn = document.getElementById('btn-offer-flower');
+    // 更新累计献花（所有展点之和）
     if (totalEl) {
-      totalEl.textContent = String(getDisplayTotal());
+      totalEl.textContent = '…';
+      getTotalsForAllExhibits().then(function (sum) {
+        totalEl.textContent = (sum == null ? '—' : String(sum));
+      }).catch(function () { totalEl.textContent = '—'; });
     }
 
+    // 渲染每个展点并异步填充各自的献花次数
     if (listEl) {
-      listEl.innerHTML = "";
+      listEl.innerHTML = '';
       var rows = getExhibitList();
       for (var i = 0; i < rows.length; i++) {
-        var r = rows[i];
-        var li = document.createElement("li");
-        li.className = "flower-wall-exhibit-item" + (r.flowered ? " is-done" : "");
-        var name = document.createElement("span");
-        name.className = "flower-wall-exhibit-item__name";
-        name.textContent = "展点 " + r.id + " · " + r.full;
-        var st = document.createElement("span");
-        st.className = "flower-wall-exhibit-item__status";
-        st.textContent = r.flowered ? "\u2705 \u5DF2\u732E\u82B1" : "\u672A\u732E\u82B1";
-        li.appendChild(name);
-        li.appendChild(st);
-        listEl.appendChild(li);
+        (function (r) {
+          var li = document.createElement('li');
+          li.className = 'flower-wall-exhibit-item';
+          var name = document.createElement('span');
+          name.className = 'flower-wall-exhibit-item__name';
+          name.textContent = '展点 ' + r.id + ' · ' + r.full;
+          var st = document.createElement('span');
+          st.className = 'flower-wall-exhibit-item__status';
+          st.textContent = '\u52A0\u8F7D\u4E2D...';
+          li.appendChild(name);
+          li.appendChild(st);
+          listEl.appendChild(li);
+
+          // 异步获取该展点的总数并更新状态
+          getExhibitTotal(r.id).then(function (n) {
+            if (n == null) {
+              st.textContent = '\u2014';
+            } else if (Number(n) > 0) {
+              st.textContent = '已献花 ' + String(n) + ' 人';
+              li.classList.add('is-done');
+            } else {
+              st.textContent = '未献花';
+            }
+          }).catch(function () {
+            st.textContent = '\u2014';
+          });
+        })(rows[i]);
       }
     }
 
-    // 更新"我也要献花"按钮状态
     if (offerBtn) {
-      var firstUnflowered = getFirstUnfloweredExhibit();
-      if (firstUnflowered) {
-        // 有未献花的展点，跳转到第一个未献花的展点
-        offerBtn.href = "detail.html?id=" + firstUnflowered;
-        offerBtn.textContent = "\uD83C\uDF38 我也要献花";
-        offerBtn.classList.remove("btn-disabled");
-      } else {
-        // 所有展点都已献花，按钮置灰
-        offerBtn.href = "javascript:void(0);";
-        offerBtn.textContent = "\u2705 已完成献花";
-        offerBtn.classList.add("btn-disabled");
-        offerBtn.style.background = "#cccccc";
-        offerBtn.style.color = "#666666";
-        offerBtn.style.cursor = "not-allowed";
-        offerBtn.style.boxShadow = "none";
-        offerBtn.addEventListener("click", function (e) {
-          e.preventDefault();
-          showThankDialog();
+      // 拦截点击，尝试调用后端献花；如果 URL 中没有 id，则保留原有跳转行为
+      offerBtn.addEventListener('click', function (ev) {
+        var id = getQueryParam('id');
+        if (!id) return; // 保持默认跳转到 detail.html
+        ev.preventDefault();
+        offerBtn.classList.add('btn-disabled');
+        offerBtn.setAttribute('aria-disabled', 'true');
+        offerBtn.style.pointerEvents = 'none';
+
+        offerFlower(id).then(function (res) {
+          if (res.ok) {
+            if (totalEl && typeof res.displayTotal === 'number') {
+              totalEl.textContent = String(res.displayTotal);
+            }
+            showThankDialog();
+          } else if (res.already) {
+            if (typeof window.wxFlowers.showAlreadyDialog === 'function') window.wxFlowers.showAlreadyDialog();
+          } else {
+            if (typeof window.wxFlowers.showAlreadyDialog === 'function') {
+              // reuse as generic failure dialog if needed
+              alert('献花失败，请稍后重试');
+            } else {
+              alert('献花失败，请稍后重试');
+            }
+          }
+        }).finally(function () {
+          offerBtn.classList.remove('btn-disabled');
+          offerBtn.removeAttribute('aria-disabled');
+          offerBtn.style.pointerEvents = '';
         });
-      }
+      });
     }
   }
 
   function updateHomeCountEl() {
-    var el = document.getElementById("home-flower-count");
-    if (el) {
-      el.textContent = formatHomeLine();
-    }
+    var el = document.getElementById('home-flower-count');
+    if (!el) return;
+    // 汇总所有展点的总数并更新文案
+    getTotalsForAllExhibits().then(function (sum) {
+      el.textContent = formatHomeLine(sum);
+    }).catch(function () {
+      el.textContent = formatHomeLine(null);
+    });
   }
 
   global.wxFlowers = {
-    STORAGE_KEY: STORAGE_KEY,
-    DEFAULT_BASE: DEFAULT_BASE,
-    readState: readState,
-    getDisplayTotal: getDisplayTotal,
-    hasFlowered: hasFlowered,
+    normExhibitId: normExhibitId,
+    getExhibitTotal: getExhibitTotal,
     offerFlower: offerFlower,
     getExhibitList: getExhibitList,
-    formatHomeLine: formatHomeLine,
-    showThankDialog: showThankDialog,
+    getUserFlowered: getUserFlowered,
     mountFlowerWallPage: mountFlowerWallPage,
     updateHomeCountEl: updateHomeCountEl,
-    normExhibitId: normExhibitId,
-    setBaseCount: setBaseCount,
-    getBaseCount: getBaseCount,
-    getFirstUnfloweredExhibit: getFirstUnfloweredExhibit,
-    isAllFlowered: isAllFlowered,
+    showThankDialog: showThankDialog,
+    showAlreadyDialog: showAlreadyDialog,
+    formatHomeLine: formatHomeLine
   };
 
   function autoMountWall() {
-    if (document.getElementById("flower-wall-total")) {
+    if (document.getElementById('flower-wall-total')) {
       mountFlowerWallPage();
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", autoMountWall);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoMountWall);
   } else {
     autoMountWall();
   }
-})(typeof window !== "undefined" ? window : this);
+})(typeof window !== 'undefined' ? window : this);

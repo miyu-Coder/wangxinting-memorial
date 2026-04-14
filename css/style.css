@@ -3039,6 +3039,16 @@ body {
   pointer-events: none;
 }
 
+/* 视觉上为已献花（灰色），但仍允许点击以弹出提示。
+   用于在详情页表示当前用户已献花但仍需响应点击提示。 */
+.flower-tribute-btn--locked {
+  background: #cccccc;
+  color: #555555;
+  box-shadow: none;
+  cursor: default;
+  pointer-events: auto;
+}
+
 .flower-tribute-btn--pop {
   animation: flowerTributeBtnPop 0.55s cubic-bezier(0.34, 1.4, 0.64, 1);
 }

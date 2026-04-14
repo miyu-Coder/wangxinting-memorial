@@ -220,6 +220,27 @@ app.get('/api/flower/:exhibitId', async (req, res) => {
   }
 });
 
+// API 路由：查询当前用户是否已在某展点献花
+app.get('/api/flower/user/:exhibitId', async (req, res) => {
+  const { exhibitId } = req.params;
+  const userIdentifier = req.userIdentifier;
+
+  if (![1, 2, 3, 4].includes(Number(exhibitId))) {
+    return res.status(400).json({ error: '展点 ID 必须为 1-4' });
+  }
+
+  try {
+    const row = await db.getAsync(
+      'SELECT 1 FROM flowers WHERE user_identifier = ? AND exhibit_id = ? LIMIT 1',
+      [userIdentifier, exhibitId]
+    );
+    return res.json({ exhibitId: Number(exhibitId), hasFlowered: !!row });
+  } catch (err) {
+    console.error('User flowered check error:', err);
+    return res.status(500).json({ error: '服务器错误' });
+  }
+});
+
 // ===== 留言板 (messages) 接口 =====
 // POST /api/messages
 app.post('/api/messages', async (req, res) => {

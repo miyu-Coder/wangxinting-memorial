@@ -878,59 +878,121 @@
       block.hidden = true;
       return;
     }
-    var done = window.wxFlowers.hasFlowered(exhibitId);
-    var total = window.wxFlowers.getDisplayTotal();
-
+    // 异步从后端获取当前展点总数，点击按钮时调用 POST /api/flower
     root.innerHTML = "";
-    var card = document.createElement("div");
-    card.className = "flower-tribute-card";
+    var card = document.createElement('flower-tribute-card');
+    card = document.createElement('div');
+    card.className = 'flower-tribute-card';
 
-    var iconWrap = document.createElement("div");
-    iconWrap.className = "flower-tribute-card__icon";
-    var iconSpan = document.createElement("span");
-    iconSpan.textContent = "\uD83C\uDF38";
-    iconSpan.setAttribute("aria-hidden", "true");
+    var iconWrap = document.createElement('div');
+    iconWrap.className = 'flower-tribute-card__icon';
+    var iconSpan = document.createElement('span');
+    iconSpan.textContent = '\uD83C\uDF38';
+    iconSpan.setAttribute('aria-hidden', 'true');
     iconWrap.appendChild(iconSpan);
 
-    var tag = document.createElement("p");
-    tag.className = "flower-tribute-card__tagline";
-    tag.textContent = "\u5411\u738B\u65B0\u4EAD\u5C06\u519B\u81F4\u656C\uFF01";
+    var tag = document.createElement('p');
+    tag.className = 'flower-tribute-card__tagline';
+    tag.textContent = '\u5411\u738B\u65B0\u4EAD\u5C06\u519B\u81F4\u656C\uFF01';
 
-    var countP = document.createElement("p");
-    countP.className = "flower-tribute-card__count";
-    countP.innerHTML =
-      "\u5DF2\u6709 <strong>" +
-      total +
-      "</strong> \u4EBA\u732E\u82B1";
+    var countP = document.createElement('p');
+    countP.className = 'flower-tribute-card__count';
+    countP.innerHTML = '\u5DF2\u6709 <strong>—</strong> \u4EBA\u732E\u82B1';
 
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "flower-tribute-btn" + (done ? " flower-tribute-btn--done" : "");
-    btn.disabled = done;
-    btn.textContent = done
-      ? "\u2705 \u5DF2\u732E\u82B1"
-      : "\uD83C\uDF38 \u732E\u82B1\u81F4\u656C";
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'flower-tribute-btn';
+    btn.disabled = false;
+    btn.textContent = '\uD83C\uDF38 \u732E\u82B1\u81F4\u656C';
 
-    if (!done) {
-      btn.addEventListener("click", function () {
-        if (btn.disabled) return;
-        var res = window.wxFlowers.offerFlower(exhibitId);
-        if (res.ok) {
-          btn.classList.add("flower-tribute-btn--pop");
-          spawnFlowerPetals(card);
-          window.setTimeout(function () {
-            btn.classList.remove("flower-tribute-btn--pop");
-          }, 600);
-          if (typeof window.wxFlowers.updateHomeCountEl === "function") {
-            window.wxFlowers.updateHomeCountEl();
-          }
-          window.wxFlowers.showThankDialog();
-          window.setTimeout(function () {
-            setupFlowerTribute(loc);
-          }, 850);
+    // 异步加载当前展点总数并更新文案
+    if (window.wxFlowers && typeof window.wxFlowers.getExhibitTotal === 'function') {
+      window.wxFlowers.getExhibitTotal(exhibitId).then(function (n) {
+        if (n == null) {
+          countP.innerHTML = '\u5DF2\u6709 <strong>—</strong> \u4EBA\u732E\u82B1';
+        } else {
+          countP.innerHTML = '\u5DF2\u6709 <strong>' + n + '</strong> \u4EBA\u732E\u82B1';
+        }
+      }).catch(function () {
+        countP.innerHTML = '\u5DF2\u6709 <strong>—</strong> \u4EBA\u732E\u82B1';
+      });
+    }
+
+    // 根据当前用户是否已献花调整按钮初始状态并绑定行为
+    function setButtonToAlready() {
+      btn.classList.add('flower-tribute-btn--locked');
+      btn.textContent = '\u2705 已献花';
+      // 点击仍然可触发提示，但视觉为已完成
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (window.wxFlowers && typeof window.wxFlowers.showAlreadyDialog === 'function') {
+          window.wxFlowers.showAlreadyDialog();
         }
       });
     }
+
+    function setButtonToOffer() {
+      btn.classList.remove('flower-tribute-btn--locked');
+      btn.disabled = false;
+      btn.textContent = '\uD83C\uDF38 \u732E\u82B1\u81F4\u656C';
+      btn.addEventListener('click', function () {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        if (!window.wxFlowers || typeof window.wxFlowers.offerFlower !== 'function') {
+          if (typeof window.wxFlowers.showAlreadyDialog === 'function') window.wxFlowers.showAlreadyDialog();
+          btn.disabled = false;
+          return;
+        }
+        window.wxFlowers.offerFlower(exhibitId).then(function (res) {
+          if (res.ok) {
+            btn.classList.add('flower-tribute-btn--pop');
+            spawnFlowerPetals(card);
+            window.setTimeout(function () { btn.classList.remove('flower-tribute-btn--pop'); }, 600);
+            if (typeof res.displayTotal === 'number') {
+              countP.innerHTML = '\u5DF2\u6709 <strong>' + res.displayTotal + '</strong> \u4EBA\u732E\u82B1';
+            }
+            if (typeof window.wxFlowers.updateHomeCountEl === 'function') {
+              window.wxFlowers.updateHomeCountEl();
+            }
+            if (typeof window.wxFlowers.showThankDialog === 'function') {
+              window.wxFlowers.showThankDialog();
+            }
+            // 切换为已献花状态
+            setButtonToAlready();
+          } else if (res.already) {
+            if (window.wxFlowers && typeof window.wxFlowers.showAlreadyDialog === 'function') window.wxFlowers.showAlreadyDialog();
+            setTimeout(function () { setupFlowerTribute(loc); }, 300);
+          } else {
+            alert('献花失败，请稍后重试');
+            btn.disabled = false;
+          }
+        }).catch(function () {
+          alert('献花失败，请稍后重试');
+          btn.disabled = false;
+        });
+      });
+    }
+
+    // 并行加载总数与当前用户是否已献花
+    var pTotal = (window.wxFlowers && typeof window.wxFlowers.getExhibitTotal === 'function') ? window.wxFlowers.getExhibitTotal(exhibitId) : Promise.resolve(null);
+    var pUser = (window.wxFlowers && typeof window.wxFlowers.getUserFlowered === 'function') ? window.wxFlowers.getUserFlowered(exhibitId) : Promise.resolve(false);
+    Promise.all([pTotal, pUser]).then(function (results) {
+      var n = results[0];
+      var has = results[1];
+      if (n == null) {
+        countP.innerHTML = '\u5DF2\u6709 <strong>—</strong> \u4EBA\u732E\u82B1';
+      } else {
+        countP.innerHTML = '\u5DF2\u6709 <strong>' + n + '</strong> \u4EBA\u732E\u82B1';
+      }
+      if (has) {
+        setButtonToAlready();
+      } else {
+        setButtonToOffer();
+      }
+    }).catch(function () {
+      countP.innerHTML = '\u5DF2\u6709 <strong>—</strong> \u4EBA\u732E\u82B1';
+      setButtonToOffer();
+    });
 
     card.appendChild(iconWrap);
     card.appendChild(tag);
