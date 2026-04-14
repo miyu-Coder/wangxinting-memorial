@@ -152,10 +152,10 @@ app.get('/api/checkin/:exhibitId', async (req, res) => {
 
   try {
     const row = await db.getAsync(
-      'SELECT 1 FROM visits WHERE user_identifier = ? AND exhibit_id = ? LIMIT 1',
+      'SELECT visited_at FROM visits WHERE user_identifier = ? AND exhibit_id = ? LIMIT 1',
       [userIdentifier, exhibitId]
     );
-    return res.json({ success: true, hasCheckedIn: !!row });
+    return res.json({ success: true, hasCheckedIn: !!row, visited_at: row ? row.visited_at : null });
   } catch (err) {
     console.error('Checkin status error:', err);
     return res.status(500).json({ success: false, message: '服务器错误' });

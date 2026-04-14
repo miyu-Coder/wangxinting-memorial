@@ -636,121 +636,176 @@
    * 打卡功能：设置打卡区域
    */
   function setupCheckin(loc) {
-    var container = document.getElementById("checkin-container");
-    if (!container || !window.wxCheckin) return;
+    var container = document.getElementById('checkin-container');
+    if (!container) return;
 
     var exhibitId = normId(loc.id);
-    if (!exhibitId) return;
+    if (!exhibitId) {
+      container.hidden = true;
+      return;
+    }
 
-    var isChecked = window.wxCheckin.isChecked(exhibitId);
-    var checkTime = window.wxCheckin.getCheckTime(exhibitId);
-    var totalChecked = window.wxCheckin.getTotalChecked();
-    var isCertificateUnlocked = window.wxCheckin.isCertificateUnlocked();
+    // 初始骨架，稍后根据后端返回的状态更新按钮与进度
+    container.innerHTML =
+      '<div class="checkin-header">' +
+      '  <h3 class="checkin-title">📍 参观打卡</h3>' +
+      '</div>' +
+      '<div class="checkin-info">' +
+      '  <p class="checkin-message">在这里留下您的足迹，集齐四个展点解锁纪念证书！</p>' +
+      '</div>' +
+      '<div class="checkin-progress-inline">' +
+      '  <div class="checkin-progress-wrapper">' +
+      '    <div class="checkin-progress-bar">' +
+      '      <div class="checkin-progress-fill" style="width: 0%"></div>' +
+      '    </div>' +
+      '    <span class="checkin-progress-text">当前进度：—/4</span>' +
+      '  </div>' +
+      '</div>' +
+      '<button type="button" class="checkin-btn" id="btn-checkin">' +
+      '  <span class="checkin-btn-icon">🏆</span> 打卡留念' +
+      '</button>';
 
-    if (isChecked) {
-      // 已打卡状态
-      container.innerHTML =
-        '<div class="checkin-header">' +
-        '  <h3 class="checkin-title checkin-title--checked">✅ 已打卡留念</h3>' +
-        '</div>' +
-        '<div class="checkin-info">' +
-        '  <p class="checkin-message">🎉 感谢您的参观！</p>' +
-        '  <p class="checkin-time">' + (checkTime ? '打卡时间：' + window.wxCheckin.formatTime(checkTime) : '') + '</p>' +
-        '</div>' +
-        '<div class="checkin-progress-inline">' +
-        '  <div class="checkin-progress-wrapper">' +
-        '    <div class="checkin-progress-bar">' +
-        '      <div class="checkin-progress-fill" style="width: ' + (totalChecked / 4 * 100) + '%"></div>' +
-        '    </div>' +
-        '    <span class="checkin-progress-text">打卡进度：' + totalChecked + '/4</span>' +
-        '  </div>';
+    // 同时触发：针对当前展点的后端查询（满足要求 1），以及刷新全局 wxCheckin 缓存
+    var pUser = fetch('/api/checkin/' + encodeURIComponent(String(exhibitId)), { cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) return { hasCheckedIn: false, visited_at: null };
+        return res.json().catch(function () { return { hasCheckedIn: false, visited_at: null }; });
+      }).catch(function () { return { hasCheckedIn: false, visited_at: null }; });
 
-      // 如果集齐了四个展点，添加查看证书按钮
-      if (isCertificateUnlocked) {
-        container.innerHTML +=
-          '  <a class="btn btn-primary btn-sm checkin-certificate-btn" href="certificate.html">' +
-          '    查看我的纪念证书 ❯' +
-          '  </a>' +
-          '</div>';
-      } else {
-        container.innerHTML += '</div>';
+    var pInit = (window.wxCheckin && typeof window.wxCheckin.init === 'function') ? window.wxCheckin.init() : Promise.resolve();
+
+    Promise.all([pUser, pInit]).then(function (results) {
+      var userRes = results[0] || {};
+      var has = !!userRes.hasCheckedIn;
+      var visitedAt = userRes.visited_at || null;
+
+      var totalChecked = 0;
+      var isCertificateUnlocked = false;
+      if (window.wxCheckin && typeof window.wxCheckin.getTotalChecked === 'function') {
+        totalChecked = window.wxCheckin.getTotalChecked();
+        isCertificateUnlocked = !!window.wxCheckin.isCertificateUnlocked();
       }
-    } else {
-      // 未打卡状态
-      container.innerHTML =
-        '<div class="checkin-header">' +
-        '  <h3 class="checkin-title">📍 参观打卡</h3>' +
-        '</div>' +
-        '<div class="checkin-info">' +
-        '  <p class="checkin-message">在这里留下您的足迹，集齐四个展点解锁纪念证书！</p>' +
-        '</div>' +
-        '<div class="checkin-progress-inline">' +
-        '  <div class="checkin-progress-wrapper">' +
-        '    <div class="checkin-progress-bar">' +
-        '      <div class="checkin-progress-fill" style="width: ' + (totalChecked / 4 * 100) + '%"></div>' +
-        '    </div>' +
-        '    <span class="checkin-progress-text">当前进度：' + totalChecked + '/4</span>' +
-        '  </div>' +
-        '</div>' +
-        '<button type="button" class="checkin-btn" id="btn-checkin">' +
-        '  <span class="checkin-btn-icon">🏆</span> 打卡留念' +
-        '</button>';
 
-      // 绑定打卡按钮事件
-      var btn = document.getElementById("btn-checkin");
-      if (btn) {
-        btn.addEventListener("click", function() {
+      var pct = Math.round((totalChecked / 4) * 100);
+      var fillEl = container.querySelector('.checkin-progress-fill');
+      if (fillEl) fillEl.style.width = pct + '%';
+      var textEl = container.querySelector('.checkin-progress-text');
+      if (textEl) textEl.textContent = '当前进度：' + totalChecked + '/4';
+
+      var btn = document.getElementById('btn-checkin');
+      if (!btn) return;
+
+      // 清除旧事件，避免重复绑定
+      var newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      btn = newBtn;
+
+      if (has || (window.wxCheckin && window.wxCheckin.isChecked && window.wxCheckin.isChecked(exhibitId))) {
+        btn.textContent = '✅ 已打卡';
+        btn.disabled = true;
+        btn.classList.add('checkin-btn--checked');
+        // 显示打卡时间（优先使用服务端返回值，其次使用 wxCheckin 缓存）
+        var timeVal = visitedAt || (window.wxCheckin && window.wxCheckin.getCheckTime ? window.wxCheckin.getCheckTime(exhibitId) : null);
+        if (timeVal) {
+          var info = container.querySelector('.checkin-info');
+          if (info) {
+            var tEl = info.querySelector('.checkin-time');
+            if (!tEl) {
+              tEl = document.createElement('p');
+              tEl.className = 'checkin-time';
+              info.appendChild(tEl);
+            }
+            try {
+              tEl.textContent = '打卡时间：' + (window.wxCheckin && window.wxCheckin.formatTime ? window.wxCheckin.formatTime(timeVal) : String(timeVal));
+            } catch (e) {
+              tEl.textContent = '打卡时间：' + String(timeVal);
+            }
+          }
+        }
+      } else {
+        btn.textContent = '🏆 打卡留念';
+        btn.disabled = false;
+        btn.classList.remove('checkin-btn--checked');
+        btn.addEventListener('click', function () {
           onCheckinClick(exhibitId, loc.title);
         });
       }
-    }
+
+      // 如果解锁证书，显示按钮
+      if (isCertificateUnlocked) {
+        var certBtn = container.querySelector('.checkin-certificate-btn');
+        if (!certBtn) {
+          var host = container.querySelector('.checkin-progress-inline');
+          if (host) {
+            var a = document.createElement('a');
+            a.className = 'btn btn-primary btn-sm checkin-certificate-btn';
+            a.href = 'certificate.html';
+            a.textContent = '查看我的纪念证书 ❯';
+            host.appendChild(a);
+          }
+        }
+      }
+    }).catch(function () {
+      container.hidden = true;
+    });
+    return;
   }
 
   /**
    * 打卡按钮点击处理
    */
   function onCheckinClick(exhibitId, exhibitTitle) {
-    var btn = document.getElementById("btn-checkin");
-    if (!btn || !window.wxCheckin) return;
+    var btn = document.getElementById('btn-checkin');
+    if (!btn || !window.wxCheckin || typeof window.wxCheckin.checkIn !== 'function') return;
 
-    // 添加点击动画
-    btn.classList.add("checkin-shake-animation");
+    // 防止重复点击并给出反馈
+    btn.disabled = true;
+    btn.classList.add('checkin-shake-animation');
+    var originalText = btn.textContent;
+    btn.textContent = '打卡中...';
 
-    setTimeout(function() {
-      btn.classList.remove("checkin-shake-animation");
+    setTimeout(function () {
+      btn.classList.remove('checkin-shake-animation');
 
-      var result = window.wxCheckin.checkIn(exhibitId);
+      // 调用后端打卡（异步）
+      window.wxCheckin.checkIn(exhibitId).then(function (result) {
+        if (result && result.success) {
+          // 成功先给出动画与提示
+          btn.classList.add('checkin-success-animation');
+          try { btn.textContent = '✅ 已打卡'; } catch (e) {}
 
-      if (result.success) {
-        // 打卡成功动画
-        btn.classList.add("checkin-success-animation");
+          var container = document.getElementById('checkin-container');
+          var successMsg = document.createElement('div');
+          successMsg.className = 'checkin-checkin-time';
+          successMsg.textContent = '🎉 打卡成功！';
+          successMsg.style.color = '#4CAF50';
+          successMsg.style.textAlign = 'center';
+          successMsg.style.marginBottom = '12px';
+          successMsg.style.animation = 'fadeInDown 0.3s ease-out';
+          if (container && container.firstChild) container.insertBefore(successMsg, container.firstChild.nextSibling);
 
-        // 添加成功提示
-        var container = document.getElementById("checkin-container");
-        var successMsg = document.createElement("div");
-        successMsg.className = "checkin-checkin-time";
-        successMsg.textContent = "🎉 打卡成功！";
-        successMsg.style.color = "#4CAF50";
-        successMsg.style.textAlign = "center";
-        successMsg.style.marginBottom = "12px";
-        successMsg.style.animation = "fadeInDown 0.3s ease-out";
-
-        container.insertBefore(successMsg, btn);
-
-        // 1秒后刷新打卡状态
-        setTimeout(function() {
+          // 刷新本页状态并更新首页进度
+          window.wxCheckin.init().then(function () {
+            setupCheckin({ id: exhibitId, title: exhibitTitle });
+            if (typeof updateCheckinProgress === 'function') updateCheckinProgress();
+            if (result.firstCompletion) showCheckinCompletionModal();
+          }).catch(function () {
+            setupCheckin({ id: exhibitId, title: exhibitTitle });
+          });
+        } else if (result && result.alreadyChecked) {
+          // 已经打过卡，直接刷新状态
           setupCheckin({ id: exhibitId, title: exhibitTitle });
-
-          // 如果是集齐四个展点，显示解锁弹窗
-          if (result.firstCompletion) {
-            showCheckinCompletionModal();
-          }
-        }, 1000);
-      } else if (result.alreadyChecked) {
-        // 已经打过卡，刷新状态
-        setupCheckin({ id: exhibitId, title: exhibitTitle });
-      }
-    }, 500);
+        } else {
+          btn.disabled = false;
+          btn.textContent = originalText;
+          alert('打卡失败，请稍后重试');
+        }
+      }).catch(function () {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        alert('打卡失败，请稍后重试');
+      });
+    }, 300);
   }
 
   /**

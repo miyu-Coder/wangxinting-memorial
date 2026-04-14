@@ -55,42 +55,45 @@
   }
 
   function updateCheckinProgress() {
-    var sectionEl = document.getElementById("checkin-progress-section");
-    if (!sectionEl || !window.wxCheckin) return;
+    var sectionEl = document.getElementById('checkin-progress-section');
+    if (!sectionEl || !window.wxCheckin || typeof window.wxCheckin.init !== 'function') return;
 
-    var total = window.wxCheckin.getTotalChecked();
-    var percent = window.wxCheckin.getProgressPercent();
+    // 使用 wxCheckin.init() 拉取当前用户的打卡状态
+    window.wxCheckin.init().then(function () {
+      var total = window.wxCheckin.getTotalChecked();
+      var percent = window.wxCheckin.getProgressPercent();
 
-    var html = '<div class="checkin-progress-banner-home">' +
-      '<div class="checkin-progress-header">' +
-      '  <span class="checkin-progress-title-home">' +
-      '    🏆 <span id="checkin-progress-text">红色足迹打卡中 ' + total + '/4</span>' +
-      '  </span>' +
-      '  <span class="checkin-progress-percent-home" id="checkin-percent">' + percent + '%</span>' +
-      '</div>' +
-      '<div class="checkin-progress-bar-home">' +
-      '  <div class="checkin-progress-fill" id="checkin-progress-home" style="width: ' + percent + '%;"></div>' +
-      '</div>' +
-      '<div class="checkin-progress-actions" id="checkin-actions">' +
-      '  <p class="checkin-progress-msg">集齐四个展点解锁纪念证书</p>';
+      var html = '<div class="checkin-progress-banner-home">' +
+        '<div class="checkin-progress-header">' +
+        '  <span class="checkin-progress-title-home">' +
+        '    🏆 <span id="checkin-progress-text">红色足迹打卡中 ' + total + '/4</span>' +
+        '  </span>' +
+        '  <span class="checkin-progress-percent-home" id="checkin-percent">' + percent + '%</span>' +
+        '</div>' +
+        '<div class="checkin-progress-bar-home">' +
+        '  <div class="checkin-progress-fill" id="checkin-progress-home" style="width: ' + percent + '%;"></div>' +
+        '</div>' +
+        '<div class="checkin-progress-actions" id="checkin-actions">' +
+        '  <p class="checkin-progress-msg">集齐四个展点解锁纪念证书</p>';
 
-    // 如果集齐四个展点，添加查看证书按钮
-    if (total === 4 && window.wxCheckin.isCertificateUnlocked()) {
-      html += '  <a class="checkin-view-certificate-btn" href="certificate.html">🎉 查看证书</a>';
-    }
-
-    html += '</div></div>';
-
-    sectionEl.innerHTML = html;
-    sectionEl.hidden = false;
-
-    // 为进度条添加动画效果
-    setTimeout(function() {
-      var fillEl = document.getElementById("checkin-progress-home");
-      if (fillEl) {
-        fillEl.style.width = percent + "%";
+      // 如果集齐四个展点，添加查看证书按钮
+      if (total === 4 && window.wxCheckin.isCertificateUnlocked()) {
+        html += '  <a class="checkin-view-certificate-btn" href="certificate.html">🎉 查看证书</a>';
       }
-    }, 100);
+
+      html += '</div></div>';
+
+      sectionEl.innerHTML = html;
+      sectionEl.hidden = false;
+
+      // 为进度条添加动画效果
+      setTimeout(function () {
+        var fillEl = document.getElementById('checkin-progress-home');
+        if (fillEl) fillEl.style.width = percent + '%';
+      }, 100);
+    }).catch(function () {
+      // ignore failures silently
+    });
   }
 
   function applyUrlCardHighlight(normalizedId) {

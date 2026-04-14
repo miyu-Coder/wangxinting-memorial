@@ -1,28 +1,21 @@
 /**
- * 参观打卡功能：使用 localStorage 存储打卡数据
- * key: wx_checkins
- * 数据结构：
- * {
- *   "exhibits": {
- *     "1": { "checked": true, "time": "2026-04-12 15:30:00" },
- *     "2": { "checked": true, "time": "2026-04-12 15:35:00" },
- *     "3": { "checked": false, "time": null },
- *     "4": { "checked": false, "time": null }
- *   },
- *   "totalChecked": 2,
- *   "certificateUnlocked": false
- * }
+ * 打卡模块（基于后端 API）
+ * 提供与原有 `wxCheckin` 相同的函数名，但数据来自服务端。
+ * 端点：
+ *  - GET  /api/checkin/:exhibitId  -> { success, hasCheckedIn, visited_at }
+ *  - POST /api/checkin          -> 插入并返回 200 或 409
  */
 (function (global) {
   "use strict";
 
-  var CHECKIN_KEY = "wx_checkins";
-  var STATE_VERSION = 1;
+  var EXHIBIT_IDS = [1, 2, 3, 4];
+  var state = {
+    exhibits: {}, // '1': { checked: bool, time: 'YYYY-MM-DD hh:mm:ss' }
+    totalChecked: 0,
+    certificateUnlocked: false,
+  };
 
-  function normId(v) {
-    var n = parseInt(String(v).trim(), 10);
-    return Number.isFinite(n) && n >= 1 ? n : null;
-  }
+  var _initPromise = null;
 
   function formatTime(date) {
     var d = date instanceof Date ? date : new Date(date);
@@ -34,183 +27,127 @@
     return year + "年" + month + "月" + day + "日 " + hours + ":" + minutes;
   }
 
-  function formatTimeISO(date) {
-    var d = date instanceof Date ? date : new Date(date);
-    var year = d.getFullYear();
-    var month = String(d.getMonth() + 1).padStart(2, '0');
-    var day = String(d.getDate()).padStart(2, '0');
-    var hours = String(d.getHours()).padStart(2, '0');
-    var minutes = String(d.getMinutes()).padStart(2, '0');
-    var seconds = String(d.getSeconds()).padStart(2, '0');
-    return year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+  function _recalc() {
+    var cnt = 0;
+    for (var k in state.exhibits) {
+      if (Object.prototype.hasOwnProperty.call(state.exhibits, k) && state.exhibits[k].checked) cnt++;
+    }
+    state.totalChecked = cnt;
+    state.certificateUnlocked = state.totalChecked === EXHIBIT_IDS.length;
   }
 
-  function defaultState() {
-    return {
-      version: STATE_VERSION,
-      exhibits: {},
-      totalChecked: 0,
-      certificateUnlocked: false
-    };
+  function _fetchUserFor(id) {
+    return fetch('/api/checkin/' + encodeURIComponent(String(id)), { cache: 'no-store' }).then(function (res) {
+      if (!res.ok) return Promise.resolve(null);
+      return res.json().then(function (body) {
+        if (!body) return null;
+        return { id: String(id), has: !!body.hasCheckedIn, time: body.visited_at || null };
+      }).catch(function () { return null; });
+    }).catch(function () { return null; });
   }
 
-  function readRawData() {
-    try {
-      return localStorage.getItem(CHECKIN_KEY);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function writeRawData(obj) {
-    try {
-      localStorage.setItem(CHECKIN_KEY, JSON.stringify(obj));
-    } catch (e) {
-      console.warn("Failed to save checkin data:", e);
-    }
-  }
-
-  function safeParse(raw, fallback) {
-    if (raw == null || raw === "") return fallback;
-    try {
-      var o = JSON.parse(raw);
-      if (typeof o === "object" && o && typeof o.exhibits === "object") return o;
-      return fallback;
-    } catch (e) {
-      return fallback;
-    }
-  }
-
-  function checkIn(exhibitId) {
-    var state = loadState();
-    var id = normId(exhibitId);
-    if (id == null) return { success: false, firstCompletion: false };
-
-    var key = String(id);
-    var existing = state.exhibits[key];
-
-    // 已经打过卡，不能重复打卡
-    if (existing && existing.checked) {
-      return { success: false, alreadyChecked: true };
-    }
-
-    // 记录打卡信息
-    state.exhibits[key] = {
-      checked: true,
-      time: formatTimeISO(new Date())
-    };
-
-    // 重新计算总打卡数
-    updateTotalChecked(state);
-
-    // 检查是否集齐四个展点
-    var firstCompletion = false;
-    if (state.totalChecked === 4 && !state.certificateUnlocked) {
-      state.certificateUnlocked = true;
-      firstCompletion = true;
-    }
-
-    saveState(state);
-
-    return {
-      success: true,
-      firstCompletion: firstCompletion,
-      time: formatTime(new Date())
-    };
+  function init() {
+    if (_initPromise) return _initPromise;
+    _initPromise = Promise.all(EXHIBIT_IDS.map(function (id) { return _fetchUserFor(id); })).then(function (arr) {
+      state.exhibits = {};
+      for (var i = 0; i < arr.length; i++) {
+        var r = arr[i];
+        if (r && r.id) {
+          state.exhibits[String(r.id)] = { checked: !!r.has, time: r.time };
+        }
+      }
+      _recalc();
+      return state;
+    }).catch(function () {
+      state.exhibits = {};
+      _recalc();
+      return state;
+    });
+    return _initPromise;
   }
 
   function isChecked(exhibitId) {
-    var state = loadState();
-    var id = normId(exhibitId);
-    if (id == null) return false;
-
-    var key = String(id);
-    var rec = state.exhibits[key];
-    return rec && rec.checked;
+    var id = String(Number(exhibitId));
+    return !!(state.exhibits[id] && state.exhibits[id].checked);
   }
 
   function getCheckTime(exhibitId) {
-    var state = loadState();
-    var id = normId(exhibitId);
-    if (id == null) return null;
-
-    var key = String(id);
-    var rec = state.exhibits[key];
-    if (!rec || !rec.checked) return null;
-
-    return rec.time;
-  }
-
-  function updateTotalChecked(state) {
-    var count = 0;
-    var ex = state.exhibits;
-    for (var key in ex) {
-      if (Object.prototype.hasOwnProperty.call(ex, key) && ex[key].checked) {
-        count++;
-      }
-    }
-    state.totalChecked = count;
-  }
-
-  function loadState() {
-    var raw = readRawData();
-    var parsed = safeParse(raw, null);
-    if (parsed) {
-      parsed.version = STATE_VERSION;
-      updateTotalChecked(parsed);
-      return parsed;
-    }
-    return defaultState();
-  }
-
-  function saveState(state) {
-    state.version = STATE_VERSION;
-    updateTotalChecked(state);
-    writeRawData(state);
+    var id = String(Number(exhibitId));
+    return state.exhibits[id] ? state.exhibits[id].time : null;
   }
 
   function getTotalChecked() {
-    return loadState().totalChecked;
+    return state.totalChecked || 0;
   }
 
   function isCertificateUnlocked() {
-    return loadState().certificateUnlocked;
+    return !!state.certificateUnlocked;
   }
 
   function getAllCheckedTimes() {
-    var state = loadState();
-    var times = {};
-    var ex = state.exhibits;
-    for (var key in ex) {
-      if (Object.prototype.hasOwnProperty.call(ex, key) && ex[key].checked) {
-        var id = normId(key);
-        if (id != null && ex[key].time) {
-          times[id] = ex[key].time;
-        }
+    var out = {};
+    for (var k in state.exhibits) {
+      if (Object.prototype.hasOwnProperty.call(state.exhibits, k) && state.exhibits[k].checked) {
+        out[k] = state.exhibits[k].time || null;
       }
     }
-    return times;
+    return out;
   }
 
-  // 格式化进度信息显示（用于首页）
   function formatProgressTotal() {
-    var total = getTotalChecked();
-    return "📍 打卡进度 " + total + "/4";
+    return '📍 打卡进度 ' + getTotalChecked() + '/' + EXHIBIT_IDS.length;
   }
 
-  // 获取进度百分比
   function getProgressPercent() {
-    return Math.round((getTotalChecked() / 4) * 100);
+    return Math.round((getTotalChecked() / EXHIBIT_IDS.length) * 100);
   }
 
-  // 重置所有数据（测试用）
+  function checkIn(exhibitId) {
+    var id = Number(exhibitId);
+    if (!Number.isFinite(id)) return Promise.resolve({ success: false });
+    var prevTotal = getTotalChecked();
+    return fetch('/api/checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ exhibitId: id })
+    }).then(function (res) {
+      if (res.ok) {
+        // fetch updated user status for this exhibit
+        return _fetchUserFor(id).then(function (r) {
+          if (r && r.id) {
+            state.exhibits[String(r.id)] = { checked: !!r.has, time: r.time };
+          }
+          _recalc();
+          var firstCompletion = prevTotal < EXHIBIT_IDS.length && state.totalChecked === EXHIBIT_IDS.length;
+          return { success: true, firstCompletion: firstCompletion, time: state.exhibits[String(id)] ? state.exhibits[String(id)].time : null };
+        });
+      }
+      if (res.status === 409) {
+        // already checked
+        return _fetchUserFor(id).then(function (r) {
+          if (r && r.id) state.exhibits[String(r.id)] = { checked: !!r.has, time: r.time };
+          _recalc();
+          return { success: false, alreadyChecked: true };
+        });
+      }
+      return { success: false };
+    }).catch(function (e) {
+      return { success: false };
+    });
+  }
+
   function resetAll() {
-    writeRawData(defaultState());
+    // 无服务器端清除接口；只清空本地缓存（下次 init 会重新拉取）
+    state.exhibits = {};
+    state.totalChecked = 0;
+    state.certificateUnlocked = false;
+    _initPromise = null;
   }
 
-  // 导出函数
+  // 导出
   global.wxCheckin = {
-    checkIn: checkIn,
+    init: init,
+    checkIn: function (exhibitId) { return checkIn(exhibitId); },
     isChecked: isChecked,
     getCheckTime: getCheckTime,
     getTotalChecked: getTotalChecked,
@@ -219,8 +156,10 @@
     formatProgressTotal: formatProgressTotal,
     getProgressPercent: getProgressPercent,
     formatTime: formatTime,
-    resetAll: resetAll,
-    CHECKIN_KEY: CHECKIN_KEY
+    resetAll: resetAll
   };
+
+  // 自动初始化（后台拉取当前用户的打卡状态）
+  try { if (typeof window !== 'undefined') init(); } catch (e) {}
 
 })(window);
