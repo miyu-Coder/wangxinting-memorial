@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
@@ -388,6 +389,22 @@ app.get('/api/messages', async (req, res) => {
   } catch (err) {
     console.error('Messages query error:', err);
     return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// POST /api/admin/login - 管理员登录验证
+app.post('/api/admin/login', (req, res) => {
+  const { password } = req.body;
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  
+  if (!password) {
+    return res.status(400).json({ success: false, message: '请输入密码' });
+  }
+  
+  if (password === adminPassword) {
+    return res.json({ success: true, message: '登录成功' });
+  } else {
+    return res.status(401).json({ success: false, message: '密码错误' });
   }
 });
 
