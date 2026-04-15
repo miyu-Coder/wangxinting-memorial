@@ -297,11 +297,23 @@ app.get('/api/stats/overview', async (req, res) => {
     
     console.log('[DEBUG] hotExhibit result:', hotExhibit);
     
+    const todayFlowersRow = await db.getAsync(
+      "SELECT COUNT(*) AS cnt FROM flowers WHERE DATE(created_at) = DATE('now')"
+    );
+    const todayFlowers = todayFlowersRow ? todayFlowersRow.cnt : 0;
+    
+    const todayUVRow = await db.getAsync(
+      "SELECT COUNT(DISTINCT session_id) AS cnt FROM page_views WHERE DATE(visit_time) = DATE('now')"
+    );
+    const todayUV = todayUVRow ? todayUVRow.cnt : 0;
+    
     return res.json({
       success: true,
       totalVisits,
       todayVisits,
-      hotExhibit
+      hotExhibit,
+      todayFlowers,
+      todayUV
     });
   } catch (err) {
     console.error('Stats overview error:', err);

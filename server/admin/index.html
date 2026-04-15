@@ -129,6 +129,29 @@
         <h2>数据概览</h2>
         <div class="dashboard-grid">
           <div class="stat-card">
+            <div class="stat-icon">👀</div>
+            <p class="stat-label">总访问量</p>
+            <p class="stat-value" id="totalVisits">—</p>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <p class="stat-label">今日访问</p>
+            <p class="stat-value" id="todayVisits">—</p>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">👤</div>
+            <p class="stat-label">今日访客</p>
+            <p class="stat-value" id="todayUV">—</p>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🌸</div>
+            <p class="stat-label">今日献花</p>
+            <p class="stat-value" id="todayFlowers">—</p>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="stat-card">
             <div class="stat-icon">🌸</div>
             <p class="stat-label">献花总数</p>
             <p class="stat-value" id="totalFlowers">—</p>
@@ -142,24 +165,7 @@
             <div class="stat-icon">💬</div>
             <p class="stat-label">留言总数</p>
             <p class="stat-value" id="totalMessages">—</p>
-          </div>
-          <div class="stat-card stat-card--warning">
-            <div class="stat-icon">⏳</div>
-            <p class="stat-label">待审核数量</p>
-            <p class="stat-value" id="pendingMessages">—</p>
-          </div>
-        </div>
-
-        <div class="dashboard-grid">
-          <div class="stat-card">
-            <div class="stat-icon">👀</div>
-            <p class="stat-label">总访问量</p>
-            <p class="stat-value" id="totalVisits">—</p>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">📅</div>
-            <p class="stat-label">今日访问</p>
-            <p class="stat-value" id="todayVisits">—</p>
+            <p class="stat-sublabel" id="pendingHint"></p>
           </div>
           <div class="stat-card stat-card--gold">
             <div class="stat-icon">🔥</div>
@@ -476,13 +482,14 @@
         const allMessages = msgData.list || [];
         const pendingMsgs = allMessages.filter((m) => m.status === 0);
         document.getElementById('totalMessages').textContent = allMessages.length;
-        document.getElementById('pendingMessages').textContent = pendingMsgs.length;
 
         const overviewRes = await fetch('/api/stats/overview');
         const overviewData = await overviewRes.json();
         if (overviewData.success) {
           document.getElementById('totalVisits').textContent = overviewData.totalVisits || 0;
           document.getElementById('todayVisits').textContent = overviewData.todayVisits || 0;
+          document.getElementById('todayUV').textContent = overviewData.todayUV || 0;
+          document.getElementById('todayFlowers').textContent = overviewData.todayFlowers || 0;
           if (overviewData.hotExhibit) {
             document.getElementById('hotExhibit').textContent = overviewData.hotExhibit.name;
             document.getElementById('hotExhibitCount').textContent = `${overviewData.hotExhibit.checkinCount || 0} 人打卡`;
@@ -492,6 +499,14 @@
             document.getElementById('hotExhibitCount').textContent = '';
             document.getElementById('hotExhibitConversion').textContent = '';
           }
+        }
+
+        const pendingHintEl = document.getElementById('pendingHint');
+        if (pendingMsgs.length > 0) {
+          pendingHintEl.textContent = `待审核 ${pendingMsgs.length} 条`;
+          pendingHintEl.style.color = '#FF9800';
+        } else {
+          pendingHintEl.textContent = '';
         }
 
         initCharts();
