@@ -178,6 +178,13 @@
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     var nick = nickEl ? nickEl.value : '';
     var content = contentEl ? contentEl.value : '';
+    
+    if (nick && nick.trim()) {
+      try {
+        localStorage.setItem('userNickname', nick.trim());
+      } catch (e) {}
+    }
+    
     if (submitBtn) submitBtn.disabled = true;
     submitMessage(nick, content).then(function () {
       if (submitBtn) submitBtn.disabled = false;
@@ -190,18 +197,18 @@
     contentEl = queryFirst(CONTENT_SELECTORS);
     submitBtn = document.getElementById('submitBtn');
 
-    console.log('留言模块初始化', {
-      listEl: !!listEl,
-      nickEl: !!nickEl,
-      contentEl: !!contentEl,
-      submitBtn: !!submitBtn
-    });
+    if (nickEl) {
+      try {
+        var savedNickname = localStorage.getItem('userNickname') || '';
+        if (savedNickname && !nickEl.value) {
+          nickEl.value = savedNickname;
+        }
+      } catch (e) {}
+    }
 
     if (submitBtn) {
-      console.log('绑定提交按钮点击事件');
       submitBtn.addEventListener('click', function (e) {
         e.preventDefault();
-        console.log('提交按钮被点击');
         handleSubmit(e);
       });
     }

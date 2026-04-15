@@ -113,6 +113,21 @@ function initDatabase() {
       console.log('Table page_views ready');
     }
   });
+  db.run(`
+    CREATE TABLE IF NOT EXISTS quiz_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nickname TEXT NOT NULL,
+      exhibit_id INTEGER NOT NULL,
+      score INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Failed to create quiz_records table:', err.message);
+    } else {
+      console.log('Table quiz_records ready');
+    }
+  });
 }
 
 // ===== 打卡 (checkin) 接口 =====
@@ -172,6 +187,99 @@ app.get('/api/checkin/:exhibitId', async (req, res) => {
     return res.json({ success: true, hasCheckedIn: !!row, visited_at: row ? row.visited_at : null });
   } catch (err) {
     console.error('Checkin status error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// ===== 答题记录接口 =====
+// POST /api/quiz/submit - 提交答题记录
+app.post('/api/quiz/submit', async (req, res) => {
+  const { nickname, exhibitId, score } = req.body;
+
+  if (!nickname || !nickname.trim()) {
+    return res.status(400).json({ success: false, message: '昵称不能为空' });
+  }
+
+  if (!exhibitId || ![1, 2, 3, 4].includes(Number(exhibitId))) {
+    return res.status(400).json({ success: false, message: '展点 ID 必须为 1-4' });
+  }
+
+  if (typeof score !== 'number' || score < 0) {
+    return res.status(400).json({ success: false, message: '得分无效' });
+  }
+
+  try {
+    const existing = await db.getAsync(
+      'SELECT id FROM quiz_records WHERE nickname = ? AND exhibit_id = ? LIMIT 1',
+      [nickname.trim(), exhibitId]
+    );
+
+    if (existing) {
+      return res.status(409).json({ success: false, message: '您已完成过答题' });
+    }
+
+    await db.runAsync(
+      "INSERT INTO quiz_records (nickname, exhibit_id, score, created_at) VALUES (?, ?, ?, datetime('now'))",
+      [nickname.trim(), exhibitId, score]
+    );
+    return res.json({ success: true, message: '答题记录已保存' });
+  } catch (err) {
+    console.error('Quiz submit error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// GET /api/quiz/records - 获取答题记录列表
+app.get('/api/quiz/records', async (req, res) => {
+  const { exhibitId } = req.query;
+
+  try {
+    let sql = `
+      SELECT id, nickname, exhibit_id, score, created_at
+      FROM quiz_records
+    `;
+    const params = [];
+
+    if (exhibitId && [1, 2, 3, 4].includes(Number(exhibitId))) {
+      sql += ' WHERE exhibit_id = ?';
+      params.push(Number(exhibitId));
+    }
+
+    sql += ' ORDER BY created_at DESC LIMIT 100';
+
+    const rows = await db.allAsync(sql, params);
+    return res.json({ success: true, data: rows || [] });
+  } catch (err) {
+    console.error('Quiz records error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// GET /api/quiz/stats - 各展点答题统计
+app.get('/api/quiz/stats', async (req, res) => {
+  try {
+    const rows = await db.allAsync(`
+      SELECT 
+        exhibit_id,
+        AVG(score) as avg_score,
+        COUNT(*) as total_count,
+        SUM(CASE WHEN score = 4 THEN 1 ELSE 0 END) as full_score_count
+      FROM quiz_records
+      GROUP BY exhibit_id
+    `);
+
+    const stats = { '1': null, '2': null, '3': null, '4': null };
+    rows.forEach(r => {
+      stats[String(r.exhibit_id)] = {
+        avgScore: Math.round(r.avg_score * 10) / 10,
+        totalCount: r.total_count,
+        fullScoreCount: r.full_score_count
+      };
+    });
+
+    return res.json({ success: true, stats });
+  } catch (err) {
+    console.error('Quiz stats error:', err);
     return res.status(500).json({ success: false, message: '服务器错误' });
   }
 });

@@ -124,6 +124,10 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
           留言审核
         </button>
+        <button class="tab-btn" data-tab="quiz">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          答题记录
+        </button>
       </nav>
 
       <section id="dashboardTab" class="tab-content is-active">
@@ -192,6 +196,12 @@
           <div id="trendChart" style="width: 100%; height: 300px;"></div>
           <p class="chart-hint">用于分析用户访问趋势及活跃度变化，为运营决策提供依据</p>
         </div>
+
+        <div class="chart-section">
+          <h3>📝 各展点答题统计</h3>
+          <div id="quizStatsChart" style="width: 100%; height: 280px;"></div>
+          <p class="chart-hint">展示各展点的答题人数、平均分及满分人数，帮助评估知识问答效果</p>
+        </div>
       </section>
 
       <section id="messagesTab" class="tab-content">
@@ -204,6 +214,18 @@
         </div>
         <div class="message-list" id="messageList"></div>
       </section>
+
+      <section id="quizTab" class="tab-content">
+        <h2>答题记录</h2>
+        <div class="message-filter">
+          <button class="filter-btn quiz-filter-btn is-active" data-exhibit="all">全部展点</button>
+          <button class="filter-btn quiz-filter-btn" data-exhibit="1">陈列馆</button>
+          <button class="filter-btn quiz-filter-btn" data-exhibit="2">故居</button>
+          <button class="filter-btn quiz-filter-btn" data-exhibit="3">纪念园</button>
+          <button class="filter-btn quiz-filter-btn" data-exhibit="4">将军铜像</button>
+        </div>
+        <div class="message-list" id="quizList"></div>
+      </section>
     </div>
   </div>
 
@@ -215,6 +237,7 @@
     let flowerChart = null;
     let checkinChart = null;
     let trendChart = null;
+    let quizStatsChart = null;
 
     function checkLogin() {
       const session = localStorage.getItem(SESSION_KEY);
@@ -276,6 +299,8 @@
         document.getElementById(tab + 'Tab').classList.add('is-active');
         if (tab === 'messages') {
           loadMessages();
+        } else if (tab === 'quiz') {
+          loadQuizRecords();
         } else {
           loadDashboard();
         }
@@ -300,6 +325,9 @@
       }
       if (!trendChart) {
         trendChart = echarts.init(document.getElementById('trendChart'));
+      }
+      if (!quizStatsChart) {
+        quizStatsChart = echarts.init(document.getElementById('quizStatsChart'));
       }
     }
 
@@ -542,10 +570,134 @@
       trendChart.setOption(option);
     }
 
+    function renderQuizStatsChart(stats) {
+      if (!quizStatsChart) return;
+      
+      const exhibitNames = ['陈列馆', '故居', '纪念园', '将军铜像'];
+      const totalCounts = [];
+      const avgScores = [];
+      const fullScoreCounts = [];
+      let hasData = false;
+
+      for (let i = 1; i <= 4; i++) {
+        const s = stats[String(i)];
+        if (s) {
+          totalCounts.push(s.totalCount || 0);
+          avgScores.push(s.avgScore || 0);
+          fullScoreCounts.push(s.fullScoreCount || 0);
+          if (s.totalCount > 0) hasData = true;
+        } else {
+          totalCounts.push(0);
+          avgScores.push(0);
+          fullScoreCounts.push(0);
+        }
+      }
+
+      const option = {
+        backgroundColor: 'transparent',
+        grid: { left: '10%', right: '5%', top: '18%', bottom: '12%' },
+        legend: {
+          data: ['答题人数', '平均分', '满分人数'],
+          top: 0,
+          textStyle: { color: '#666666', fontSize: 12 }
+        },
+        xAxis: {
+          type: 'category',
+          data: exhibitNames,
+          axisLine: { lineStyle: { color: '#E8E8E8' } },
+          axisLabel: { color: '#666666', fontSize: 12 }
+        },
+        yAxis: [
+          {
+            type: 'value',
+            name: '人数',
+            minInterval: 1,
+            axisLine: { show: false },
+            splitLine: { lineStyle: { color: '#F0F0F0' } },
+            axisLabel: { color: '#666666' }
+          },
+          {
+            type: 'value',
+            name: '平均分',
+            min: 0,
+            max: 4,
+            interval: 1,
+            axisLine: { show: false },
+            splitLine: { show: false },
+            axisLabel: { color: '#666666' }
+          }
+        ],
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#E8E8E8',
+          textStyle: { color: '#333333' }
+        },
+        series: [
+          {
+            name: '答题人数',
+            type: 'bar',
+            data: totalCounts,
+            barWidth: 20,
+            itemStyle: { 
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#C41E3A' },
+                { offset: 1, color: '#8B1A2D' }
+              ]),
+              borderRadius: [4, 4, 0, 0]
+            },
+            label: { show: true, position: 'top', color: '#C41E3A', fontSize: 11 }
+          },
+          {
+            name: '满分人数',
+            type: 'bar',
+            data: fullScoreCounts,
+            barWidth: 20,
+            itemStyle: { 
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#D4A843' },
+                { offset: 1, color: '#B8922E' }
+              ]),
+              borderRadius: [4, 4, 0, 0]
+            },
+            label: { show: true, position: 'top', color: '#D4A843', fontSize: 11 }
+          },
+          {
+            name: '平均分',
+            type: 'line',
+            yAxisIndex: 1,
+            data: avgScores,
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 8,
+            lineStyle: { color: '#4CAF50', width: 3 },
+            itemStyle: { color: '#4CAF50' },
+            label: { show: true, position: 'top', color: '#4CAF50', fontSize: 11, fontWeight: 600 }
+          }
+        ]
+      };
+
+      if (!hasData) {
+        option.graphic = {
+          type: 'text',
+          left: 'center',
+          top: 'middle',
+          style: {
+            text: '暂无答题数据',
+            fontSize: 16,
+            fill: '#999999'
+          }
+        };
+      }
+
+      quizStatsChart.setOption(option);
+    }
+
     window.addEventListener('resize', function () {
       if (flowerChart) flowerChart.resize();
       if (checkinChart) checkinChart.resize();
       if (trendChart) trendChart.resize();
+      if (quizStatsChart) quizStatsChart.resize();
     });
 
     async function loadDashboard() {
@@ -608,6 +760,12 @@
         const trendData = await trendRes.json();
         if (trendData.success) {
           renderTrendChart(trendData.data || []);
+        }
+
+        const quizStatsRes = await fetch('/api/quiz/stats');
+        const quizStatsData = await quizStatsRes.json();
+        if (quizStatsData.success) {
+          renderQuizStatsChart(quizStatsData.stats || {});
         }
       } catch (err) {
         console.error('Error loading dashboard:', err);
@@ -722,6 +880,60 @@
         console.error('Error rejecting message:', err);
         alert('操作失败');
       }
+    }
+
+    let currentQuizFilter = 'all';
+    let allQuizData = [];
+
+    document.querySelectorAll('.quiz-filter-btn').forEach((btn) => {
+      btn.addEventListener('click', function () {
+        currentQuizFilter = this.getAttribute('data-exhibit');
+        document.querySelectorAll('.quiz-filter-btn').forEach((b) => b.classList.remove('is-active'));
+        this.classList.add('is-active');
+        renderQuizRecords();
+      });
+    });
+
+    async function loadQuizRecords() {
+      try {
+        let url = '/api/quiz/records';
+        if (currentQuizFilter !== 'all') {
+          url += '?exhibitId=' + currentQuizFilter;
+        }
+        const res = await fetch(url);
+        const data = await res.json();
+        allQuizData = data.data || [];
+        renderQuizRecords();
+      } catch (err) {
+        console.error('Error loading quiz records:', err);
+      }
+    }
+
+    function renderQuizRecords() {
+      const exhibitNames = { '1': '陈列馆', '2': '故居', '3': '纪念园', '4': '将军铜像' };
+      
+      let filtered = allQuizData;
+      if (currentQuizFilter !== 'all') {
+        filtered = allQuizData.filter((r) => String(r.exhibit_id) === currentQuizFilter);
+      }
+
+      const html = filtered.map((record) => {
+        const exhibitName = exhibitNames[String(record.exhibit_id)] || '未知展点';
+        const scoreClass = record.score >= 4 ? 'status-approved' : (record.score >= 2 ? 'status-pending' : 'status-rejected');
+        const scoreText = record.score + '/4';
+
+        return `
+          <div class="message-card">
+            <div class="message-meta">
+              <strong>${escapeHtml(record.nickname)}</strong>
+              <span class="message-time">${record.created_at}</span>
+              <span class="message-status ${scoreClass}">${scoreText}</span>
+            </div>
+            <p class="message-content" style="margin-bottom: 0;">📍 展点：${exhibitName} · 得分：${record.score} 分</p>
+          </div>`;
+      }).join('');
+
+      document.getElementById('quizList').innerHTML = html || '<p class="empty-hint">暂无答题记录</p>';
     }
 
     checkLogin();

@@ -1141,11 +1141,153 @@
       return;
     }
 
-    var state = { idx: 0, correct: 0, picked: false };
-    /** 最后一题作答后立即写入，防止刷新页面重复刷分 */
-    var lastLockResult = { ok: false, allExhibitsComplete: false };
+    var quizNickname = '';
+    try {
+      quizNickname = localStorage.getItem('userNickname') || '';
+    } catch (e) {}
 
-    /** 仅展示结果页（得分已在最后一题选项点击时锁定） */
+    if (!quizNickname) {
+      renderNicknameInput(loc);
+      return;
+    }
+
+    startQuiz(loc, quizNickname);
+  }
+
+  function renderNicknameInput(loc) {
+    var root = document.getElementById("quiz-root");
+    if (!root) return;
+
+    var exhibitId = normId(loc.id);
+    var total = (loc && loc.quiz && Array.isArray(loc.quiz.questions)) ? loc.quiz.questions.length : 0;
+
+    root.innerHTML = '';
+
+    var card = document.createElement('div');
+    card.className = 'quiz-card quiz-nickname-card';
+
+    var title = document.createElement('h3');
+    title.className = 'quiz-nickname-title';
+    title.textContent = '📝 开始答题';
+    card.appendChild(title);
+
+    var hint = document.createElement('p');
+    hint.className = 'quiz-nickname-hint';
+    hint.textContent = '请输入您的昵称，开始本展点知识问答';
+    card.appendChild(hint);
+
+    var inputWrap = document.createElement('div');
+    inputWrap.className = 'quiz-nickname-input-wrap';
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'quiz-nickname';
+    input.className = 'quiz-nickname-input';
+    input.placeholder = '请输入您的昵称';
+    input.maxLength = 20;
+    input.setAttribute('aria-label', '昵称');
+
+    var savedNickname = '';
+    try {
+      savedNickname = localStorage.getItem('userNickname') || '';
+    } catch (e) {}
+    if (savedNickname) {
+      input.value = savedNickname;
+    }
+
+    inputWrap.appendChild(input);
+    card.appendChild(inputWrap);
+
+    var exhibitInfo = document.createElement('p');
+    exhibitInfo.className = 'quiz-nickname-exhibit';
+    exhibitInfo.textContent = '📍 当前展点：' + (loc.title || '展点') + ' · 共 ' + total + ' 题';
+    card.appendChild(exhibitInfo);
+
+    var startBtn = document.createElement('button');
+    startBtn.type = 'button';
+    startBtn.className = 'btn btn-primary quiz-nickname-btn';
+    startBtn.textContent = '开始答题';
+    startBtn.disabled = !input.value.trim();
+
+    input.addEventListener('input', function () {
+      startBtn.disabled = !input.value.trim();
+    });
+
+    startBtn.addEventListener('click', function () {
+      var nickname = input.value.trim();
+      if (!nickname) return;
+
+      try {
+        localStorage.setItem('userNickname', nickname);
+      } catch (e) {}
+
+      startQuiz(loc, nickname);
+    });
+
+    card.appendChild(startBtn);
+    root.appendChild(card);
+
+    setTimeout(function () {
+      input.focus();
+    }, 100);
+  }
+
+  function startQuiz(loc, nickname) {
+    var root = document.getElementById("quiz-root");
+    if (!root) return;
+
+    var questions =
+      loc && loc.quiz && Array.isArray(loc.quiz.questions) ? loc.quiz.questions : [];
+    var exhibitId = normId(loc.id);
+    var total = questions.length;
+    var st = window.wxQuizStorage;
+
+    var state = { idx: 0, correct: 0, picked: false };
+    var lastLockResult = { ok: false, allExhibitsComplete: false };
+    var quizRecordSubmitted = false;
+
+    function submitQuizRecord() {
+      if (quizRecordSubmitted) return;
+
+      var record = st && typeof st.getExhibitRecord === 'function'
+        ? st.getExhibitRecord(exhibitId, LOCATIONS)
+        : null;
+
+      if (!record || typeof record.score !== 'number') {
+        console.warn('Quiz record not found or invalid score');
+        return;
+      }
+
+      var submitNickname = '';
+      try {
+        submitNickname = localStorage.getItem('userNickname') || '游客';
+      } catch (e) {
+        submitNickname = '游客';
+      }
+
+      fetch('/api/quiz/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname: submitNickname,
+          exhibitId: exhibitId,
+          score: record.score
+        })
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.success) {
+            quizRecordSubmitted = true;
+            console.log('答题记录已保存');
+          } else if (data.message) {
+            showQuizToast(data.message);
+          }
+        })
+        .catch(function (e) {
+          console.error('Submit quiz record error:', e);
+        });
+    }
+
     function showFinalResultPanel() {
       var comment = quizCommentForScore(state.correct, total);
       root.innerHTML = "";
@@ -1162,6 +1304,13 @@
 
       wrap.appendChild(scoreEl);
       wrap.appendChild(msg);
+
+      if (state.correct === total) {
+        var giftHint = document.createElement("p");
+        giftHint.className = "quiz-result__gift";
+        giftHint.textContent = "🎉 恭喜！您已完成本展点答题，可前往服务台领取纪念品";
+        wrap.appendChild(giftHint);
+      }
 
       if (st && st.isHeritageUnlocked(LOCATIONS)) {
         var heritage = document.createElement("p");
@@ -1182,6 +1331,8 @@
       wrap.appendChild(btnRow);
       root.appendChild(wrap);
 
+      submitQuizRecord();
+
       if (lastLockResult.allExhibitsComplete) {
         showAchievementEntranceModal();
       }
@@ -1195,7 +1346,6 @@
       var card = document.createElement("div");
       card.className = "quiz-card";
 
-      /* —— 氛围区：当前展点 + 全站展点完成进度 —— */
       var ambient = document.createElement("div");
       ambient.className = "quiz-ambient";
       var lineA = document.createElement("p");
@@ -1295,7 +1445,6 @@
         }
         nextBtn.hidden = false;
 
-        /* 最后一题：立即锁定存储，避免用户在未点「查看结果」前刷新重答 */
         if (state.idx === total - 1 && st && typeof st.lockExhibitQuiz === "function") {
           var cmt = quizCommentForScore(state.correct, total);
           lastLockResult = st.lockExhibitQuiz(
@@ -1329,7 +1478,6 @@
 
       nextBtn.addEventListener("click", function () {
         if (!state.picked) {
-          // 未选择答案，显示Toast提示
           showQuizToast("请先回答本题");
           return;
         }
