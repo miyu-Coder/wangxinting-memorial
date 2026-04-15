@@ -399,36 +399,44 @@
     }
 
     var total = LOCATIONS.length;
+    var percent = Math.round(((currentIndex + 1) / total) * 100);
 
     // 构建进度条 HTML
-    var html = '<div class="detail-progress-bar__content">';
+    var html = '';
 
-    // 左侧：展点计数
-    html += '<span class="detail-progress-bar__counter">📍 展点 ' + (currentIndex + 1) + '/' + total + '</span>';
-
-    // 右侧：展点名称列表
-    html += '<span class="detail-progress-bar__locations">';
+    // 第一行：展点导航 + 进度徽章
+    html += '<div class="detail-progress-bar__nav">';
+    html += '<div class="detail-progress-bar__locations">';
+    html += '<span class="detail-progress-bar__icon">📍 </span>';
 
     for (var i = 0; i < LOCATIONS.length; i++) {
       var isCurrent = (i === currentIndex);
       var location = LOCATIONS[i];
       var locId = normId(location.id);
-      var locTitle = location.title || ('展点' + locId);
+      var locTitle = location.routeShort || location.title || ('展点' + locId);
 
-      // 添加展点链接
       if (isCurrent) {
         html += '<span class="detail-progress-bar__location detail-progress-bar__location--current">' + locTitle + '</span>';
       } else {
         html += '<a class="detail-progress-bar__location" href="' + detailUrlWithId(locId) + '">' + locTitle + '</a>';
       }
 
-      // 如果不是最后一个，添加箭头
       if (i < LOCATIONS.length - 1) {
         html += '<span class="detail-progress-bar__arrow">→</span>';
       }
     }
 
-    html += '</span></div>';
+    html += '</div>';
+    html += '<span class="detail-progress-bar__badge">' + (currentIndex + 1) + '/' + total + '</span>';
+    html += '</div>';
+
+    // 第二行：进度条 + 百分比
+    html += '<div class="detail-progress-bar__track-wrap">';
+    html += '<div class="detail-progress-bar__track">';
+    html += '<div class="detail-progress-bar__fill" style="width: ' + percent + '%;"></div>';
+    html += '</div>';
+    html += '<span class="detail-progress-bar__percent">' + percent + '%</span>';
+    html += '</div>';
 
     progressBar.innerHTML = html;
   }

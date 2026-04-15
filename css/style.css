@@ -789,42 +789,35 @@ body {
   margin-bottom: 18px;
 }
 
-/* —— 详情页：顶部进度条（替代原参观动线卡片） —— */
+/* —— 详情页：顶部进度条 —— */
 .detail-progress-bar {
   background: #FDF8F2;
   border-radius: var(--radius);
-  padding: 12px 16px;
+  padding: 14px 16px;
   margin-bottom: 16px;
   border: 1px solid rgba(196, 30, 58, 0.1);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
+  box-shadow: var(--shadow-card);
 }
 
-.detail-progress-bar::-webkit-scrollbar {
-  display: none;
-}
-
-.detail-progress-bar__content {
+.detail-progress-bar__nav {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: min-content;
-  white-space: nowrap;
-}
-
-.detail-progress-bar__counter {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-red);
-  flex-shrink: 0;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 8px;
 }
 
 .detail-progress-bar__locations {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 14px;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.detail-progress-bar__icon {
+  color: #666666;
+  font-size: 0.85rem;
 }
 
 .detail-progress-bar__location {
@@ -846,8 +839,47 @@ body {
 
 .detail-progress-bar__arrow {
   color: var(--color-gold);
-  margin: 0 4px;
+  margin: 0 2px;
   font-weight: 500;
+}
+
+.detail-progress-bar__badge {
+  background: linear-gradient(135deg, var(--color-red), var(--color-red-deep));
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.detail-progress-bar__track-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-progress-bar__track {
+  flex: 1;
+  height: 6px;
+  background: rgba(196, 30, 58, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.detail-progress-bar__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-red), var(--color-gold));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.detail-progress-bar__percent {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-red);
+  min-width: 36px;
+  text-align: right;
 }
 
 /* —— 详情页：底部导航按钮 —— */
@@ -3010,6 +3042,14 @@ body {
 /* —— 详情页：献花致敬 —— */
 .flower-tribute-block {
   margin-top: 4px;
+}
+
+.detail-qr-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #999;
+  margin: 8px 0 16px;
+  padding: 0 16px;
 }
 
 .flower-tribute-card {

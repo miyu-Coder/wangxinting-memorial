@@ -118,4 +118,52 @@
   } else {
     boot();
   }
+
+  // 网络状态监听
+  var offlineToast = null;
+  var offlineToastTimeout = null;
+
+  function showOfflineToast() {
+    if (offlineToast) return;
+    
+    offlineToast = document.createElement("div");
+    offlineToast.className = "wx-font-toast is-visible";
+    offlineToast.style.zIndex = "10052";
+    offlineToast.textContent = "当前网络较弱，已为您加载本地内容";
+    document.body.appendChild(offlineToast);
+    
+    if (offlineToastTimeout) {
+      clearTimeout(offlineToastTimeout);
+    }
+    offlineToastTimeout = setTimeout(function() {
+      hideOfflineToast();
+    }, 3000);
+  }
+
+  function hideOfflineToast() {
+    if (offlineToast) {
+      offlineToast.classList.remove("is-visible");
+      setTimeout(function() {
+        if (offlineToast && offlineToast.parentNode) {
+          offlineToast.parentNode.removeChild(offlineToast);
+        }
+        offlineToast = null;
+      }, 250);
+    }
+  }
+
+  window.addEventListener("offline", function() {
+    showOfflineToast();
+  });
+
+  window.addEventListener("online", function() {
+    hideOfflineToast();
+  });
+
+  // 页面加载时检查网络状态
+  if (typeof navigator.onLine === "boolean" && !navigator.onLine) {
+    setTimeout(function() {
+      showOfflineToast();
+    }, 500);
+  }
 })();
