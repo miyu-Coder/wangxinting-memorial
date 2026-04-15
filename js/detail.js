@@ -9,7 +9,55 @@
 
   var state = {
     carouselIndex: 0,
+    currentExhibitId: null,
   };
+
+  var STORAGE_KEY_LAST_EXHIBIT = 'lastVisitedExhibit';
+  var STORAGE_KEY_SCROLL_PREFIX = 'scrollPos_';
+
+  function saveLastExhibit(id) {
+    try {
+      localStorage.setItem(STORAGE_KEY_LAST_EXHIBIT, String(id));
+    } catch (e) {}
+  }
+
+  function getLastExhibit() {
+    try {
+      var val = localStorage.getItem(STORAGE_KEY_LAST_EXHIBIT);
+      var n = parseInt(val, 10);
+      return Number.isFinite(n) && n >= 1 ? n : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveScrollPosition(exhibitId) {
+    try {
+      var key = STORAGE_KEY_SCROLL_PREFIX + exhibitId;
+      var scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      localStorage.setItem(key, String(Math.round(scrollY)));
+    } catch (e) {}
+  }
+
+  function getScrollPosition(exhibitId) {
+    try {
+      var key = STORAGE_KEY_SCROLL_PREFIX + exhibitId;
+      var val = localStorage.getItem(key);
+      var n = parseInt(val, 10);
+      return Number.isFinite(n) && n >= 0 ? n : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function restoreScrollPosition(exhibitId) {
+    var pos = getScrollPosition(exhibitId);
+    if (pos > 0) {
+      setTimeout(function () {
+        window.scrollTo(0, pos);
+      }, 100);
+    }
+  }
 
   var detailAudioPlayer = null;
 
@@ -452,7 +500,6 @@
     var currentIndex = -1;
     var currentId = normId(loc.id);
 
-    // 找到当前展点的索引
     for (var i = 0; i < LOCATIONS.length; i++) {
       if (normId(LOCATIONS[i].id) === currentId) {
         currentIndex = i;
@@ -460,9 +507,7 @@
       }
     }
 
-    // 设置上一展点按钮
     if (currentIndex <= 0) {
-      // 第一个展点：置灰不可点击
       btnPrev.disabled = true;
       btnPrev.classList.add("btn-nav--disabled");
       btnPrev.removeAttribute("onclick");
@@ -472,13 +517,12 @@
       btnPrev.disabled = false;
       btnPrev.classList.remove("btn-nav--disabled");
       btnPrev.onclick = function () {
+        saveScrollPosition(currentId);
         window.location.assign(detailUrlWithId(prevId));
       };
     }
 
-    // 设置下一展点按钮
     if (currentIndex >= LOCATIONS.length - 1) {
-      // 最后一个展点：置灰不可点击
       btnNext.disabled = true;
       btnNext.classList.add("btn-nav--disabled");
       btnNext.removeAttribute("onclick");
@@ -488,6 +532,7 @@
       btnNext.disabled = false;
       btnNext.classList.remove("btn-nav--disabled");
       btnNext.onclick = function () {
+        saveScrollPosition(currentId);
         window.location.assign(detailUrlWithId(nextId));
       };
     }
@@ -1344,6 +1389,8 @@
   }
 
   function updatePageContent(loc) {
+    state.currentExhibitId = normId(loc.id);
+
     try {
       sessionStorage.setItem("wx_current_stop", String(normId(loc.id)));
     } catch (e) {}
@@ -1417,7 +1464,13 @@
           requestedId != null ? loadLocationData(requestedId) : null;
 
         if (!loc) {
-          loc = LOCATIONS[0];
+          var lastId = getLastExhibit();
+          if (lastId != null) {
+            loc = loadLocationData(lastId);
+          }
+          if (!loc) {
+            loc = LOCATIONS[0];
+          }
           if (window.history && window.history.replaceState) {
             try {
               var u = new URL(window.location.href);
@@ -1435,8 +1488,12 @@
           }
         }
 
+        saveLastExhibit(normId(loc.id));
+
         setRetryVisible(false);
         updatePageContent(loc);
+
+        restoreScrollPosition(normId(loc.id));
       })
       .catch(function (e) {
         var extra = e && e.message ? e.message : "";
@@ -1446,6 +1503,18 @@
         );
       });
   }
+
+  window.addEventListener('beforeunload', function () {
+    if (state.currentExhibitId != null) {
+      saveScrollPosition(state.currentExhibitId);
+    }
+  });
+
+  window.addEventListener('pagehide', function () {
+    if (state.currentExhibitId != null) {
+      saveScrollPosition(state.currentExhibitId);
+    }
+  });
 
   document.addEventListener("DOMContentLoaded", function () {
     var btn = document.getElementById("btn-retry-load");
