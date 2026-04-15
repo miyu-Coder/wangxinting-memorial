@@ -121,6 +121,23 @@
       .message-actions { flex-direction: column; gap: 8px; }
       .footer-slogan { padding: 16px; }
     }
+    .exhibit-editor { background: var(--color-surface); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow-card); }
+    .exhibit-select { width: 100%; padding: 12px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 1rem; background: var(--color-surface); color: var(--color-text); cursor: pointer; }
+    .exhibit-select:focus { outline: none; border-color: var(--color-red); }
+    .exhibit-editor .form-group { margin-bottom: 20px; }
+    .exhibit-editor label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--color-text); }
+    .exhibit-editor input[type="text"], .exhibit-editor textarea { width: 100%; padding: 12px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 1rem; font-family: inherit; transition: border-color 0.2s; }
+    .exhibit-editor input[type="text"]:focus, .exhibit-editor textarea:focus { outline: none; border-color: var(--color-red); }
+    .exhibit-actions { display: flex; align-items: center; gap: 16px; margin-top: 24px; }
+    .save-hint { font-size: 0.9rem; color: var(--color-green); }
+    .save-hint.error { color: var(--color-red); }
+    .export-section { text-align: center; }
+    .export-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 20px 0; }
+    .btn-export { background: var(--color-surface); border: 2px solid var(--color-border); color: var(--color-text); padding: 12px 24px; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+    .btn-export:hover { border-color: var(--color-red); color: var(--color-red); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .btn-export-all { background: linear-gradient(135deg, var(--color-red), var(--color-red-deep)); border: none; color: white; }
+    .btn-export-all:hover { color: white; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(196, 30, 58, 0.35); }
+    .required { color: var(--color-red); font-weight: 500; }
   </style>
 </head>
 <body class="admin-page">
@@ -162,6 +179,10 @@
         <button class="tab-btn" data-tab="quiz">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
           答题记录
+        </button>
+        <button class="tab-btn" data-tab="exhibits">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          展点管理
         </button>
       </nav>
 
@@ -237,6 +258,25 @@
           <div id="quizStatsChart" style="width: 100%; height: 280px;"></div>
           <p class="chart-hint">展示各展点的答题人数、平均分及满分人数，帮助评估知识问答效果</p>
         </div>
+
+        <div class="chart-section export-section">
+          <h3>📥 数据导出</h3>
+          <div class="export-buttons">
+            <button class="btn btn-export" onclick="exportData('checkins')">
+              <span>📍</span> 导出打卡数据
+            </button>
+            <button class="btn btn-export" onclick="exportData('flowers')">
+              <span>🌸</span> 导出献花数据
+            </button>
+            <button class="btn btn-export" onclick="exportData('quiz')">
+              <span>📝</span> 导出答题数据
+            </button>
+            <button class="btn btn-export btn-export-all" onclick="exportData('all')">
+              <span>📊</span> 导出全部数据
+            </button>
+          </div>
+          <p class="chart-hint">点击按钮下载 CSV 格式数据文件，可用 Excel 打开查看</p>
+        </div>
       </section>
 
       <section id="messagesTab" class="tab-content">
@@ -260,6 +300,52 @@
           <button class="filter-btn quiz-filter-btn" data-exhibit="4">将军铜像</button>
         </div>
         <div class="message-list" id="quizList"></div>
+      </section>
+
+      <section id="exhibitsTab" class="tab-content">
+        <h2>展点内容管理</h2>
+        <div class="exhibit-editor">
+          <div class="form-group">
+            <label for="exhibitSelect">选择展点</label>
+            <select id="exhibitSelect" class="exhibit-select">
+              <option value="">-- 请选择展点 --</option>
+              <option value="1">陈列馆</option>
+              <option value="2">故居</option>
+              <option value="3">广场</option>
+              <option value="4">装备</option>
+            </select>
+          </div>
+          <div id="exhibitForm" style="display: none;">
+            <div class="form-group">
+              <label for="exhibitTitle">展点标题 <span class="required">*</span></label>
+              <input type="text" id="exhibitTitle" placeholder="请输入展点标题" />
+            </div>
+            <div class="form-group">
+              <label for="exhibitRouteShort">简短名称</label>
+              <input type="text" id="exhibitRouteShort" placeholder="如：陈列馆、故居（用于导航显示）" />
+            </div>
+            <div class="form-group">
+              <label for="exhibitSummary">展点简介 <span class="required">*</span></label>
+              <textarea id="exhibitSummary" rows="2" placeholder="请输入展点简介（一句话概括）"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="exhibitText">详细内容 <span class="required">*</span></label>
+              <textarea id="exhibitText" rows="6" placeholder="请输入展点详细内容"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="exhibitAudio">音频路径</label>
+              <input type="text" id="exhibitAudio" placeholder="如：audio/exhibit-1.mp3（留空则无音频）" />
+            </div>
+            <div class="form-group">
+              <label for="exhibitVideo">视频路径</label>
+              <input type="text" id="exhibitVideo" placeholder="如：video/exhibit-1.mp4（留空则无视频）" />
+            </div>
+            <div class="exhibit-actions">
+              <button type="button" id="saveExhibitBtn" class="btn btn-primary" style="width: auto; padding: 12px 32px;">保存修改</button>
+              <span id="exhibitSaveHint" class="save-hint"></span>
+            </div>
+          </div>
+        </div>
       </section>
       <div class="footer-slogan">传承红色基因 · 赓续精神血脉</div>
     </div>
@@ -337,6 +423,8 @@
           loadMessages();
         } else if (tab === 'quiz') {
           loadQuizRecords();
+        } else if (tab === 'exhibits') {
+          // 展点管理不需要额外加载
         } else {
           loadDashboard();
         }
@@ -974,6 +1062,115 @@
       }).join('');
 
       document.getElementById('quizList').innerHTML = html || '<p class="empty-hint">暂无答题记录</p>';
+    }
+
+    document.getElementById('exhibitSelect').addEventListener('change', function() {
+      const id = this.value;
+      const form = document.getElementById('exhibitForm');
+      const hint = document.getElementById('exhibitSaveHint');
+      
+      if (!id) {
+        form.style.display = 'none';
+        return;
+      }
+      
+      form.style.display = 'block';
+      hint.textContent = '加载中...';
+      hint.className = 'save-hint';
+      
+      fetch('/api/admin/exhibits/' + id)
+        .then(res => {
+          console.log('Response status:', res.status);
+          if (!res.ok) {
+            throw new Error('HTTP ' + res.status);
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log('Response data:', data);
+          if (data.success && data.exhibit) {
+            document.getElementById('exhibitTitle').value = data.exhibit.title || '';
+            document.getElementById('exhibitRouteShort').value = data.exhibit.routeShort || '';
+            document.getElementById('exhibitSummary').value = data.exhibit.summary || '';
+            document.getElementById('exhibitText').value = data.exhibit.text || '';
+            document.getElementById('exhibitAudio').value = data.exhibit.audio || '';
+            document.getElementById('exhibitVideo').value = data.exhibit.video || '';
+            hint.textContent = '';
+          } else {
+            hint.textContent = data.message || '获取展点数据失败';
+            hint.className = 'save-hint error';
+          }
+        })
+        .catch(err => {
+          console.error('Load exhibit error:', err);
+          hint.textContent = '加载失败: ' + err.message;
+          hint.className = 'save-hint error';
+        });
+    });
+
+    document.getElementById('saveExhibitBtn').addEventListener('click', function() {
+      const id = document.getElementById('exhibitSelect').value;
+      if (!id) return;
+      
+      const title = document.getElementById('exhibitTitle').value.trim();
+      const routeShort = document.getElementById('exhibitRouteShort').value.trim();
+      const summary = document.getElementById('exhibitSummary').value.trim();
+      const text = document.getElementById('exhibitText').value.trim();
+      const audio = document.getElementById('exhibitAudio').value.trim();
+      const video = document.getElementById('exhibitVideo').value.trim();
+      const hint = document.getElementById('exhibitSaveHint');
+      
+      if (!title || !summary || !text) {
+        hint.textContent = '请填写必填字段（标题、简介、内容）';
+        hint.className = 'save-hint error';
+        return;
+      }
+      
+      this.disabled = true;
+      this.textContent = '保存中...';
+      
+      fetch('/api/admin/exhibits/' + id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, routeShort, summary, text, audio, video })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          hint.textContent = '✓ 保存成功';
+          hint.className = 'save-hint';
+        } else {
+          hint.textContent = data.message || '保存失败';
+          hint.className = 'save-hint error';
+        }
+      })
+      .catch(err => {
+        console.error('Save exhibit error:', err);
+        hint.textContent = '保存失败，请重试';
+        hint.className = 'save-hint error';
+      })
+      .finally(() => {
+        this.disabled = false;
+        this.textContent = '保存修改';
+      });
+    });
+
+    function exportData(type) {
+      const urls = {
+        checkins: '/api/admin/export/checkins',
+        flowers: '/api/admin/export/flowers',
+        quiz: '/api/admin/export/quiz',
+        all: '/api/admin/export/all'
+      };
+      const url = urls[type];
+      if (!url) return;
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = type === 'all' ? 'all_data.csv' : type + '.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     checkLogin();

@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
@@ -595,6 +597,198 @@ app.post('/api/admin/messages/:id/reject', async (req, res) => {
   } catch (err) {
     console.error('Reject message error:', err);
     return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// GET /api/admin/exhibits - 获取所有展点列表
+app.get('/api/admin/exhibits', (req, res) => {
+  const dataPath = path.join(__dirname, 'data', 'data.json');
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Read exhibits error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
+    }
+    try {
+      const exhibits = JSON.parse(data);
+      const list = exhibits.map(e => ({ id: e.id, title: e.title, routeShort: e.routeShort }));
+      return res.json({ success: true, list });
+    } catch (parseErr) {
+      return res.status(500).json({ success: false, message: '解析展点数据失败' });
+    }
+  });
+});
+
+// GET /api/admin/exhibits/:id - 获取单个展点详情
+app.get('/api/admin/exhibits/:id', (req, res) => {
+  const id = Number(req.params.id);
+  console.log('Get exhibit request, id:', id);
+  if (!id || id < 1 || id > 4) {
+    return res.status(400).json({ success: false, message: '无效的展点ID' });
+  }
+  const dataPath = path.join(__dirname, 'data', 'data.json');
+  console.log('Data path:', dataPath);
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Read exhibit error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
+    }
+    try {
+      const exhibits = JSON.parse(data);
+      const exhibit = exhibits.find(e => e.id === id);
+      if (!exhibit) {
+        console.log('Exhibit not found, id:', id);
+        return res.status(404).json({ success: false, message: '展点不存在' });
+      }
+      console.log('Exhibit found:', exhibit.title);
+      return res.json({ success: true, exhibit });
+    } catch (parseErr) {
+      console.error('Parse error:', parseErr);
+      return res.status(500).json({ success: false, message: '解析展点数据失败' });
+    }
+  });
+});
+
+// POST /api/admin/exhibits/:id - 更新展点内容
+app.post('/api/admin/exhibits/:id', (req, res) => {
+  const id = Number(req.params.id);
+  if (!id || id < 1 || id > 4) {
+    return res.status(400).json({ success: false, message: '无效的展点ID' });
+  }
+  const { title, routeShort, summary, text, audio, video } = req.body;
+  if (!title || !summary || !text) {
+    return res.status(400).json({ success: false, message: '标题、简介、内容不能为空' });
+  }
+  const dataPath = path.join(__dirname, 'data', 'data.json');
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Read exhibits error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
+    }
+    try {
+      const exhibits = JSON.parse(data);
+      const index = exhibits.findIndex(e => e.id === id);
+      if (index === -1) {
+        return res.status(404).json({ success: false, message: '展点不存在' });
+      }
+      exhibits[index].title = title;
+      if (routeShort) exhibits[index].routeShort = routeShort;
+      exhibits[index].summary = summary;
+      exhibits[index].text = text;
+      if (audio !== undefined) exhibits[index].audio = audio;
+      if (video !== undefined) exhibits[index].video = video;
+      fs.writeFile(dataPath, JSON.stringify(exhibits, null, 2), 'utf8', (writeErr) => {
+        if (writeErr) {
+          console.error('Write exhibits error:', writeErr);
+          return res.status(500).json({ success: false, message: '保存展点数据失败' });
+        }
+        console.log('Exhibit updated:', id, title);
+        return res.json({ success: true, message: '保存成功' });
+      });
+    } catch (parseErr) {
+      return res.status(500).json({ success: false, message: '解析展点数据失败' });
+    }
+  });
+});
+
+// GET /api/admin/export/checkins - 导出打卡数据
+app.get('/api/admin/export/checkins', async (req, res) => {
+  try {
+    const rows = await db.allAsync(`
+      SELECT user_identifier, exhibit_id, created_at 
+      FROM visits 
+      ORDER BY created_at DESC
+    `);
+    console.log('Export checkins:', rows.length, 'records');
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
+    let csv = '用户标识,展点,打卡时间\n';
+    rows.forEach(r => {
+      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.created_at}\n`;
+    });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=checkins.csv');
+    res.send('\uFEFF' + csv);
+  } catch (err) {
+    console.error('Export checkins error:', err);
+    res.status(500).json({ success: false, message: '导出失败' });
+  }
+});
+
+// GET /api/admin/export/flowers - 导出献花数据
+app.get('/api/admin/export/flowers', async (req, res) => {
+  try {
+    const rows = await db.allAsync(`
+      SELECT user_identifier, exhibit_id, created_at 
+      FROM flowers 
+      ORDER BY created_at DESC
+    `);
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
+    let csv = '用户标识,展点,献花时间\n';
+    rows.forEach(r => {
+      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.created_at}\n`;
+    });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=flowers.csv');
+    res.send('\uFEFF' + csv);
+  } catch (err) {
+    console.error('Export flowers error:', err);
+    res.status(500).json({ success: false, message: '导出失败' });
+  }
+});
+
+// GET /api/admin/export/quiz - 导出答题数据
+app.get('/api/admin/export/quiz', async (req, res) => {
+  try {
+    const rows = await db.allAsync(`
+      SELECT nickname, exhibit_id, score, created_at 
+      FROM quiz_records 
+      ORDER BY created_at DESC
+    `);
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
+    let csv = '昵称,展点,得分,答题时间\n';
+    rows.forEach(r => {
+      csv += `${r.nickname},${exhibitNames[r.exhibit_id] || '未知'},${r.score}/4,${r.created_at}\n`;
+    });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=quiz.csv');
+    res.send('\uFEFF' + csv);
+  } catch (err) {
+    console.error('Export quiz error:', err);
+    res.status(500).json({ success: false, message: '导出失败' });
+  }
+});
+
+// GET /api/admin/export/all - 导出所有数据（合并CSV）
+app.get('/api/admin/export/all', async (req, res) => {
+  try {
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
+    let csv = '';
+    
+    const checkins = await db.allAsync('SELECT user_identifier, exhibit_id, created_at FROM visits ORDER BY created_at DESC');
+    csv += '【打卡记录】\n用户标识,展点,打卡时间\n';
+    checkins.forEach(r => {
+      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.created_at}\n`;
+    });
+    csv += '\n';
+    
+    const flowers = await db.allAsync('SELECT user_identifier, exhibit_id, created_at FROM flowers ORDER BY created_at DESC');
+    csv += '【献花记录】\n用户标识,展点,献花时间\n';
+    flowers.forEach(r => {
+      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.created_at}\n`;
+    });
+    csv += '\n';
+    
+    const quiz = await db.allAsync('SELECT nickname, exhibit_id, score, created_at FROM quiz_records ORDER BY created_at DESC');
+    csv += '【答题记录】\n昵称,展点,得分,答题时间\n';
+    quiz.forEach(r => {
+      csv += `${r.nickname},${exhibitNames[r.exhibit_id] || '未知'},${r.score}/4,${r.created_at}\n`;
+    });
+    
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=all_data.csv');
+    res.send('\uFEFF' + csv);
+  } catch (err) {
+    console.error('Export all error:', err);
+    res.status(500).json({ success: false, message: '导出失败' });
   }
 });
 
