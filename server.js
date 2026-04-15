@@ -6,11 +6,6 @@ const crypto = require('crypto');
 const app = express();
 app.use(express.json());
 
-///app.use((req, res, next) => {
-  ///res.setHeader('Content-Type', 'text/html; charset=utf-8');
- // next();
-//});
-
 app.use((req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress || '127.0.0.1';
   const ua = req.get('User-Agent') || '';
@@ -238,25 +233,11 @@ app.get('/api/stats/overview', async (req, res) => {
       '4': '将军铜像'
     };
     
-    // 调试：查看page_views原始数据
-    const debugPageViews = await db.allAsync(
-      "SELECT page, COUNT(*) as cnt FROM page_views WHERE page LIKE 'detail_%' GROUP BY page"
-    );
-    console.log('[DEBUG] page_views detail pages:', debugPageViews);
-    
-    // 调试：查看visits原始数据
-    const debugVisits = await db.allAsync(
-      "SELECT exhibit_id, COUNT(*) as cnt FROM visits GROUP BY exhibit_id"
-    );
-    console.log('[DEBUG] visits by exhibit:', debugVisits);
-    
-    // 分别查询打卡数和访问数
     const checkinStats = await db.allAsync(`
       SELECT exhibit_id, COUNT(DISTINCT user_identifier) as checkin_count
       FROM visits
       GROUP BY exhibit_id
     `);
-    console.log('[DEBUG] checkinStats:', checkinStats);
     
     const viewStats = await db.allAsync(`
       SELECT 
@@ -266,9 +247,7 @@ app.get('/api/stats/overview', async (req, res) => {
       WHERE page LIKE 'detail_%'
       GROUP BY CAST(REPLACE(page, 'detail_', '') AS INTEGER)
     `);
-    console.log('[DEBUG] viewStats:', viewStats);
     
-    // 合并计算转化率
     let hotExhibit = null;
     let maxConversionRate = -1;
     
@@ -278,9 +257,6 @@ app.get('/api/stats/overview', async (req, res) => {
       const checkinCount = checkin.checkin_count || 0;
       const conversionRate = viewCount > 0 ? Math.round(checkinCount * 1000 / viewCount) / 10 : 0;
       
-      console.log(`[DEBUG] Exhibit ${checkin.exhibit_id}: checkin=${checkinCount}, views=${viewCount}, rate=${conversionRate}%`);
-      
-      // 按转化率降序，相同则按打卡数降序
       if (conversionRate > maxConversionRate || 
           (conversionRate === maxConversionRate && hotExhibit && checkinCount > hotExhibit.checkinCount)) {
         maxConversionRate = conversionRate;
@@ -294,8 +270,6 @@ app.get('/api/stats/overview', async (req, res) => {
         };
       }
     }
-    
-    console.log('[DEBUG] hotExhibit result:', hotExhibit);
     
     const todayFlowersRow = await db.getAsync(
       "SELECT COUNT(*) AS cnt FROM flowers WHERE DATE(created_at) = DATE('now')"
@@ -343,22 +317,6 @@ app.get('/api/stats/daily-trend', async (req, res) => {
     console.error('Daily trend error:', err);
     return res.status(500).json({ success: false, message: '服务器错误' });
   }
-});
-
-// 添加日志中间件用于诊断
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
-  next();
-});
-
-// API 路由：测试接口
-app.get('/api/test', (req, res) => {
-  res.json({ ok: true });
-});
-
-// 诊断用测试路由
-app.post('/test-post', (req, res) => {
-  res.json({ message: 'POST test route works', body: req.body });
 });
 
 // API 路由：献花 (POST)
@@ -532,15 +490,9 @@ app.post('/api/admin/messages/:id/reject', async (req, res) => {
   }
 });
 
-// 测试日志
-console.log('About to register /admin route, __dirname=' + __dirname);
-
 // 管理后台页面
 app.get('/admin', (req, res) => {
-  console.log('Admin route handler called');
-  const adminPath = __dirname + '/server/admin/index.html';
-  console.log('Serving file from:', adminPath);
-  res.sendFile(adminPath, (err) => {
+  res.sendFile(__dirname + '/server/admin/index.html', (err) => {
     if (err) {
       console.error('sendFile error:', err);
       res.status(500).json({ error: 'Failed to serve admin page', details: err.message });
@@ -548,24 +500,18 @@ app.get('/admin', (req, res) => {
   });
 });
 
-console.log('Registered /admin route');
-
 // 管理后台资源
 app.use('/admin', express.static(__dirname + '/server/admin'));
 
-// 静态文件服务（必须在所有 API 路由之后）
+// 静态文件服务
 app.use(express.static(__dirname));
 
-// 全局 404 处理（用于诊断）
+// 全局 404 处理
 app.use((req, res) => {
-  console.log(`No route matched for ${req.method} ${req.path}`);
-  res.status(404).json({ error: 'Not found', path: req.path, method: req.method });
+  res.status(404).json({ error: 'Not found', path: req.path });
 });
 
 // 启动服务
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });
-
-// 保持进程运行
-setInterval(() => {}, 1000);

@@ -615,22 +615,42 @@
   }
 
   /**
-   * 检查打卡状态（通过API）
+   * 检查打卡状态（通过API检查当前用户）
    */
   function checkCheckinStatus() {
-    return fetch("/api/checkin/stats", {
-      credentials: "include"
-    })
-      .then(function (res) {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
-      .then(function (data) {
-        if (!data.success) {
-          throw new Error(data.message || "获取打卡状态失败");
+    var checkPromises = [];
+    for (var i = 1; i <= 4; i++) {
+      checkPromises.push(
+        fetch("/api/checkin/" + i, { credentials: "include" })
+          .then(function (res) {
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            return res.json();
+          })
+          .then(function (data) {
+            return data.success && data.hasCheckedIn ? true : false;
+          })
+          .catch(function () {
+            return false;
+          })
+      );
+    }
+
+    return Promise.all(checkPromises).then(function (results) {
+      var checkedCount = 0;
+      var checkedTimes = {};
+      
+      results.forEach(function (checked, index) {
+        if (checked) {
+          checkedCount++;
+          checkedTimes[index + 1] = true;
         }
-        return data.data || data;
       });
+
+      return {
+        checkedCount: checkedCount,
+        checkedTimes: checkedTimes
+      };
+    });
   }
 
   /**
@@ -641,17 +661,8 @@
     if (main) main.hidden = true;
 
     checkCheckinStatus()
-      .then(function (stats) {
-        var checkedCount = 0;
-        if (stats && stats.stats) {
-          for (var i = 1; i <= 4; i++) {
-            if (stats.stats[i] && stats.stats[i].checked) {
-              checkedCount++;
-            }
-          }
-        } else if (stats && typeof stats.checkedCount === "number") {
-          checkedCount = stats.checkedCount;
-        }
+      .then(function (result) {
+        var checkedCount = result.checkedCount || 0;
 
         if (checkedCount < 4) {
           var toast = showRedirectToast("请先完成全部展点打卡");
