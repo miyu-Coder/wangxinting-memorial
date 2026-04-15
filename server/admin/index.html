@@ -138,9 +138,17 @@
     .btn-export-all { background: linear-gradient(135deg, var(--color-red), var(--color-red-deep)); border: none; color: white; }
     .btn-export-all:hover { color: white; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(196, 30, 58, 0.35); }
     .required { color: var(--color-red); font-weight: 500; }
+    .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast { padding: 14px 28px; border-radius: 8px; font-size: 0.95rem; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: toastSlideIn 0.3s ease; pointer-events: auto; max-width: 90vw; text-align: center; }
+    .toast--success { background: linear-gradient(135deg, #10B981, #059669); color: white; }
+    .toast--error { background: linear-gradient(135deg, #EF4444, #DC2626); color: white; }
+    .toast--hide { animation: toastSlideOut 0.3s ease forwards; }
+    @keyframes toastSlideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastSlideOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-20px); } }
   </style>
 </head>
 <body class="admin-page">
+  <div id="toastContainer" class="toast-container"></div>
   <div class="admin-container">
     <div id="loginBox" class="login-box">
       <form id="loginForm" class="login-form">
@@ -345,6 +353,21 @@
               <span id="exhibitSaveHint" class="save-hint"></span>
             </div>
           </div>
+          <div class="csv-actions" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--color-border);">
+            <h3 style="font-size: 1rem; margin-bottom: 16px; color: var(--color-text);">📥 CSV 批量导入/导出</h3>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <button type="button" id="exportCSVBtn" class="btn btn-export" style="padding: 10px 20px;">
+                <span>📤</span> 导出展点 CSV
+              </button>
+              <label class="btn btn-export" style="padding: 10px 20px; cursor: pointer;">
+                <span>📥</span> 导入展点 CSV
+                <input type="file" id="importCSVInput" accept=".csv" style="display: none;" />
+              </label>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 12px;">
+              提示：导出 CSV 后可用 Excel 编辑，修改后再导入更新展点内容
+            </p>
+          </div>
         </div>
       </section>
       <div class="footer-slogan">传承红色基因 · 赓续精神血脉</div>
@@ -360,6 +383,23 @@
     let checkinChart = null;
     let trendChart = null;
     let quizStatsChart = null;
+
+    function showToast(message, isError = false) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + (isError ? 'toast--error' : 'toast--success');
+      toast.textContent = message;
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('toast--hide');
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 3000);
+    }
 
     function checkLogin() {
       const session = localStorage.getItem(SESSION_KEY);
@@ -1121,8 +1161,7 @@
       const hint = document.getElementById('exhibitSaveHint');
       
       if (!title || !summary || !text) {
-        hint.textContent = '请填写必填字段（标题、简介、内容）';
-        hint.className = 'save-hint error';
+        showToast('❌ 请填写必填字段（标题、简介、内容）', true);
         return;
       }
       
@@ -1137,23 +1176,80 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          hint.textContent = '✓ 保存成功';
-          hint.className = 'save-hint';
+          showToast('✅ 展点内容修改成功！');
         } else {
-          hint.textContent = data.message || '保存失败';
-          hint.className = 'save-hint error';
+          showToast('❌ ' + (data.message || '保存失败'), true);
         }
       })
       .catch(err => {
         console.error('Save exhibit error:', err);
-        hint.textContent = '保存失败，请重试';
-        hint.className = 'save-hint error';
+        showToast('❌ 保存失败，请重试', true);
       })
       .finally(() => {
         this.disabled = false;
         this.textContent = '保存修改';
       });
     });
+
+    document.getElementById('exportCSVBtn').addEventListener('click', function() {
+      downloadCSV('/api/admin/export-exhibits', '展点数据.csv');
+    });
+
+    document.getElementById('importCSVInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const csvContent = event.target.result;
+        
+        fetch('/api/admin/import-exhibits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/csv' },
+          body: csvContent
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showToast('✅ CSV 导入成功！');
+            document.getElementById('exhibitSelect').value = '';
+            document.getElementById('exhibitForm').style.display = 'none';
+          } else {
+            showToast('❌ ' + (data.message || '导入失败'), true);
+          }
+        })
+        .catch(err => {
+          console.error('Import CSV error:', err);
+          showToast('❌ 导入失败，请检查文件格式', true);
+        });
+      };
+      reader.readAsText(file, 'UTF-8');
+      e.target.value = '';
+    });
+
+    function downloadCSV(url, filename) {
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error('导出失败');
+          return res.text();
+        })
+        .then(csv => {
+          const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+          showToast('✅ ' + filename + ' 下载成功');
+        })
+        .catch(err => {
+          console.error('Export error:', err);
+          showToast('❌ 导出失败，请重试', true);
+        });
+    }
 
     function exportData(type) {
       const urls = {
@@ -1162,15 +1258,17 @@
         quiz: '/api/admin/export/quiz',
         all: '/api/admin/export/all'
       };
+      const filenames = {
+        checkins: '打卡数据.csv',
+        flowers: '献花数据.csv',
+        quiz: '答题数据.csv',
+        all: '全部数据.csv'
+      };
       const url = urls[type];
-      if (!url) return;
+      const filename = filenames[type];
+      if (!url || !filename) return;
       
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = type === 'all' ? 'all_data.csv' : type + '.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      downloadCSV(url, filename);
     }
 
     checkLogin();

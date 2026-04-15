@@ -694,15 +694,15 @@ app.post('/api/admin/exhibits/:id', (req, res) => {
 app.get('/api/admin/export/checkins', async (req, res) => {
   try {
     const rows = await db.allAsync(`
-      SELECT user_identifier, exhibit_id, created_at 
+      SELECT user_identifier, exhibit_id, visited_at 
       FROM visits 
-      ORDER BY created_at DESC
+      ORDER BY visited_at DESC
     `);
     console.log('Export checkins:', rows.length, 'records');
     const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
     let csv = '用户标识,展点,打卡时间\n';
     rows.forEach(r => {
-      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.created_at}\n`;
+      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.visited_at}\n`;
     });
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=checkins.csv');
@@ -763,10 +763,10 @@ app.get('/api/admin/export/all', async (req, res) => {
     const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
     let csv = '';
     
-    const checkins = await db.allAsync('SELECT user_identifier, exhibit_id, created_at FROM visits ORDER BY created_at DESC');
+    const checkins = await db.allAsync('SELECT user_identifier, exhibit_id, visited_at FROM visits ORDER BY visited_at DESC');
     csv += '【打卡记录】\n用户标识,展点,打卡时间\n';
     checkins.forEach(r => {
-      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.created_at}\n`;
+      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.visited_at}\n`;
     });
     csv += '\n';
     
@@ -790,6 +790,116 @@ app.get('/api/admin/export/all', async (req, res) => {
     console.error('Export all error:', err);
     res.status(500).json({ success: false, message: '导出失败' });
   }
+});
+
+function escapeCSV(str) {
+  if (str === null || str === undefined) return '';
+  str = String(str);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+app.get('/api/admin/export-exhibits', (req, res) => {
+  const dataPath = path.join(__dirname, 'data', 'data.json');
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Export exhibits error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
+    }
+    try {
+      const exhibits = JSON.parse(data);
+      let csv = 'ID,标题,简短名称,简介,详细内容,音频路径,视频路径\n';
+      exhibits.forEach(e => {
+        csv += `${e.id},${escapeCSV(e.title)},${escapeCSV(e.routeShort)},${escapeCSV(e.summary)},${escapeCSV(e.text)},${escapeCSV(e.audio || '')},${escapeCSV(e.video || '')}\n`;
+      });
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename=exhibits.csv');
+      res.send('\uFEFF' + csv);
+    } catch (parseErr) {
+      console.error('Parse exhibits error:', parseErr);
+      res.status(500).json({ success: false, message: '解析展点数据失败' });
+    }
+  });
+});
+
+app.post('/api/admin/import-exhibits', express.text({ type: 'text/csv' }), (req, res) => {
+  const csvContent = req.body;
+  if (!csvContent) {
+    return res.status(400).json({ success: false, message: 'CSV 内容为空' });
+  }
+  
+  const lines = csvContent.split('\n').filter(line => line.trim());
+  if (lines.length < 2) {
+    return res.status(400).json({ success: false, message: 'CSV 格式错误：至少需要表头和一行数据' });
+  }
+  
+  const dataPath = path.join(__dirname, 'data', 'data.json');
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Read exhibits error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
+    }
+    
+    try {
+      const exhibits = JSON.parse(data);
+      
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const values = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let j = 0; j < line.length; j++) {
+          const char = line[j];
+          if (char === '"') {
+            if (inQuotes && line[j + 1] === '"') {
+              current += '"';
+              j++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (char === ',' && !inQuotes) {
+            values.push(current);
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        values.push(current);
+        
+        if (values.length < 5) continue;
+        
+        const id = parseInt(values[0]);
+        if (isNaN(id) || id < 1 || id > 4) continue;
+        
+        const index = exhibits.findIndex(e => e.id === id);
+        if (index !== -1) {
+          exhibits[index].title = values[1] || exhibits[index].title;
+          exhibits[index].routeShort = values[2] || exhibits[index].routeShort;
+          exhibits[index].summary = values[3] || exhibits[index].summary;
+          exhibits[index].text = values[4] || exhibits[index].text;
+          if (values[5] !== undefined) exhibits[index].audio = values[5];
+          if (values[6] !== undefined) exhibits[index].video = values[6];
+        }
+      }
+      
+      fs.writeFile(dataPath, JSON.stringify(exhibits, null, 2), 'utf8', (writeErr) => {
+        if (writeErr) {
+          console.error('Write exhibits error:', writeErr);
+          return res.status(500).json({ success: false, message: '保存展点数据失败' });
+        }
+        console.log('Exhibits imported successfully');
+        res.json({ success: true, message: '导入成功' });
+      });
+    } catch (parseErr) {
+      console.error('Parse error:', parseErr);
+      res.status(500).json({ success: false, message: '解析数据失败' });
+    }
+  });
 });
 
 // 管理后台页面
