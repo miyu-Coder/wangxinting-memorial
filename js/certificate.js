@@ -334,6 +334,15 @@
     var panel = document.createElement('div');
     panel.className = 'poster-preview-panel';
 
+    var closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'poster-preview-close';
+    closeBtn.setAttribute('aria-label', '关闭');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.addEventListener('click', function () {
+      mask.remove();
+    });
+
     var title = document.createElement('h3');
     title.className = 'poster-preview-title';
     title.textContent = '🎉 纪念证书已生成';
@@ -386,6 +395,7 @@
 
     actions.appendChild(saveBtn);
     actions.appendChild(shareBtn);
+    panel.appendChild(closeBtn);
     panel.appendChild(title);
     panel.appendChild(imgContainer);
     panel.appendChild(actions);

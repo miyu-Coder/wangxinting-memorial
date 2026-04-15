@@ -259,7 +259,6 @@
    * 显示海报预览弹窗
    */
   function showPosterPreview(dataUrl) {
-    // 移除已存在的弹窗
     var existingModal = document.getElementById("poster-preview-modal");
     if (existingModal) {
       existingModal.remove();
@@ -273,6 +272,15 @@
 
     var panel = document.createElement("div");
     panel.className = "poster-preview-panel";
+
+    var closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "poster-preview-close";
+    closeBtn.setAttribute("aria-label", "关闭");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.addEventListener("click", function () {
+      mask.remove();
+    });
 
     var h = document.createElement("h3");
     h.className = "poster-preview-title";
@@ -301,7 +309,6 @@
     shareBtn.className = "btn btn-secondary poster-preview-btn-share";
     shareBtn.textContent = "分享给好友";
 
-    // 保存图片功能
     saveBtn.addEventListener("click", function () {
       try {
         var a = document.createElement("a");
@@ -320,7 +327,6 @@
       sharePoster();
     });
 
-    // 点击遮罩关闭
     mask.addEventListener("click", function (e) {
       if (e.target === mask) {
         mask.remove();
@@ -329,6 +335,7 @@
 
     actions.appendChild(saveBtn);
     actions.appendChild(shareBtn);
+    panel.appendChild(closeBtn);
     panel.appendChild(h);
     panel.appendChild(imgContainer);
     panel.appendChild(actions);
