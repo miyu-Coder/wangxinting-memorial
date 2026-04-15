@@ -7,19 +7,19 @@
   <style>
     :root {
       --color-red: #C41E3A;
-      --color-red-deep: #7A1528;
-      --color-gold: #D4A843;
+      --color-red-deep: #8B1A1A;
+      --color-gold: #D4A017;
       --color-green: #4CAF50;
       --color-orange: #FF9800;
       --color-bg: #F5F7FA;
       --color-surface: #ffffff;
-      --color-text: #333333;
-      --color-text-secondary: #666666;
-      --color-border: #E8E8E8;
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+      --color-text: #1F2937;
+      --color-text-secondary: #6B7280;
+      --color-border: #E5E7EB;
+      --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
       --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
       --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-      --radius: 16px;
+      --radius: 12px;
       --radius-sm: 8px;
       --font-sans: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     }
@@ -27,57 +27,66 @@
     html { font-size: 16px; -webkit-text-size-adjust: 100%; }
     body { font-family: var(--font-sans); background-color: var(--color-bg); color: var(--color-text); line-height: 1.6; min-height: 100vh; }
     .admin-container { min-height: 100vh; }
-    .login-box { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-    .login-title { font-size: 2rem; margin-bottom: 40px; color: var(--color-red); text-align: center; font-weight: 700; }
-    .login-form { background: var(--color-surface); padding: 48px 40px; border-radius: var(--radius); box-shadow: var(--shadow-lg); width: 100%; max-width: 360px; border-top: 4px solid var(--color-gold); }
-    .form-group { margin-bottom: 24px; }
-    .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--color-text); }
-    .form-group input { width: 100%; padding: 14px 16px; border: 2px solid var(--color-border); border-radius: var(--radius-sm); font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+    .login-box { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; background: linear-gradient(135deg, #8B1A1A, #C41E3A); }
+    .login-form { background: var(--color-surface); padding: 40px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); width: 100%; max-width: 400px; text-align: center; }
+    .login-logo { margin-bottom: 24px; }
+    .login-logo-icon { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; background: linear-gradient(135deg, var(--color-red) 0%, var(--color-red-deep) 100%); border-radius: 50%; font-size: 2rem; box-shadow: 0 4px 16px rgba(196, 30, 58, 0.3); }
+    .login-title { font-size: 1.35rem; margin-bottom: 8px; color: var(--color-red-deep); font-weight: 600; line-height: 1.4; }
+    .login-subtitle { font-size: 0.95rem; color: var(--color-text-secondary); margin-bottom: 32px; }
+    .form-group { margin-bottom: 20px; text-align: left; }
+    .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--color-text); font-size: 0.9rem; }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .input-icon { position: absolute; left: 14px; font-size: 1rem; pointer-events: none; }
+    .form-group input { width: 100%; padding: 12px 16px 12px 42px; border: 1px solid #E5E7EB; border-radius: 8px; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; background: var(--color-surface); }
     .form-group input:focus { outline: none; border-color: var(--color-red); box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1); }
-    .login-hint { text-align: center; font-size: 0.9rem; color: #999; margin-top: 24px; }
+    .form-group input::placeholder { color: #9CA3AF; }
+    .btn-primary { background: linear-gradient(135deg, var(--color-red), var(--color-red-deep)); color: white; width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(196, 30, 58, 0.35); }
+    .login-slogan { font-size: 0.85rem; color: var(--color-red); margin-top: 28px; font-weight: 500; letter-spacing: 1px; }
+    .login-hint { text-align: center; font-size: 0.9rem; color: #9CA3AF; margin-top: 24px; }
     .admin-box { display: flex; flex-direction: column; min-height: 100vh; }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; background: linear-gradient(135deg, var(--color-red) 0%, var(--color-red-deep) 100%); color: white; box-shadow: var(--shadow-md); position: sticky; top: 0; z-index: 100; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; background: #2C3E50; color: white; box-shadow: var(--shadow-md); position: sticky; top: 0; z-index: 100; }
     .admin-title { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.5px; }
     .admin-header .btn-secondary { background: rgba(255, 255, 255, 0.15); color: white; border: 1px solid rgba(255, 255, 255, 0.3); }
     .admin-header .btn-secondary:hover { background: rgba(255, 255, 255, 0.25); }
-    .admin-tabs { display: flex; gap: 0; background: var(--color-surface); padding: 0 32px; border-bottom: 1px solid var(--color-border); position: sticky; top: 64px; z-index: 90; }
-    .tab-btn { padding: 16px 24px; border: none; background: transparent; color: var(--color-text-secondary); font-size: 1rem; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
-    .tab-btn:hover { color: var(--color-red); background: rgba(196, 30, 58, 0.04); }
-    .tab-btn.is-active { color: var(--color-red); border-bottom-color: var(--color-red); font-weight: 600; }
+    .admin-tabs { display: flex; gap: 0; background: #34495E; padding: 0 32px; position: sticky; top: 64px; z-index: 90; }
+    .tab-btn { padding: 16px 24px; border: none; background: transparent; color: rgba(255, 255, 255, 0.7); font-size: 1rem; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+    .tab-btn:hover { color: white; background: rgba(255, 255, 255, 0.08); }
+    .tab-btn.is-active { color: white; border-bottom-color: var(--color-red); font-weight: 600; background: rgba(255, 255, 255, 0.12); }
     .tab-content { display: none; padding: 24px 32px; flex: 1; }
     .tab-content.is-active { display: block; }
     .tab-content h2 { font-size: 1.25rem; color: var(--color-text); margin-bottom: 20px; font-weight: 600; }
-    .dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
-    .stat-card { background: var(--color-surface); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid var(--color-border); }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
+    .stat-card { background: var(--color-surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-card); display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.2s, box-shadow 0.2s; border: none; }
     .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
     .stat-card--warning { border: 2px solid var(--color-orange); background: linear-gradient(135deg, #FFF8F0 0%, var(--color-surface) 100%); }
     .stat-card--warning .stat-value { color: var(--color-orange); }
     .stat-card--gold { border: 2px solid var(--color-gold); background: linear-gradient(135deg, #FFFDF5 0%, var(--color-surface) 100%); }
     .stat-card--gold .stat-value { color: var(--color-gold); }
-    .stat-card--gold .stat-icon { background: linear-gradient(135deg, rgba(212, 168, 67, 0.2) 0%, rgba(212, 168, 67, 0.05) 100%); }
-    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px; background: linear-gradient(135deg, rgba(196, 30, 58, 0.1) 0%, rgba(212, 168, 67, 0.1) 100%); }
+    .stat-card--gold .stat-icon { background: linear-gradient(135deg, rgba(212, 160, 23, 0.2) 0%, rgba(212, 160, 23, 0.05) 100%); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px; background: linear-gradient(135deg, rgba(196, 30, 58, 0.1) 0%, rgba(212, 160, 23, 0.1) 100%); }
     .stat-card--warning .stat-icon { background: linear-gradient(135deg, rgba(255, 152, 0, 0.15) 0%, rgba(255, 152, 0, 0.05) 100%); }
-    .stat-label { font-size: 0.9rem; color: var(--color-text-secondary); font-weight: 500; margin-bottom: 8px; }
-    .stat-value { font-size: 2.25rem; font-weight: 700; color: var(--color-red); line-height: 1.2; }
+    .stat-label { font-size: 14px; color: var(--color-text-secondary); font-weight: 500; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--color-text); line-height: 1.2; }
     .stat-value--small { font-size: 1.5rem; }
     .stat-sublabel { font-size: 0.8rem; color: #999; margin-top: 4px; }
     .stat-conversion { font-size: 0.75rem; color: var(--color-gold); margin-top: 2px; font-weight: 500; }
-    .chart-section { background: var(--color-surface); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 24px; border: 1px solid var(--color-border); }
+    .chart-section { background: var(--color-surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-card); margin-bottom: 24px; border: none; }
     .chart-section h3 { font-size: 1rem; color: var(--color-text); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--color-border); font-weight: 600; }
-    .chart-hint { font-size: 0.8rem; color: #999; margin-top: 16px; text-align: center; }
-    .message-filter { display: flex; gap: 8px; margin-bottom: 20px; padding: 4px; background: #F0F0F0; border-radius: var(--radius-sm); width: fit-content; }
+    .chart-hint { font-size: 0.8rem; color: #9CA3AF; margin-top: 16px; text-align: center; }
+    .message-filter { display: flex; gap: 8px; margin-bottom: 20px; padding: 4px; background: #F3F4F6; border-radius: var(--radius-sm); width: fit-content; }
     .filter-btn { padding: 10px 20px; border: none; background: transparent; border-radius: 6px; color: var(--color-text-secondary); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
     .filter-btn:hover { color: var(--color-text); }
-    .filter-btn.is-active { background: var(--color-surface); color: var(--color-red); box-shadow: var(--shadow-sm); font-weight: 600; }
+    .filter-btn.is-active { background: var(--color-surface); color: var(--color-red); box-shadow: var(--shadow-card); font-weight: 600; }
     .message-list { display: flex; flex-direction: column; gap: 12px; }
-    .message-card { background: var(--color-surface); padding: 20px 24px; border-radius: var(--radius); box-shadow: var(--shadow-sm); border: 1px solid var(--color-border); border-left: 4px solid #ccc; transition: transform 0.2s, box-shadow 0.2s; }
-    .message-card:hover { transform: translateX(4px); box-shadow: var(--shadow-md); }
+    .message-card { background: var(--color-surface); padding: 20px 24px; border-radius: var(--radius); box-shadow: var(--shadow-card); border: none; border-left: 4px solid #ccc; transition: background 0.2s, box-shadow 0.2s; }
+    .message-card:hover { background: #FEF2F2; box-shadow: var(--shadow-md); }
     .message-card.status-pending { border-left-color: var(--color-orange); }
     .message-card.status-approved { border-left-color: var(--color-green); }
     .message-card.status-rejected { border-left-color: var(--color-red); }
     .message-meta { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; font-size: 0.9rem; flex-wrap: wrap; }
-    .message-meta strong { color: var(--color-red); font-weight: 600; }
-    .message-time { color: #999; font-size: 0.85rem; }
+    .message-meta strong { color: var(--color-text); font-weight: 600; }
+    .message-time { color: #9CA3AF; font-size: 0.85rem; }
     .message-status { padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 0.75rem; margin-left: auto; }
     .message-status.status-pending { background: #FFF3E0; color: #E65100; }
     .message-status.status-approved { background: #E8F5E9; color: #2E7D32; }
@@ -93,19 +102,45 @@
     .btn-approve:hover { background: #43A047; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); }
     .btn-reject { padding: 10px 24px; font-size: 0.9rem; background: var(--color-red); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; transition: all 0.2s; }
     .btn-reject:hover { background: #A01830; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3); }
-    .empty-hint { text-align: center; color: #999; padding: 60px 20px; background: var(--color-surface); border-radius: var(--radius); border: 1px dashed var(--color-border); }
+    .empty-hint { text-align: center; color: #9CA3AF; padding: 60px 20px; background: var(--color-surface); border-radius: var(--radius); border: 1px dashed var(--color-border); }
+    .footer-slogan { text-align: center; color: var(--color-red); font-size: 0.9rem; padding: 24px 0; font-weight: 500; letter-spacing: 2px; }
+    @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+      .admin-header { padding: 12px 16px; }
+      .admin-title { font-size: 1.25rem; }
+      .admin-tabs { padding: 0 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .tab-btn { padding: 14px 16px; font-size: 0.9rem; white-space: nowrap; }
+      .tab-content { padding: 16px; }
+      .dashboard-grid { grid-template-columns: 1fr; gap: 16px; }
+      .stat-card { padding: 16px; }
+      .stat-value { font-size: 24px; }
+      .chart-section { padding: 16px; }
+      .message-card { padding: 16px; }
+      .message-meta { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .message-status { margin-left: 0; }
+      .message-actions { flex-direction: column; gap: 8px; }
+      .footer-slogan { padding: 16px; }
+    }
   </style>
 </head>
 <body class="admin-page">
   <div class="admin-container">
     <div id="loginBox" class="login-box">
-      <h1 class="login-title">后台管理系统</h1>
       <form id="loginForm" class="login-form">
+        <div class="login-logo">
+          <span class="login-logo-icon">🎖️</span>
+        </div>
+        <h1 class="login-title">王新亭将军红色教育基地</h1>
+        <p class="login-subtitle">管理后台</p>
         <div class="form-group">
           <label for="adminPassword">管理员密码</label>
-          <input id="adminPassword" type="password" placeholder="请输入管理员密码" required />
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input id="adminPassword" type="password" placeholder="请输入管理员密码" required />
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary">登录</button>
+        <button type="submit" class="btn btn-primary">登 录</button>
+        <p class="login-slogan">传承红色基因 · 赓续精神血脉</p>
       </form>
     </div>
 
@@ -226,6 +261,7 @@
         </div>
         <div class="message-list" id="quizList"></div>
       </section>
+      <div class="footer-slogan">传承红色基因 · 赓续精神血脉</div>
     </div>
   </div>
 
@@ -343,16 +379,18 @@
         } else if (value === maxValue && maxValue > 0) {
           itemStyle = { 
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#7A1528' },
+              { offset: 0, color: '#E8576B' },
               { offset: 1, color: '#C41E3A' }
-            ])
+            ]),
+            borderRadius: [4, 4, 0, 0]
           };
         } else {
           itemStyle = { 
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#D4A843' },
+              { offset: 0, color: '#E8576B' },
               { offset: 1, color: '#C41E3A' }
-            ])
+            ]),
+            borderRadius: [4, 4, 0, 0]
           };
         }
         return { value: value, itemStyle: itemStyle };
@@ -364,21 +402,21 @@
         xAxis: {
           type: 'category',
           data: ['展点1', '展点2', '展点3', '展点4'],
-          axisLine: { lineStyle: { color: '#E8E8E8' } },
-          axisLabel: { color: '#666666', fontSize: 12 }
+          axisLine: { lineStyle: { color: '#E5E7EB' } },
+          axisLabel: { color: '#6B7280', fontSize: 12 }
         },
         yAxis: {
           type: 'value',
           minInterval: 1,
           axisLine: { show: false },
           splitLine: { lineStyle: { color: '#F0F0F0' } },
-          axisLabel: { color: '#666666' }
+          axisLabel: { color: '#6B7280' }
         },
         tooltip: {
           trigger: 'axis',
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          borderColor: '#E8E8E8',
-          textStyle: { color: '#333333' },
+          borderColor: '#E5E7EB',
+          textStyle: { color: '#1F2937' },
           formatter: function(params) {
             const val = params[0].value;
             const percent = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
@@ -423,16 +461,18 @@
         } else if (value === maxValue && maxValue > 0) {
           itemStyle = { 
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#7A1528' },
+              { offset: 0, color: '#E8576B' },
               { offset: 1, color: '#C41E3A' }
-            ])
+            ]),
+            borderRadius: [4, 4, 0, 0]
           };
         } else {
           itemStyle = { 
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: '#D4A843' },
+              { offset: 0, color: '#E8576B' },
               { offset: 1, color: '#C41E3A' }
-            ])
+            ]),
+            borderRadius: [4, 4, 0, 0]
           };
         }
         return { value: value, itemStyle: itemStyle };
@@ -444,21 +484,21 @@
         xAxis: {
           type: 'category',
           data: ['展点1', '展点2', '展点3', '展点4'],
-          axisLine: { lineStyle: { color: '#E8E8E8' } },
-          axisLabel: { color: '#666666', fontSize: 12 }
+          axisLine: { lineStyle: { color: '#E5E7EB' } },
+          axisLabel: { color: '#6B7280', fontSize: 12 }
         },
         yAxis: {
           type: 'value',
           minInterval: 1,
           axisLine: { show: false },
           splitLine: { lineStyle: { color: '#F0F0F0' } },
-          axisLabel: { color: '#666666' }
+          axisLabel: { color: '#6B7280' }
         },
         tooltip: {
           trigger: 'axis',
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          borderColor: '#E8E8E8',
-          textStyle: { color: '#333333' },
+          borderColor: '#E5E7EB',
+          textStyle: { color: '#1F2937' },
           formatter: function(params) {
             const val = params[0].value;
             const percent = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
@@ -507,26 +547,26 @@
         legend: {
           data: ['PV（页面浏览量）', 'UV（独立访客）'],
           top: 0,
-          textStyle: { color: '#666666', fontSize: 12 }
+          textStyle: { color: '#6B7280', fontSize: 12 }
         },
         xAxis: {
           type: 'category',
           data: dates,
-          axisLine: { lineStyle: { color: '#E8E8E8' } },
-          axisLabel: { color: '#666666', fontSize: 12 }
+          axisLine: { lineStyle: { color: '#E5E7EB' } },
+          axisLabel: { color: '#6B7280', fontSize: 12 }
         },
         yAxis: {
           type: 'value',
           minInterval: 1,
           axisLine: { show: false },
           splitLine: { lineStyle: { color: '#F0F0F0' } },
-          axisLabel: { color: '#666666' }
+          axisLabel: { color: '#6B7280' }
         },
         tooltip: {
           trigger: 'axis',
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          borderColor: '#E8E8E8',
-          textStyle: { color: '#333333' }
+          borderColor: '#E5E7EB',
+          textStyle: { color: '#1F2937' }
         },
         series: [
           {
@@ -535,7 +575,7 @@
             data: pvData,
             smooth: true,
             symbol: 'circle',
-            symbolSize: 8,
+            symbolSize: 6,
             lineStyle: { color: '#C41E3A', width: 3 },
             itemStyle: { color: '#C41E3A' },
             label: { show: true, position: 'top', color: '#C41E3A', fontSize: 11, fontWeight: 600 }
@@ -546,10 +586,10 @@
             data: uvData,
             smooth: true,
             symbol: 'circle',
-            symbolSize: 8,
-            lineStyle: { color: '#D4A843', width: 3 },
-            itemStyle: { color: '#D4A843' },
-            label: { show: true, position: 'top', color: '#D4A843', fontSize: 11, fontWeight: 600 }
+            symbolSize: 6,
+            lineStyle: { color: '#D4A017', width: 3 },
+            itemStyle: { color: '#D4A017' },
+            label: { show: true, position: 'top', color: '#D4A017', fontSize: 11, fontWeight: 600 }
           }
         ]
       };
@@ -599,13 +639,13 @@
         legend: {
           data: ['答题人数', '平均分', '满分人数'],
           top: 0,
-          textStyle: { color: '#666666', fontSize: 12 }
+          textStyle: { color: '#6B7280', fontSize: 12 }
         },
         xAxis: {
           type: 'category',
           data: exhibitNames,
-          axisLine: { lineStyle: { color: '#E8E8E8' } },
-          axisLabel: { color: '#666666', fontSize: 12 }
+          axisLine: { lineStyle: { color: '#E5E7EB' } },
+          axisLabel: { color: '#6B7280', fontSize: 12 }
         },
         yAxis: [
           {
@@ -614,7 +654,7 @@
             minInterval: 1,
             axisLine: { show: false },
             splitLine: { lineStyle: { color: '#F0F0F0' } },
-            axisLabel: { color: '#666666' }
+            axisLabel: { color: '#6B7280' }
           },
           {
             type: 'value',
@@ -624,13 +664,13 @@
             interval: 1,
             axisLine: { show: false },
             splitLine: { show: false },
-            axisLabel: { color: '#666666' }
+            axisLabel: { color: '#6B7280' }
           }
         ],
         tooltip: {
           trigger: 'axis',
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          borderColor: '#E8E8E8',
+          borderColor: '#E5E7EB',
           textStyle: { color: '#333333' }
         },
         series: [
@@ -938,5 +978,29 @@
 
     checkLogin();
   </script>
+  <script>
+(function() {
+  // 强制导航栏红色渐变
+  var header = document.querySelector('header.admin-header');
+  var nav = document.querySelector('nav.admin-tabs');
+  var btn = document.querySelector('.admin-header button');
+  
+  if(header) {
+    header.style.background = 'linear-gradient(180deg, #8B1A1A 0%, #C41E3A 100%)';
+  }
+  if(nav) {
+    nav.style.background = 'linear-gradient(180deg, #C41E3A 0%, #8B1A1A 100%)';
+  }
+  if(btn) {
+    btn.style.background = 'transparent';
+    btn.style.color = '#FFFFFF';
+    btn.style.border = '1px solid rgba(255,255,255,0.4)';
+    btn.style.borderRadius = '6px';
+    btn.style.padding = '6px 16px';
+    btn.style.outline = 'none';
+    btn.style.boxShadow = 'none';
+  }
+})();
+</script>
 </body>
 </html>
