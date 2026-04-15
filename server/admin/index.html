@@ -64,6 +64,7 @@
     .stat-conversion { font-size: 0.75rem; color: var(--color-gold); margin-top: 2px; font-weight: 500; }
     .chart-section { background: var(--color-surface); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 24px; border: 1px solid var(--color-border); }
     .chart-section h3 { font-size: 1rem; color: var(--color-text); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--color-border); font-weight: 600; }
+    .chart-hint { font-size: 0.8rem; color: #999; margin-top: 16px; text-align: center; }
     .message-filter { display: flex; gap: 8px; margin-bottom: 20px; padding: 4px; background: #F0F0F0; border-radius: var(--radius-sm); width: fit-content; }
     .filter-btn { padding: 10px 20px; border: none; background: transparent; border-radius: 6px; color: var(--color-text-secondary); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
     .filter-btn:hover { color: var(--color-text); }
@@ -185,6 +186,12 @@
           <h3>各展点打卡人数（单位：次）</h3>
           <div id="checkinChart" style="width: 100%; height: 250px;"></div>
         </div>
+
+        <div class="chart-section">
+          <h3>📈 近7日访问趋势</h3>
+          <div id="trendChart" style="width: 100%; height: 300px;"></div>
+          <p class="chart-hint">用于分析用户访问趋势及活跃度变化，为运营决策提供依据</p>
+        </div>
       </section>
 
       <section id="messagesTab" class="tab-content">
@@ -207,6 +214,7 @@
     let allMessagesData = [];
     let flowerChart = null;
     let checkinChart = null;
+    let trendChart = null;
 
     function checkLogin() {
       const session = localStorage.getItem(SESSION_KEY);
@@ -289,6 +297,9 @@
       }
       if (!checkinChart) {
         checkinChart = echarts.init(document.getElementById('checkinChart'));
+      }
+      if (!trendChart) {
+        trendChart = echarts.init(document.getElementById('trendChart'));
       }
     }
 
@@ -452,9 +463,89 @@
       checkinChart.setOption(option);
     }
 
+    function renderTrendChart(data) {
+      if (!trendChart) return;
+      
+      const dates = data.map(item => {
+        const d = new Date(item.date);
+        return (d.getMonth() + 1) + '/' + d.getDate();
+      });
+      const pvData = data.map(item => item.pv);
+      const uvData = data.map(item => item.uv);
+      
+      const option = {
+        backgroundColor: 'transparent',
+        grid: { left: '10%', right: '5%', top: '18%', bottom: '12%' },
+        legend: {
+          data: ['PV（页面浏览量）', 'UV（独立访客）'],
+          top: 0,
+          textStyle: { color: '#666666', fontSize: 12 }
+        },
+        xAxis: {
+          type: 'category',
+          data: dates,
+          axisLine: { lineStyle: { color: '#E8E8E8' } },
+          axisLabel: { color: '#666666', fontSize: 12 }
+        },
+        yAxis: {
+          type: 'value',
+          minInterval: 1,
+          axisLine: { show: false },
+          splitLine: { lineStyle: { color: '#F0F0F0' } },
+          axisLabel: { color: '#666666' }
+        },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#E8E8E8',
+          textStyle: { color: '#333333' }
+        },
+        series: [
+          {
+            name: 'PV（页面浏览量）',
+            type: 'line',
+            data: pvData,
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 8,
+            lineStyle: { color: '#C41E3A', width: 3 },
+            itemStyle: { color: '#C41E3A' },
+            label: { show: true, position: 'top', color: '#C41E3A', fontSize: 11, fontWeight: 600 }
+          },
+          {
+            name: 'UV（独立访客）',
+            type: 'line',
+            data: uvData,
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 8,
+            lineStyle: { color: '#D4A843', width: 3 },
+            itemStyle: { color: '#D4A843' },
+            label: { show: true, position: 'top', color: '#D4A843', fontSize: 11, fontWeight: 600 }
+          }
+        ]
+      };
+
+      if (data.length === 0) {
+        option.graphic = {
+          type: 'text',
+          left: 'center',
+          top: 'middle',
+          style: {
+            text: '暂无数据',
+            fontSize: 16,
+            fill: '#999999'
+          }
+        };
+      }
+
+      trendChart.setOption(option);
+    }
+
     window.addEventListener('resize', function () {
       if (flowerChart) flowerChart.resize();
       if (checkinChart) checkinChart.resize();
+      if (trendChart) trendChart.resize();
     });
 
     async function loadDashboard() {
@@ -512,6 +603,12 @@
         initCharts();
         renderFlowerChart(flowerData);
         renderCheckinChart(checkinDataArr);
+
+        const trendRes = await fetch('/api/stats/daily-trend');
+        const trendData = await trendRes.json();
+        if (trendData.success) {
+          renderTrendChart(trendData.data || []);
+        }
       } catch (err) {
         console.error('Error loading dashboard:', err);
       }

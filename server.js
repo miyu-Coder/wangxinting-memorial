@@ -321,6 +321,30 @@ app.get('/api/stats/overview', async (req, res) => {
   }
 });
 
+// GET /api/stats/daily-trend - 获取近7日访问趋势
+app.get('/api/stats/daily-trend', async (req, res) => {
+  try {
+    const rows = await db.allAsync(`
+      SELECT 
+        DATE(visit_time) as date,
+        COUNT(*) as pv,
+        COUNT(DISTINCT session_id) as uv
+      FROM page_views 
+      WHERE visit_time >= DATE('now', '-6 days')
+      GROUP BY DATE(visit_time)
+      ORDER BY date ASC
+    `);
+    
+    return res.json({
+      success: true,
+      data: rows || []
+    });
+  } catch (err) {
+    console.error('Daily trend error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
 // 添加日志中间件用于诊断
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);
