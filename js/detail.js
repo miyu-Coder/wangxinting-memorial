@@ -168,14 +168,7 @@
         return { kind: "image", src: String(src).trim() };
       });
     }
-    var labels = Array.isArray(loc.placeholderLabels)
-      ? loc.placeholderLabels.filter(function (t) {
-          return t && String(t).trim();
-        })
-      : [];
-    return labels.map(function (label) {
-      return { kind: "placeholder", label: String(label).trim() };
-    });
+    return [];
   }
 
   function loadData() {
@@ -305,7 +298,6 @@
     var slides = buildSlides(loc);
 
     var carousel = document.getElementById("detail-carousel");
-    var empty = document.getElementById("carousel-empty");
     var imgEl = document.getElementById("carousel-image");
     var phEl = document.getElementById("carousel-placeholder-slide");
     var phText = document.getElementById("carousel-placeholder-text");
@@ -313,17 +305,28 @@
     var prev = document.getElementById("carousel-prev");
     var next = document.getElementById("carousel-next");
     var viewport = document.getElementById("carousel-viewport");
+    var carouselSection = carousel ? carousel.closest("section") : null;
 
     if (!slides.length) {
       if (carousel) carousel.hidden = true;
-      if (empty) empty.hidden = false;
       if (imgEl) imgEl.hidden = true;
       if (phEl) phEl.hidden = true;
+      if (carouselSection) carouselSection.hidden = true;
       return;
     }
 
-    if (empty) empty.hidden = true;
     if (carousel) carousel.hidden = false;
+    if (carouselSection) carouselSection.hidden = false;
+
+    if (viewport) {
+      viewport.classList.remove("aspect-4-3", "aspect-3-4");
+      var exhibitId = loc && loc.id;
+      if (exhibitId === 3) {
+        viewport.style.aspectRatio = "3 / 4";
+      } else {
+        viewport.style.aspectRatio = "2.225 / 1";
+      }
+    }
 
     function paintDots() {
       if (!dots) return;

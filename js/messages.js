@@ -1,10 +1,16 @@
 /**
  * 留言板前端（基于后端 API）
- * - GET  /api/messages  获取已审核留言（按时间倒序）
+ * - GET  /api/messages  获取已审核留言（按时间倒序，支持分页）
  * - POST /api/messages  提交一条留言（需审核后才公开）
  */
 (function (global) {
   'use strict';
+
+  var PAGE_SIZE = 20;
+  var currentPage = 1;
+  var isLoading = false;
+  var hasMore = true;
+  var allMessages = [];
 
   function countChars(s) {
     return Array.from(String(s || '')).length;
@@ -47,7 +53,6 @@
     return null;
   }
 
-  // ========== 自定义弹窗（与献花弹窗风格一致） ==========
   function showMessageDialog(title, btnText) {
     var mask = document.createElement('div');
     mask.className = 'flower-tribute-modal-mask';
@@ -84,6 +89,7 @@
   var nickEl = null;
   var contentEl = null;
   var submitBtn = null;
+  var loadMoreEl = null;
 
   function renderMessageItem(item) {
     var li = document.createElement('li');
@@ -109,36 +115,118 @@
     return li;
   }
 
-  function renderList(list) {
+  function createLoadMoreElement() {
+    var el = document.createElement('div');
+    el.className = 'load-more-btn';
+    el.id = 'loadMoreBtn';
+    el.innerHTML = '<span class="load-more-text">加载更多</span><span class="load-more-loading" style="display:none;">加载中...</span>';
+    el.style.cssText = 'text-align:center;padding:16px;cursor:pointer;color:#C41E3A;font-size:0.95rem;';
+    return el;
+  }
+
+  function updateLoadMoreState() {
+    if (!loadMoreEl) return;
+    var textEl = loadMoreEl.querySelector('.load-more-text');
+    var loadingEl = loadMoreEl.querySelector('.load-more-loading');
+    
+    if (isLoading) {
+      if (textEl) textEl.style.display = 'none';
+      if (loadingEl) loadingEl.style.display = 'inline';
+      loadMoreEl.style.cursor = 'wait';
+    } else if (!hasMore) {
+      if (textEl) {
+        textEl.style.display = 'inline';
+        textEl.textContent = '没有更多留言了';
+      }
+      if (loadingEl) loadingEl.style.display = 'none';
+      loadMoreEl.style.cursor = 'default';
+      loadMoreEl.style.color = '#999';
+    } else {
+      if (textEl) {
+        textEl.style.display = 'inline';
+        textEl.textContent = '加载更多';
+      }
+      if (loadingEl) loadingEl.style.display = 'none';
+      loadMoreEl.style.cursor = 'pointer';
+      loadMoreEl.style.color = '#C41E3A';
+    }
+  }
+
+  function appendMessages(list) {
     if (!listEl) return;
-    listEl.innerHTML = '';
+    
+    if (loadMoreEl && loadMoreEl.parentNode) {
+      loadMoreEl.parentNode.removeChild(loadMoreEl);
+    }
+    
     if (!Array.isArray(list) || !list.length) {
-      var empty = document.createElement('p');
-      empty.className = 'messages-empty';
-      empty.textContent = '暂无留言';
-      listEl.appendChild(empty);
+      if (currentPage === 1) {
+        listEl.innerHTML = '';
+        var empty = document.createElement('p');
+        empty.className = 'messages-empty';
+        empty.textContent = '暂无留言';
+        listEl.appendChild(empty);
+      }
       return;
     }
+    
+    if (currentPage === 1) {
+      listEl.innerHTML = '';
+      allMessages = [];
+    }
+    
     for (var i = 0; i < list.length; i++) {
       try {
         var it = list[i];
+        allMessages.push(it);
         var node = renderMessageItem(it);
         listEl.appendChild(node);
       } catch (e) {}
     }
+    
+    loadMoreEl = createLoadMoreElement();
+    loadMoreEl.addEventListener('click', loadMoreMessages);
+    listEl.appendChild(loadMoreEl);
+    updateLoadMoreState();
   }
 
-  function loadMessages() {
-    return fetch('/api/messages', { cache: 'no-store' }).then(function (res) {
-      if (!res.ok) return Promise.resolve([]);
-      return res.json().then(function (body) {
-        if (body && Array.isArray(body.list)) return body.list;
-        return [];
-      }).catch(function () { return []; });
-    }).catch(function () { return []; }).then(function (list) {
-      renderList(list);
-      return list;
-    });
+  function loadMessages(page) {
+    page = page || 1;
+    if (isLoading) return Promise.resolve([]);
+    
+    isLoading = true;
+    updateLoadMoreState();
+    
+    return fetch('/api/messages?page=' + page + '&limit=' + PAGE_SIZE, { cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) return Promise.resolve({ list: [], pagination: { hasMore: false } });
+        return res.json().then(function (body) {
+          return {
+            list: (body && Array.isArray(body.list)) ? body.list : [],
+            pagination: (body && body.pagination) || { hasMore: false }
+          };
+        }).catch(function () { return { list: [], pagination: { hasMore: false } }; });
+      })
+      .catch(function () { return { list: [], pagination: { hasMore: false } }; })
+      .then(function (result) {
+        isLoading = false;
+        hasMore = result.pagination.hasMore;
+        currentPage = page;
+        appendMessages(result.list);
+        return result.list;
+      });
+  }
+
+  function loadMoreMessages() {
+    if (isLoading || !hasMore) return;
+    loadMessages(currentPage + 1);
+  }
+
+  function refreshMessages() {
+    currentPage = 1;
+    hasMore = true;
+    allMessages = [];
+    return loadMessages(1);
   }
 
   function submitMessage(nickname, content) {
@@ -186,9 +274,21 @@
     }
     
     if (submitBtn) submitBtn.disabled = true;
-    submitMessage(nick, content).then(function () {
+    submitMessage(nick, content).then(function (result) {
       if (submitBtn) submitBtn.disabled = false;
     });
+  }
+
+  function handleScroll() {
+    if (isLoading || !hasMore) return;
+    
+    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    var scrollHeight = document.documentElement.scrollHeight;
+    var clientHeight = window.innerHeight;
+    
+    if (scrollTop + clientHeight >= scrollHeight - 200) {
+      loadMoreMessages();
+    }
   }
 
   function init() {
@@ -213,12 +313,16 @@
       });
     }
 
-    loadMessages();
+    window.addEventListener('scroll', handleScroll);
+    
+    loadMessages(1);
   }
 
   global.wxMessages = {
     init: init,
     loadMessages: loadMessages,
+    loadMoreMessages: loadMoreMessages,
+    refreshMessages: refreshMessages,
     submitMessage: submitMessage
   };
 

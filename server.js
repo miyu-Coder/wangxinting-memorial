@@ -534,10 +534,29 @@ app.post('/api/messages', async (req, res) => {
 // GET /api/messages - 仅返回已审核(status=1)留言，按 id 倒序
 app.get('/api/messages', async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    
     const rows = await db.allAsync(
-      'SELECT id, nickname, content, created_at FROM messages WHERE status = 1 ORDER BY id DESC'
+      'SELECT id, nickname, content, created_at FROM messages WHERE status = 1 ORDER BY id DESC LIMIT ? OFFSET ?',
+      [limit, offset]
     );
-    return res.json({ success: true, list: rows });
+    
+    const countRow = await db.getAsync('SELECT COUNT(*) as total FROM messages WHERE status = 1');
+    const total = countRow ? countRow.total : 0;
+    const hasMore = offset + rows.length < total;
+    
+    return res.json({ 
+      success: true, 
+      list: rows,
+      pagination: {
+        page: page,
+        limit: limit,
+        total: total,
+        hasMore: hasMore
+      }
+    });
   } catch (err) {
     console.error('Messages query error:', err);
     return res.status(500).json({ success: false, message: '服务器错误' });
