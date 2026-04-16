@@ -58,6 +58,7 @@
     mask.className = 'flower-tribute-modal-mask';
     mask.setAttribute('role', 'dialog');
     mask.setAttribute('aria-modal', 'true');
+    mask.setAttribute('aria-label', '提示');
 
     var panel = document.createElement('div');
     panel.className = 'flower-tribute-modal-panel';
@@ -99,7 +100,7 @@
     meta.className = 'message-item__meta';
     var nick = document.createElement('span');
     nick.className = 'message-item__nick';
-    nick.innerHTML = escapeHtml(item.nickname || '游客');
+    nick.textContent = item.nickname || '游客';
     var time = document.createElement('span');
     time.className = 'message-item__time';
     time.textContent = formatTime(item.created_at || item.createdAt || '');
@@ -314,6 +315,9 @@
     }
 
     window.addEventListener('scroll', handleScroll);
+    window.addEventListener('beforeunload', function () {
+      window.removeEventListener('scroll', handleScroll);
+    });
     
     loadMessages(1);
   }

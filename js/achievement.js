@@ -7,6 +7,14 @@
 
   var LOCATIONS = [];
 
+  function escapeHtml(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   function normId(v) {
     var n = parseInt(String(v).trim(), 10);
     return Number.isFinite(n) && n >= 1 ? n : null;
@@ -77,7 +85,7 @@
       var content = document.createElement("div");
       content.innerHTML =
         '<span class="achievement-exhibit-item__icon">' + icon + '</span>' +
-        '<h3 class="achievement-exhibit-item__name">' + (loc.routeShort || loc.title || "展点 " + key) + '</h3>' +
+        '<h3 class="achievement-exhibit-item__name">' + escapeHtml(loc.routeShort || loc.title || "展点 " + key) + '</h3>' +
         '<p class="achievement-exhibit-item__score">' +
         (row && row.completed ? score + "/" + nq + "分" : "未完成") +
         '</p>';
@@ -131,16 +139,22 @@
 
     var posterData = preparePosterData(st, grandMax);
 
-    // 显示加载提示
-    showLoadingToast();
+    PosterUtils.showLoadingToast();
 
     window.PosterGenerator.generateAchievementPoster(posterData.userData, posterData.detailItems)
       .then(function (dataUrl) {
-        hideLoadingToast();
-        showPosterPreview(dataUrl);
+        PosterUtils.hideLoadingToast();
+        PosterUtils.showPosterPreview({
+          dataUrl: dataUrl,
+          title: "🎉 成就海报已生成",
+          downloadName: "王新亭红色教育基地-成就海报.png",
+          shareTitle: "红色传承之旅 · 成就海报",
+          shareText: "我在王新亭将军红色教育基地完成了知识问答挑战，快来扫码体验！",
+          onError: showPosterError
+        });
       })
       .catch(function (error) {
-        hideLoadingToast();
+        PosterUtils.hideLoadingToast();
         generatePosterFallback(st, grandMax);
       });
   }
@@ -244,205 +258,21 @@
     );
     ctx.fillText("扫码或搜索访问官方导览", w / 2, h - 82);
 
-    // 转换为图片并显示预览
     try {
       var dataUrl = canvas.toDataURL("image/png");
-      showPosterPreview(dataUrl);
+      PosterUtils.showPosterPreview({
+        dataUrl: dataUrl,
+        title: "🎉 成就海报已生成",
+        downloadName: "王新亭红色教育基地-成就海报.png",
+        shareTitle: "红色传承之旅 · 成就海报",
+        shareText: "我在王新亭将军红色教育基地完成了知识问答挑战，快来扫码体验！",
+        onError: showPosterError
+      });
     } catch (e) {
       showPosterError("图片生成失败，请重试");
     }
   }
 
-  /**
-   * 显示海报预览弹窗
-   */
-  function showPosterPreview(dataUrl) {
-    var existingModal = document.getElementById("poster-preview-modal");
-    if (existingModal) {
-      existingModal.remove();
-    }
-
-    var mask = document.createElement("div");
-    mask.id = "poster-preview-modal";
-    mask.className = "poster-preview-modal";
-    mask.setAttribute("role", "dialog");
-    mask.setAttribute("aria-modal", "true");
-
-    var panel = document.createElement("div");
-    panel.className = "poster-preview-panel";
-
-    var closeBtn = document.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.className = "poster-preview-close";
-    closeBtn.setAttribute("aria-label", "关闭");
-    closeBtn.innerHTML = "&times;";
-    closeBtn.addEventListener("click", function () {
-      mask.remove();
-    });
-
-    var h = document.createElement("h3");
-    h.className = "poster-preview-title";
-    h.textContent = "🎉 成就海报已生成";
-
-    var imgContainer = document.createElement("div");
-    imgContainer.className = "poster-preview-image";
-
-    var img = document.createElement("img");
-    img.src = dataUrl;
-    img.alt = "成就海报";
-    img.className = "poster-preview-img";
-
-    imgContainer.appendChild(img);
-
-    var actions = document.createElement("div");
-    actions.className = "poster-preview-actions";
-
-    var saveBtn = document.createElement("button");
-    saveBtn.type = "button";
-    saveBtn.className = "btn btn-primary poster-preview-btn-save";
-    saveBtn.textContent = "保存图片";
-
-    var shareBtn = document.createElement("button");
-    shareBtn.type = "button";
-    shareBtn.className = "btn btn-secondary poster-preview-btn-share";
-    shareBtn.textContent = "分享给好友";
-
-    saveBtn.addEventListener("click", function () {
-      try {
-        var a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = "王新亭红色教育基地-成就海报.png";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        showSaveSuccessToast();
-      } catch (e) {
-        showPosterError("保存失败，请长按图片保存");
-      }
-    });
-
-    shareBtn.addEventListener("click", function () {
-      sharePoster();
-    });
-
-    mask.addEventListener("click", function (e) {
-      if (e.target === mask) {
-        mask.remove();
-      }
-    });
-
-    actions.appendChild(saveBtn);
-    actions.appendChild(shareBtn);
-    panel.appendChild(closeBtn);
-    panel.appendChild(h);
-    panel.appendChild(imgContainer);
-    panel.appendChild(actions);
-    mask.appendChild(panel);
-    document.body.appendChild(mask);
-  }
-
-  function sharePoster() {
-    var title = '红色传承之旅 · 成就海报';
-    var url = window.location.href;
-    if (navigator.share) {
-      navigator.share({
-        title: title,
-        text: '我在王新亭将军红色教育基地完成了知识问答挑战，快来扫码体验！',
-        url: url
-      }).catch(function (err) {
-        showShareToast('分享未完成，可复制链接分享');
-      });
-    } else {
-      copyToClipboard(url, '链接已复制，可粘贴分享');
-    }
-  }
-
-  function copyToClipboard(text, successMessage) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () {
-        showShareToast(successMessage || '已复制到剪贴板');
-      }).catch(function () {
-        fallbackCopyText(text, successMessage);
-      });
-    } else {
-      fallbackCopyText(text, successMessage);
-    }
-  }
-
-  function fallbackCopyText(text, successMessage) {
-    var textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.left = '-9999px';
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      var success = document.execCommand('copy');
-      if (success) {
-        showShareToast(successMessage || '已复制到剪贴板');
-      } else {
-        showShareToast('复制失败，请手动复制');
-      }
-    } catch (e) {
-      showShareToast('复制失败，请手动复制');
-    }
-    document.body.removeChild(textarea);
-  }
-
-  /**
-   * 显示加载提示
-   */
-  function showLoadingToast() {
-    hideLoadingToast();
-    var toast = document.createElement("div");
-    toast.id = "poster-loading-toast";
-    toast.className = "poster-loading-toast";
-    toast.textContent = "正在生成海报...";
-    document.body.appendChild(toast);
-  }
-
-  /**
-   * 隐藏加载提示
-   */
-  function hideLoadingToast() {
-    var toast = document.getElementById("poster-loading-toast");
-    if (toast) {
-      toast.remove();
-    }
-  }
-
-  /**
-   * 显示保存成功提示
-   */
-  function showSaveSuccessToast() {
-    var toast = document.createElement("div");
-    toast.className = "poster-success-toast";
-    toast.textContent = "图片已保存";
-    document.body.appendChild(toast);
-
-    setTimeout(function () {
-      if (toast.parentNode) {
-        toast.remove();
-      }
-    }, 2000);
-  }
-
-  function showShareToast(message) {
-    var toast = document.createElement("div");
-    toast.className = "poster-share-toast";
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    setTimeout(function () {
-      if (toast.parentNode) {
-        toast.remove();
-      }
-    }, 2000);
-  }
-
-  /**
-   * 显示错误提示
-   */
   function showPosterError(message) {
     var hint = document.getElementById("share-hint");
     if (hint) {
@@ -479,9 +309,9 @@
         // 为称号添加勋章图标
         var titleEl = document.getElementById("stat-title");
         if (state.title && state.title.indexOf("红色传承人") !== -1) {
-          titleEl.innerHTML = '<span class="medal-icon">🏆</span> ' + state.title;
+          titleEl.innerHTML = '<span class="medal-icon">🏆</span> ' + escapeHtml(state.title);
         } else if (state.totalScore >= 12 && state.title) {
-          titleEl.innerHTML = '<span class="medal-icon">🎖️</span> ' + state.title;
+          titleEl.innerHTML = '<span class="medal-icon">🎖️</span> ' + escapeHtml(state.title);
         }
 
         // 设置鼓励文案

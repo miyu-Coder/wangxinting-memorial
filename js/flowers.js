@@ -35,7 +35,8 @@
   function fetchJson(url, opts) {
     return fetch(url, Object.assign({ cache: "no-store" }, opts || {})).then(function (res) {
       if (!res) return Promise.reject(new Error("no response"));
-      if (res.headers && res.headers.get && res.headers.get("content-type") && res.headers.get("content-type").indexOf("application/json") !== -1) {
+      var ct = (res.headers && typeof res.headers.get === 'function') ? res.headers.get("content-type") : '';
+      if (ct && ct.indexOf("application/json") !== -1) {
         return res.json().then(function (body) { return { res: res, body: body }; });
       }
       return { res: res, body: null };
@@ -115,7 +116,7 @@
     return '\uD83C\uDF38 ' + String(total) + '+ \u4EBA\u5DF2\u732E\u82B1';
   }
 
-  function showThankDialog() {
+  function showDialog(title, btnText) {
     var mask = document.createElement('div');
     mask.className = 'flower-tribute-modal-mask';
     mask.setAttribute('role', 'dialog');
@@ -127,12 +128,12 @@
 
     var h = document.createElement('p');
     h.className = 'flower-tribute-modal-title';
-    h.textContent = '感谢您的致敬！';
+    h.textContent = title;
 
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'btn btn-primary flower-tribute-modal-btn';
-    btn.textContent = '好的';
+    btn.textContent = btnText || '好的';
 
     function close() { mask.remove(); }
     btn.addEventListener('click', close);
@@ -142,64 +143,18 @@
     panel.appendChild(btn);
     mask.appendChild(panel);
     document.body.appendChild(mask);
+  }
+
+  function showThankDialog() {
+    showDialog('感谢您的致敬！', '好的');
   }
 
   function showAlreadyDialog() {
-    var mask = document.createElement('div');
-    mask.className = 'flower-tribute-modal-mask';
-    mask.setAttribute('role', 'dialog');
-    mask.setAttribute('aria-modal', 'true');
-    mask.setAttribute('aria-label', '致敬提示');
-
-    var panel = document.createElement('div');
-    panel.className = 'flower-tribute-modal-panel';
-
-    var h = document.createElement('p');
-    h.className = 'flower-tribute-modal-title';
-    h.textContent = '您已经献过花了';
-
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'btn btn-primary flower-tribute-modal-btn';
-    btn.textContent = '知道了';
-
-    function close() { mask.remove(); }
-    btn.addEventListener('click', close);
-    mask.addEventListener('click', function (ev) { if (ev.target === mask) close(); });
-
-    panel.appendChild(h);
-    panel.appendChild(btn);
-    mask.appendChild(panel);
-    document.body.appendChild(mask);
+    showDialog('您已经献过花了', '知道了');
   }
 
   function showAllFloweredDialog() {
-    var mask = document.createElement('div');
-    mask.className = 'flower-tribute-modal-mask';
-    mask.setAttribute('role', 'dialog');
-    mask.setAttribute('aria-modal', 'true');
-    mask.setAttribute('aria-label', '致敬提示');
-
-    var panel = document.createElement('div');
-    panel.className = 'flower-tribute-modal-panel';
-
-    var h = document.createElement('p');
-    h.className = 'flower-tribute-modal-title';
-    h.textContent = '您已向所有展点献花致敬！';
-
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'btn btn-primary flower-tribute-modal-btn';
-    btn.textContent = '好的';
-
-    function close() { mask.remove(); }
-    btn.addEventListener('click', close);
-    mask.addEventListener('click', function (ev) { if (ev.target === mask) close(); });
-
-    panel.appendChild(h);
-    panel.appendChild(btn);
-    mask.appendChild(panel);
-    document.body.appendChild(mask);
+    showDialog('您已向所有展点献花致敬！', '好的');
   }
 
   function findFirstUnfloweredExhibit() {
@@ -264,13 +219,22 @@
     }
 
     if (offerBtn) {
+      function disableOfferBtn() {
+        offerBtn.classList.add('btn-disabled');
+        offerBtn.setAttribute('aria-disabled', 'true');
+        offerBtn.style.pointerEvents = 'none';
+      }
+      function enableOfferBtn() {
+        offerBtn.classList.remove('btn-disabled');
+        offerBtn.removeAttribute('aria-disabled');
+        offerBtn.style.pointerEvents = '';
+      }
+
       offerBtn.addEventListener('click', function (ev) {
         var id = getQueryParam('id');
         if (id) {
           ev.preventDefault();
-          offerBtn.classList.add('btn-disabled');
-          offerBtn.setAttribute('aria-disabled', 'true');
-          offerBtn.style.pointerEvents = 'none';
+          disableOfferBtn();
 
           offerFlower(id).then(function (res) {
             if (res.ok) {
@@ -281,31 +245,21 @@
             } else if (res.already) {
               if (typeof window.wxFlowers.showAlreadyDialog === 'function') window.wxFlowers.showAlreadyDialog();
             } else {
-              if (typeof window.wxFlowers.showAlreadyDialog === 'function') {
-                alert('献花失败，请稍后重试');
-              } else {
-                alert('献花失败，请稍后重试');
-              }
+              alert('献花失败，请稍后重试');
             }
           }).finally(function () {
-            offerBtn.classList.remove('btn-disabled');
-            offerBtn.removeAttribute('aria-disabled');
-            offerBtn.style.pointerEvents = '';
+            enableOfferBtn();
           });
         } else {
           ev.preventDefault();
-          offerBtn.classList.add('btn-disabled');
-          offerBtn.setAttribute('aria-disabled', 'true');
-          offerBtn.style.pointerEvents = 'none';
+          disableOfferBtn();
 
           findFirstUnfloweredExhibit().then(function (unfloweredId) {
             if (unfloweredId) {
               window.location.href = 'detail.html?id=' + unfloweredId;
             } else {
               showAllFloweredDialog();
-              offerBtn.classList.remove('btn-disabled');
-              offerBtn.removeAttribute('aria-disabled');
-              offerBtn.style.pointerEvents = '';
+              enableOfferBtn();
             }
           }).catch(function () {
             window.location.href = 'detail.html?id=1';
