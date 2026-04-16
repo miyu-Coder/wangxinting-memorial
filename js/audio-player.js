@@ -142,6 +142,10 @@
   };
 
   WxDetailAudioPlayer.prototype.loadUrl = function (url) {
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.src = '';
+    }
     var a = this.audio;
     this._hideError();
     a.pause();
