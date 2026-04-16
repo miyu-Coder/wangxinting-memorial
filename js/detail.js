@@ -10,6 +10,8 @@
   var state = {
     carouselIndex: 0,
     currentExhibitId: null,
+    autoplayTimer: null,
+    autoplayPaused: false,
   };
 
   var STORAGE_KEY_LAST_EXHIBIT = 'lastVisitedExhibit';
@@ -328,6 +330,22 @@
       }
     }
 
+    function stopAutoplay() {
+      if (state.autoplayTimer) {
+        clearInterval(state.autoplayTimer);
+        state.autoplayTimer = null;
+      }
+      state.autoplayPaused = true;
+    }
+
+    function startAutoplay() {
+      if (state.autoplayTimer || slides.length <= 1) return;
+      state.autoplayPaused = false;
+      state.autoplayTimer = setInterval(function () {
+        showAt(state.carouselIndex + 1);
+      }, 3500);
+    }
+
     function paintDots() {
       if (!dots) return;
       dots.innerHTML = "";
@@ -339,6 +357,7 @@
             "carousel-dot" + (jj === state.carouselIndex ? " is-active" : "");
           b.setAttribute("aria-label", "第 " + (jj + 1) + " 张");
           b.addEventListener("click", function () {
+            stopAutoplay();
             showAt(jj);
           });
           dots.appendChild(b);
@@ -384,11 +403,13 @@
 
     if (prev) {
       prev.onclick = function () {
+        stopAutoplay();
         showAt(state.carouselIndex - 1);
       };
     }
     if (next) {
       next.onclick = function () {
+        stopAutoplay();
         showAt(state.carouselIndex + 1);
       };
     }
@@ -409,8 +430,11 @@
           var x1 = e.changedTouches[0].clientX;
           var dx = x1 - x0;
           x0 = null;
-          if (dx > 48) showAt(state.carouselIndex - 1);
-          else if (dx < -48) showAt(state.carouselIndex + 1);
+          if (Math.abs(dx) > 48) {
+            stopAutoplay();
+            if (dx > 48) showAt(state.carouselIndex - 1);
+            else if (dx < -48) showAt(state.carouselIndex + 1);
+          }
         },
         { passive: true }
       );
@@ -427,6 +451,10 @@
     if (next) {
       next.disabled = single;
       next.style.opacity = single ? "0.4" : "1";
+    }
+
+    if (!single) {
+      startAutoplay();
     }
   }
 
