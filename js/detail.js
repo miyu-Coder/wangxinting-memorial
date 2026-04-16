@@ -321,7 +321,6 @@
     if (carouselSection) carouselSection.hidden = false;
 
     if (viewport) {
-      viewport.classList.remove("aspect-4-3", "aspect-3-4");
       var exhibitId = loc && loc.id;
       if (exhibitId === 3) {
         viewport.style.aspectRatio = "3 / 4";
@@ -1285,7 +1284,6 @@
         : null;
 
       if (!record || typeof record.score !== 'number') {
-        console.warn('Quiz record not found or invalid score');
         return;
       }
 
@@ -1309,13 +1307,11 @@
         .then(function (data) {
           if (data.success) {
             quizRecordSubmitted = true;
-            console.log('答题记录已保存');
           } else if (data.message) {
             showQuizToast(data.message);
           }
         })
         .catch(function (e) {
-          console.error('Submit quiz record error:', e);
         });
     }
 
@@ -1687,11 +1683,19 @@
     if (state.currentExhibitId != null) {
       saveScrollPosition(state.currentExhibitId);
     }
+    if (state.autoplayTimer) {
+      clearInterval(state.autoplayTimer);
+      state.autoplayTimer = null;
+    }
   });
 
   window.addEventListener('pagehide', function () {
     if (state.currentExhibitId != null) {
       saveScrollPosition(state.currentExhibitId);
+    }
+    if (state.autoplayTimer) {
+      clearInterval(state.autoplayTimer);
+      state.autoplayTimer = null;
     }
   });
 

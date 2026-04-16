@@ -314,7 +314,6 @@
       })
       .catch(function (error) {
         hideLoadingToast();
-        console.error('海报生成失败:', error);
         showPosterError('海报生成失败，请重试');
       });
   }
@@ -413,7 +412,6 @@
         text: '我完成了王新亭将军红色教育基地的打卡纪念证书，快来一起参观！',
         url: url
       }).catch(function (err) {
-        console.log('分享取消或失败:', err);
         showShareToast('分享未完成，可复制链接分享');
       });
     } else {
