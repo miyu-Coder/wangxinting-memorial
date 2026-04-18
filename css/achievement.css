@@ -43,71 +43,59 @@ html.achievement-doc {
 
 /* —— 头部主视觉 —— */
 .achievement-hero {
+  position: relative;
   text-align: center;
-  padding: 24px 18px 20px;
-  background: linear-gradient(
-    165deg,
-    #7a1528 0%,
-    #c41e3a 42%,
-    #8b1e2e 100%
-  );
   color: #fff8ef;
   border-radius: 0 0 var(--radius) var(--radius);
   box-shadow: 0 12px 40px rgba(61, 24, 24, 0.2);
-}
-
-.achievement-hero__kicker {
-  margin: 0 0 8px;
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  opacity: 0.88;
-}
-
-.achievement-hero__title {
-  margin: 0 0 10px;
-  font-family: var(--font-serif);
-  font-size: 1.45rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-}
-
-.achievement-hero__sub {
-  margin: 0 0 18px;
-  font-size: 0.88rem;
-  opacity: 0.9;
-}
-
-.achievement-hero__visual {
-  margin: 0 auto;
-  max-width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(
-    145deg,
-    rgba(255, 248, 240, 0.15),
-    rgba(0, 0, 0, 0.12)
-  );
-  border: 2px solid rgba(255, 220, 160, 0.35);
+  overflow: hidden;
+  min-height: 340px;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  background: url("../images/achievement-hero.jpg") center center / cover no-repeat, linear-gradient(165deg, #7a1528 0%, #c41e3a 42%, #8b1e2e 100%);
+}
+
+.achievement-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(0, 0, 0, 0.2) 100%
+  );
+  z-index: 1;
+}
+
+.achievement-hero__content {
   position: relative;
+  z-index: 2;
+  padding: 36px 24px;
+  max-width: 560px;
 }
 
-.achievement-hero__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.achievement-hero__kicker {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  opacity: 0.9;
+  text-transform: uppercase;
 }
 
-.achievement-hero__caption {
-  padding: 12px;
-  font-size: 0.8rem;
-  color: rgba(255, 245, 235, 0.75);
-  line-height: 1.5;
+.achievement-hero__title {
+  margin: 0 0 14px;
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+}
+
+.achievement-hero__sub {
+  margin: 0;
+  font-size: 0.92rem;
+  opacity: 0.92;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
 }
 
 /* —— 主体 —— */
@@ -478,6 +466,10 @@ html.achievement-doc {
 /* 横屏模式适配 */
 @media (orientation: landscape) and (max-height: 500px) {
   .achievement-hero {
+    min-height: 240px;
+  }
+
+  .achievement-hero__content {
     padding: 16px 18px 12px;
   }
 
