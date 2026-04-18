@@ -482,9 +482,9 @@
     html += '<div class="detail-progress-bar__locations">';
     html += '<span class="detail-progress-bar__icon">📍 </span>';
 
-    for (var j = 0; j < LOCATIONS.length; j++) {
-      var isCurrent = (j === currentIndex);
-      var location = LOCATIONS[j];
+    for (var i = 0; i < LOCATIONS.length; i++) {
+      var isCurrent = (i === currentIndex);
+      var location = LOCATIONS[i];
       var locId = normId(location.id);
       var locTitle = location.routeShort || location.title || ('展点' + locId);
 
@@ -494,7 +494,7 @@
         html += '<a class="detail-progress-bar__location" href="' + detailUrlWithId(locId) + '">' + locTitle + '</a>';
       }
 
-      if (j < LOCATIONS.length - 1) {
+      if (i < LOCATIONS.length - 1) {
         html += '<span class="detail-progress-bar__arrow">→</span>';
       }
     }
@@ -1013,7 +1013,8 @@
     }
     // 异步从后端获取当前展点总数，点击按钮时调用 POST /api/flower
     root.innerHTML = "";
-    var card = document.createElement('div');
+    var card = document.createElement('flower-tribute-card');
+    card = document.createElement('div');
     card.className = 'flower-tribute-card';
 
     var iconWrap = document.createElement('div');
@@ -1297,15 +1298,15 @@
           score: record.score
         })
       })
-        .then(function (res) { return res.json().catch(function () { return { success: false }; }); })
+        .then(function (res) { return res.json(); })
         .then(function (data) {
-          if (data && data.success) {
+          if (data.success) {
             quizRecordSubmitted = true;
-          } else if (data && data.message) {
+          } else if (data.message) {
             showQuizToast(data.message);
           }
         })
-        .catch(function () {
+        .catch(function (e) {
         });
     }
 

@@ -54,26 +54,6 @@ db.allAsync = (sql, params = []) => {
   });
 };
 
-const EXHIBIT_NAMES = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
-
-const readFileAsync = (filePath, encoding) => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePath, encoding, (err, data) => {
-      if (err) reject(err);
-      else resolve(data);
-    });
-  });
-};
-
-const writeFileAsync = (filePath, data, encoding) => {
-  return new Promise((resolve, reject) => {
-    fs.writeFile(filePath, data, encoding, (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
-};
-
 // 初始化数据库表
 function initDatabase() {
   db.run(`
@@ -85,7 +65,11 @@ function initDatabase() {
       UNIQUE(user_identifier, exhibit_id)
     )
   `, (err) => {
-    if (err) console.error('Failed to create visits table:', err.message);
+    if (err) {
+      console.error('Failed to create visits table:', err.message);
+    } else {
+      console.log('Table visits ready');
+    }
   });
   db.run(`
     CREATE TABLE IF NOT EXISTS flowers (
@@ -96,7 +80,11 @@ function initDatabase() {
       UNIQUE(user_identifier, exhibit_id)
     )
   `, (err) => {
-    if (err) console.error('Failed to create flowers table:', err.message);
+    if (err) {
+      console.error('Failed to create flowers table:', err.message);
+    } else {
+      console.log('Table flowers ready');
+    }
   });
   db.run(`
     CREATE TABLE IF NOT EXISTS messages (
@@ -107,7 +95,11 @@ function initDatabase() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `, (err) => {
-    if (err) console.error('Failed to create messages table:', err.message);
+    if (err) {
+      console.error('Failed to create messages table:', err.message);
+    } else {
+      console.log('Table messages ready');
+    }
   });
   db.run(`
     CREATE TABLE IF NOT EXISTS page_views (
@@ -117,7 +109,11 @@ function initDatabase() {
       visit_time DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `, (err) => {
-    if (err) console.error('Failed to create page_views table:', err.message);
+    if (err) {
+      console.error('Failed to create page_views table:', err.message);
+    } else {
+      console.log('Table page_views ready');
+    }
   });
   db.run(`
     CREATE TABLE IF NOT EXISTS quiz_records (
@@ -128,7 +124,11 @@ function initDatabase() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `, (err) => {
-    if (err) console.error('Failed to create quiz_records table:', err.message);
+    if (err) {
+      console.error('Failed to create quiz_records table:', err.message);
+    } else {
+      console.log('Table quiz_records ready');
+    }
   });
 }
 
@@ -196,9 +196,9 @@ app.get('/api/checkin/:exhibitId', async (req, res) => {
 // ===== 答题记录接口 =====
 // POST /api/quiz/submit - 提交答题记录
 app.post('/api/quiz/submit', async (req, res) => {
-  const { nickname, exhibitId, score } = req.body || {};
+  const { nickname, exhibitId, score } = req.body;
 
-  if (!nickname || typeof nickname !== 'string' || !nickname.trim()) {
+  if (!nickname || !nickname.trim()) {
     return res.status(400).json({ success: false, message: '昵称不能为空' });
   }
 
@@ -206,7 +206,7 @@ app.post('/api/quiz/submit', async (req, res) => {
     return res.status(400).json({ success: false, message: '展点 ID 必须为 1-4' });
   }
 
-  if (typeof score !== 'number' || score < 0 || !Number.isFinite(score)) {
+  if (typeof score !== 'number' || score < 0) {
     return res.status(400).json({ success: false, message: '得分无效' });
   }
 
@@ -336,6 +336,13 @@ app.get('/api/stats/overview', async (req, res) => {
     );
     const todayVisits = todayRow ? todayRow.cnt : 0;
     
+    const exhibitNames = {
+      '1': '陈列馆',
+      '2': '故居',
+      '3': '纪念园',
+      '4': '将军铜像'
+    };
+    
     const checkinStats = await db.allAsync(`
       SELECT exhibit_id, COUNT(DISTINCT user_identifier) as checkin_count
       FROM visits
@@ -366,7 +373,7 @@ app.get('/api/stats/overview', async (req, res) => {
         const exhibitId = String(checkin.exhibit_id);
         hotExhibit = {
           id: exhibitId,
-          name: EXHIBIT_NAMES[exhibitId] || `展点${exhibitId}`,
+          name: exhibitNames[exhibitId] || `展点${exhibitId}`,
           checkinCount: checkinCount,
           viewCount: viewCount,
           conversionRate: conversionRate
@@ -438,11 +445,10 @@ app.post('/api/flower', async (req, res) => {
     );
     res.json({ success: true, message: '献花成功' });
   } catch (err) {
-    if (err && err.message && err.message.includes('UNIQUE constraint failed')) {
+    if (err.message.includes('UNIQUE constraint failed')) {
       return res.status(409).json({ error: '您已在该展点献花过了' });
     }
-    console.error('Flower error:', err);
-    res.status(500).json({ error: '服务器错误' });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -459,10 +465,9 @@ app.get('/api/flower/:exhibitId', async (req, res) => {
       'SELECT COUNT(*) as count FROM flowers WHERE exhibit_id = ?',
       [exhibitId]
     );
-    res.json({ exhibitId: Number(exhibitId), totalCount: row ? row.count : 0 });
+    res.json({ exhibitId: Number(exhibitId), totalCount: row.count });
   } catch (err) {
-    console.error('Flower count error:', err);
-    res.status(500).json({ error: '服务器错误' });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -529,8 +534,8 @@ app.post('/api/messages', async (req, res) => {
 // GET /api/messages - 仅返回已审核(status=1)留言，按 id 倒序
 app.get('/api/messages', async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
     
     const rows = await db.allAsync(
@@ -591,7 +596,7 @@ app.get('/api/admin/messages', async (req, res) => {
 // POST /api/admin/messages/:id/approve - 将 status 置为 1
 app.post('/api/admin/messages/:id/approve', async (req, res) => {
   const id = Number(req.params.id);
-  if (!id || id < 1) return res.status(400).json({ success: false, message: '无效的 id' });
+  if (!id) return res.status(400).json({ success: false, message: '无效的 id' });
   try {
     await db.runAsync('UPDATE messages SET status = 1 WHERE id = ?', [id]);
     return res.json({ success: true });
@@ -604,7 +609,7 @@ app.post('/api/admin/messages/:id/approve', async (req, res) => {
 // POST /api/admin/messages/:id/reject - 将 status 置为 2（拒绝/软删除）
 app.post('/api/admin/messages/:id/reject', async (req, res) => {
   const id = Number(req.params.id);
-  if (!id || id < 1) return res.status(400).json({ success: false, message: '无效的 id' });
+  if (!id) return res.status(400).json({ success: false, message: '无效的 id' });
   try {
     await db.runAsync('UPDATE messages SET status = 2 WHERE id = ?', [id]);
     return res.json({ success: true });
@@ -615,42 +620,55 @@ app.post('/api/admin/messages/:id/reject', async (req, res) => {
 });
 
 // GET /api/admin/exhibits - 获取所有展点列表
-app.get('/api/admin/exhibits', async (req, res) => {
+app.get('/api/admin/exhibits', (req, res) => {
   const dataPath = path.join(__dirname, 'data', 'data.json');
-  try {
-    const data = await readFileAsync(dataPath, 'utf8');
-    const exhibits = JSON.parse(data);
-    const list = exhibits.map(e => ({ id: e.id, title: e.title, routeShort: e.routeShort }));
-    return res.json({ success: true, list });
-  } catch (err) {
-    console.error('Read exhibits error:', err);
-    return res.status(500).json({ success: false, message: '读取展点数据失败' });
-  }
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Read exhibits error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
+    }
+    try {
+      const exhibits = JSON.parse(data);
+      const list = exhibits.map(e => ({ id: e.id, title: e.title, routeShort: e.routeShort }));
+      return res.json({ success: true, list });
+    } catch (parseErr) {
+      return res.status(500).json({ success: false, message: '解析展点数据失败' });
+    }
+  });
 });
 
 // GET /api/admin/exhibits/:id - 获取单个展点详情
-app.get('/api/admin/exhibits/:id', async (req, res) => {
+app.get('/api/admin/exhibits/:id', (req, res) => {
   const id = Number(req.params.id);
+  console.log('Get exhibit request, id:', id);
   if (!id || id < 1 || id > 4) {
     return res.status(400).json({ success: false, message: '无效的展点ID' });
   }
   const dataPath = path.join(__dirname, 'data', 'data.json');
-  try {
-    const data = await readFileAsync(dataPath, 'utf8');
-    const exhibits = JSON.parse(data);
-    const exhibit = exhibits.find(e => e.id === id);
-    if (!exhibit) {
-      return res.status(404).json({ success: false, message: '展点不存在' });
+  console.log('Data path:', dataPath);
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Read exhibit error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
     }
-    return res.json({ success: true, exhibit });
-  } catch (err) {
-    console.error('Read exhibit error:', err);
-    return res.status(500).json({ success: false, message: '读取展点数据失败' });
-  }
+    try {
+      const exhibits = JSON.parse(data);
+      const exhibit = exhibits.find(e => e.id === id);
+      if (!exhibit) {
+        console.log('Exhibit not found, id:', id);
+        return res.status(404).json({ success: false, message: '展点不存在' });
+      }
+      console.log('Exhibit found:', exhibit.title);
+      return res.json({ success: true, exhibit });
+    } catch (parseErr) {
+      console.error('Parse error:', parseErr);
+      return res.status(500).json({ success: false, message: '解析展点数据失败' });
+    }
+  });
 });
 
 // POST /api/admin/exhibits/:id - 更新展点内容
-app.post('/api/admin/exhibits/:id', async (req, res) => {
+app.post('/api/admin/exhibits/:id', (req, res) => {
   const id = Number(req.params.id);
   if (!id || id < 1 || id > 4) {
     return res.status(400).json({ success: false, message: '无效的展点ID' });
@@ -660,25 +678,35 @@ app.post('/api/admin/exhibits/:id', async (req, res) => {
     return res.status(400).json({ success: false, message: '标题、简介、内容不能为空' });
   }
   const dataPath = path.join(__dirname, 'data', 'data.json');
-  try {
-    const data = await readFileAsync(dataPath, 'utf8');
-    const exhibits = JSON.parse(data);
-    const index = exhibits.findIndex(e => e.id === id);
-    if (index === -1) {
-      return res.status(404).json({ success: false, message: '展点不存在' });
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Read exhibits error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
     }
-    exhibits[index].title = title;
-    if (routeShort) exhibits[index].routeShort = routeShort;
-    exhibits[index].summary = summary;
-    exhibits[index].text = text;
-    if (audio !== undefined) exhibits[index].audio = audio;
-    if (video !== undefined) exhibits[index].video = video;
-    await writeFileAsync(dataPath, JSON.stringify(exhibits, null, 2), 'utf8');
-    return res.json({ success: true, message: '保存成功' });
-  } catch (err) {
-    console.error('Update exhibit error:', err);
-    return res.status(500).json({ success: false, message: '保存展点数据失败' });
-  }
+    try {
+      const exhibits = JSON.parse(data);
+      const index = exhibits.findIndex(e => e.id === id);
+      if (index === -1) {
+        return res.status(404).json({ success: false, message: '展点不存在' });
+      }
+      exhibits[index].title = title;
+      if (routeShort) exhibits[index].routeShort = routeShort;
+      exhibits[index].summary = summary;
+      exhibits[index].text = text;
+      if (audio !== undefined) exhibits[index].audio = audio;
+      if (video !== undefined) exhibits[index].video = video;
+      fs.writeFile(dataPath, JSON.stringify(exhibits, null, 2), 'utf8', (writeErr) => {
+        if (writeErr) {
+          console.error('Write exhibits error:', writeErr);
+          return res.status(500).json({ success: false, message: '保存展点数据失败' });
+        }
+        console.log('Exhibit updated:', id, title);
+        return res.json({ success: true, message: '保存成功' });
+      });
+    } catch (parseErr) {
+      return res.status(500).json({ success: false, message: '解析展点数据失败' });
+    }
+  });
 });
 
 // GET /api/admin/export/checkins - 导出打卡数据
@@ -689,11 +717,15 @@ app.get('/api/admin/export/checkins', async (req, res) => {
       FROM visits 
       ORDER BY visited_at DESC
     `);
+    console.log('Export checkins:', rows.length, 'records');
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
     let csv = '用户标识,展点,打卡时间\n';
     rows.forEach(r => {
-      csv += `${r.user_identifier},${EXHIBIT_NAMES[r.exhibit_id] || '未知'},${r.visited_at}\n`;
+      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.visited_at}\n`;
     });
-    sendCSV(res, 'checkins.csv', csv);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=checkins.csv');
+    res.send('\uFEFF' + csv);
   } catch (err) {
     console.error('Export checkins error:', err);
     res.status(500).json({ success: false, message: '导出失败' });
@@ -708,11 +740,14 @@ app.get('/api/admin/export/flowers', async (req, res) => {
       FROM flowers 
       ORDER BY created_at DESC
     `);
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
     let csv = '用户标识,展点,献花时间\n';
     rows.forEach(r => {
-      csv += `${r.user_identifier},${EXHIBIT_NAMES[r.exhibit_id] || '未知'},${r.created_at}\n`;
+      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.created_at}\n`;
     });
-    sendCSV(res, 'flowers.csv', csv);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=flowers.csv');
+    res.send('\uFEFF' + csv);
   } catch (err) {
     console.error('Export flowers error:', err);
     res.status(500).json({ success: false, message: '导出失败' });
@@ -727,11 +762,14 @@ app.get('/api/admin/export/quiz', async (req, res) => {
       FROM quiz_records 
       ORDER BY created_at DESC
     `);
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
     let csv = '昵称,展点,得分,答题时间\n';
     rows.forEach(r => {
-      csv += `${r.nickname},${EXHIBIT_NAMES[r.exhibit_id] || '未知'},${r.score}/4,${r.created_at}\n`;
+      csv += `${r.nickname},${exhibitNames[r.exhibit_id] || '未知'},${r.score}/4,${r.created_at}\n`;
     });
-    sendCSV(res, 'quiz.csv', csv);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=quiz.csv');
+    res.send('\uFEFF' + csv);
   } catch (err) {
     console.error('Export quiz error:', err);
     res.status(500).json({ success: false, message: '导出失败' });
@@ -741,29 +779,32 @@ app.get('/api/admin/export/quiz', async (req, res) => {
 // GET /api/admin/export/all - 导出所有数据（合并CSV）
 app.get('/api/admin/export/all', async (req, res) => {
   try {
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
     let csv = '';
     
     const checkins = await db.allAsync('SELECT user_identifier, exhibit_id, visited_at FROM visits ORDER BY visited_at DESC');
     csv += '【打卡记录】\n用户标识,展点,打卡时间\n';
     checkins.forEach(r => {
-      csv += `${r.user_identifier},${EXHIBIT_NAMES[r.exhibit_id] || '未知'},${r.visited_at}\n`;
+      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.visited_at}\n`;
     });
     csv += '\n';
     
     const flowers = await db.allAsync('SELECT user_identifier, exhibit_id, created_at FROM flowers ORDER BY created_at DESC');
     csv += '【献花记录】\n用户标识,展点,献花时间\n';
     flowers.forEach(r => {
-      csv += `${r.user_identifier},${EXHIBIT_NAMES[r.exhibit_id] || '未知'},${r.created_at}\n`;
+      csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.created_at}\n`;
     });
     csv += '\n';
     
     const quiz = await db.allAsync('SELECT nickname, exhibit_id, score, created_at FROM quiz_records ORDER BY created_at DESC');
     csv += '【答题记录】\n昵称,展点,得分,答题时间\n';
     quiz.forEach(r => {
-      csv += `${r.nickname},${EXHIBIT_NAMES[r.exhibit_id] || '未知'},${r.score}/4,${r.created_at}\n`;
+      csv += `${r.nickname},${exhibitNames[r.exhibit_id] || '未知'},${r.score}/4,${r.created_at}\n`;
     });
     
-    sendCSV(res, 'all_data.csv', csv);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=all_data.csv');
+    res.send('\uFEFF' + csv);
   } catch (err) {
     console.error('Export all error:', err);
     res.status(500).json({ success: false, message: '导出失败' });
@@ -779,29 +820,30 @@ function escapeCSV(str) {
   return str;
 }
 
-function sendCSV(res, filename, csv) {
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename=' + filename);
-  res.send('\uFEFF' + csv);
-}
-
-app.get('/api/admin/export-exhibits', async (req, res) => {
+app.get('/api/admin/export-exhibits', (req, res) => {
   const dataPath = path.join(__dirname, 'data', 'data.json');
-  try {
-    const data = await readFileAsync(dataPath, 'utf8');
-    const exhibits = JSON.parse(data);
-    let csv = 'ID,标题,简短名称,简介,详细内容,音频路径,视频路径\n';
-    exhibits.forEach(e => {
-      csv += `${e.id},${escapeCSV(e.title)},${escapeCSV(e.routeShort)},${escapeCSV(e.summary)},${escapeCSV(e.text)},${escapeCSV(e.audio || '')},${escapeCSV(e.video || '')}\n`;
-    });
-    sendCSV(res, 'exhibits.csv', csv);
-  } catch (err) {
-    console.error('Export exhibits error:', err);
-    res.status(500).json({ success: false, message: '读取展点数据失败' });
-  }
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Export exhibits error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
+    }
+    try {
+      const exhibits = JSON.parse(data);
+      let csv = 'ID,标题,简短名称,简介,详细内容,音频路径,视频路径\n';
+      exhibits.forEach(e => {
+        csv += `${e.id},${escapeCSV(e.title)},${escapeCSV(e.routeShort)},${escapeCSV(e.summary)},${escapeCSV(e.text)},${escapeCSV(e.audio || '')},${escapeCSV(e.video || '')}\n`;
+      });
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename=exhibits.csv');
+      res.send('\uFEFF' + csv);
+    } catch (parseErr) {
+      console.error('Parse exhibits error:', parseErr);
+      res.status(500).json({ success: false, message: '解析展点数据失败' });
+    }
+  });
 });
 
-app.post('/api/admin/import-exhibits', express.text({ type: 'text/csv' }), async (req, res) => {
+app.post('/api/admin/import-exhibits', express.text({ type: 'text/csv' }), (req, res) => {
   const csvContent = req.body;
   if (!csvContent) {
     return res.status(400).json({ success: false, message: 'CSV 内容为空' });
@@ -813,58 +855,70 @@ app.post('/api/admin/import-exhibits', express.text({ type: 'text/csv' }), async
   }
   
   const dataPath = path.join(__dirname, 'data', 'data.json');
-  try {
-    const data = await readFileAsync(dataPath, 'utf8');
-    const exhibits = JSON.parse(data);
-    
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      
-      const values = [];
-      let current = '';
-      let inQuotes = false;
-      
-      for (let j = 0; j < line.length; j++) {
-        const char = line[j];
-        if (char === '"') {
-          if (inQuotes && line[j + 1] === '"') {
-            current += '"';
-            j++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (char === ',' && !inQuotes) {
-          values.push(current);
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      values.push(current);
-      
-      if (values.length < 5) continue;
-      
-      const id = parseInt(values[0]);
-      if (isNaN(id) || id < 1 || id > 4) continue;
-      
-      const index = exhibits.findIndex(e => e.id === id);
-      if (index !== -1) {
-        exhibits[index].title = values[1] || exhibits[index].title;
-        exhibits[index].routeShort = values[2] || exhibits[index].routeShort;
-        exhibits[index].summary = values[3] || exhibits[index].summary;
-        exhibits[index].text = values[4] || exhibits[index].text;
-        if (values[5] !== undefined) exhibits[index].audio = values[5];
-        if (values[6] !== undefined) exhibits[index].video = values[6];
-      }
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Read exhibits error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
     }
     
-    await writeFileAsync(dataPath, JSON.stringify(exhibits, null, 2), 'utf8');
-    res.json({ success: true, message: '导入成功' });
-  } catch (err) {
-    console.error('Import exhibits error:', err);
-    res.status(500).json({ success: false, message: '解析数据失败' });
-  }
+    try {
+      const exhibits = JSON.parse(data);
+      
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const values = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let j = 0; j < line.length; j++) {
+          const char = line[j];
+          if (char === '"') {
+            if (inQuotes && line[j + 1] === '"') {
+              current += '"';
+              j++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if (char === ',' && !inQuotes) {
+            values.push(current);
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        values.push(current);
+        
+        if (values.length < 5) continue;
+        
+        const id = parseInt(values[0]);
+        if (isNaN(id) || id < 1 || id > 4) continue;
+        
+        const index = exhibits.findIndex(e => e.id === id);
+        if (index !== -1) {
+          exhibits[index].title = values[1] || exhibits[index].title;
+          exhibits[index].routeShort = values[2] || exhibits[index].routeShort;
+          exhibits[index].summary = values[3] || exhibits[index].summary;
+          exhibits[index].text = values[4] || exhibits[index].text;
+          if (values[5] !== undefined) exhibits[index].audio = values[5];
+          if (values[6] !== undefined) exhibits[index].video = values[6];
+        }
+      }
+      
+      fs.writeFile(dataPath, JSON.stringify(exhibits, null, 2), 'utf8', (writeErr) => {
+        if (writeErr) {
+          console.error('Write exhibits error:', writeErr);
+          return res.status(500).json({ success: false, message: '保存展点数据失败' });
+        }
+        console.log('Exhibits imported successfully');
+        res.json({ success: true, message: '导入成功' });
+      });
+    } catch (parseErr) {
+      console.error('Parse error:', parseErr);
+      res.status(500).json({ success: false, message: '解析数据失败' });
+    }
+  });
 });
 
 // 管理后台页面

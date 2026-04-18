@@ -64,11 +64,11 @@
       navigator.clipboard.writeText(text).then(function () {
         alert('地址已复制，可粘贴到地图或聊天工具中');
       }, function () {
-        try { prompt('请手动复制以下地址', text); } catch (e) {}
+        prompt('请手动复制以下地址', text);
       });
       return;
     }
-    try { prompt('请手动复制以下地址', text); } catch (e) {}
+    prompt('请手动复制以下地址', text);
   }
 
   function openMapChooser() {

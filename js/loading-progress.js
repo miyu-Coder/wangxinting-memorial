@@ -145,7 +145,7 @@
       offlineToast.classList.remove("is-visible");
       setTimeout(function() {
         if (offlineToast && offlineToast.parentNode) {
-          offlineToast.remove();
+          offlineToast.parentNode.removeChild(offlineToast);
         }
         offlineToast = null;
       }, 250);

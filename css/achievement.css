@@ -88,10 +88,19 @@ html.achievement-doc {
     rgba(255, 248, 240, 0.15),
     rgba(0, 0, 0, 0.12)
   );
-  border: 2px dashed rgba(255, 220, 160, 0.35);
+  border: 2px solid rgba(255, 220, 160, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.achievement-hero__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .achievement-hero__caption {

@@ -150,6 +150,7 @@
     this._hideError();
     a.pause();
     a.removeAttribute("src");
+    a.load();
     a.src = url;
     a.playbackRate = this._rates[this._rateIdx];
     a.load();
@@ -250,10 +251,7 @@
     if (a.paused) {
       var p = a.play();
       if (p && typeof p.catch === "function") {
-        p.catch(function (err) {
-          if (err && err.name === 'AbortError') return;
-          this._handleError();
-        }.bind(this));
+        p.catch(this._handleError.bind(this));
       }
     } else {
       a.pause();
