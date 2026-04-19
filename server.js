@@ -130,6 +130,22 @@ function initDatabase() {
       console.log('Table quiz_records ready');
     }
   });
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS admin_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      action TEXT NOT NULL,
+      target TEXT,
+      detail TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Failed to create admin_logs table:', err.message);
+    } else {
+      console.log('Table admin_logs ready');
+    }
+  });
 }
 
 // ===== 打卡 (checkin) 接口 =====
@@ -463,6 +479,79 @@ app.get('/api/stats/daily-trend', async (req, res) => {
   }
 });
 
+// GET /api/stats/hourly-today - 今日访问时段分布
+app.get('/api/stats/hourly-today', async (req, res) => {
+  try {
+    const rows = await db.allAsync(`
+      SELECT strftime('%H', visit_time) as hour, COUNT(*) as pv
+      FROM page_views
+      WHERE DATE(visit_time) = DATE('now')
+      GROUP BY hour
+      ORDER BY hour ASC
+    `);
+    const data = [];
+    for (let h = 0; h < 24; h++) {
+      const key = String(h).padStart(2, '0');
+      const found = rows.find(r => r.hour === key);
+      data.push({ hour: h, pv: found ? found.pv : 0 });
+    }
+    return res.json({ success: true, data });
+  } catch (err) {
+    console.error('Hourly today error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// GET /api/system/status - 系统状态
+app.get('/api/system/status', async (req, res) => {
+  try {
+    const uptimeSeconds = Math.floor(process.uptime());
+    const days = Math.floor(uptimeSeconds / 86400);
+    const hours = Math.floor((uptimeSeconds % 86400) / 3600);
+    const dbStat = fs.statSync(path.join(__dirname, 'data.db'));
+    const dbSizeMB = (dbStat.size / (1024 * 1024)).toFixed(2);
+    return res.json({
+      success: true,
+      status: 'running',
+      uptime: days + ' 天 ' + hours + ' 小时',
+      dbSize: dbSizeMB + ' MB'
+    });
+  } catch (err) {
+    console.error('System status error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// Helper: 记录操作日志
+function addAdminLog(action, target, detail) {
+  db.run(
+    'INSERT INTO admin_logs (action, target, detail, created_at) VALUES (?, ?, ?, datetime("now"))',
+    [action, target || '', detail || ''],
+    (err) => {
+      if (err) console.error('Admin log error:', err.message);
+    }
+  );
+}
+
+// GET /api/admin/logs - 获取操作日志
+app.get('/api/admin/logs', async (req, res) => {
+  try {
+    const action = req.query.action || '';
+    let sql = 'SELECT * FROM admin_logs';
+    const params = [];
+    if (action) {
+      sql += ' WHERE action = ?';
+      params.push(action);
+    }
+    sql += ' ORDER BY created_at DESC LIMIT 200';
+    const rows = await db.allAsync(sql, params);
+    return res.json({ success: true, list: rows || [] });
+  } catch (err) {
+    console.error('Get admin logs error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
 // API 路由：献花 (POST)
 app.post('/api/flower', async (req, res) => {
   const { exhibitId } = req.body;
@@ -633,6 +722,7 @@ app.post('/api/admin/messages/:id/approve', async (req, res) => {
   if (!id) return res.status(400).json({ success: false, message: '无效的 id' });
   try {
     await db.runAsync('UPDATE messages SET status = 1 WHERE id = ?', [id]);
+    addAdminLog('审核通过', '留言#' + id, '留言ID ' + id + ' 审核通过');
     return res.json({ success: true });
   } catch (err) {
     console.error('Approve message error:', err);
@@ -646,6 +736,7 @@ app.post('/api/admin/messages/:id/reject', async (req, res) => {
   if (!id) return res.status(400).json({ success: false, message: '无效的 id' });
   try {
     await db.runAsync('UPDATE messages SET status = 2 WHERE id = ?', [id]);
+    addAdminLog('审核拒绝', '留言#' + id, '留言ID ' + id + ' 审核拒绝');
     return res.json({ success: true });
   } catch (err) {
     console.error('Reject message error:', err);
@@ -659,6 +750,7 @@ app.delete('/api/admin/messages/:id', async (req, res) => {
   if (!id || id < 1) return res.status(400).json({ success: false, message: '无效的 id' });
   try {
     await db.runAsync('DELETE FROM messages WHERE id = ?', [id]);
+    addAdminLog('删除留言', '留言#' + id, '留言ID ' + id + ' 已删除');
     return res.json({ success: true });
   } catch (err) {
     console.error('Delete message error:', err);
@@ -749,6 +841,7 @@ app.post('/api/admin/exhibits/:id', (req, res) => {
           return res.status(500).json({ success: false, message: '保存展点数据失败' });
         }
         console.log('Exhibit updated:', id, title);
+                addAdminLog('修改展点', '展点#' + id, '展点 ' + title + ' 内容已更新');
         return res.json({ success: true, message: '保存成功' });
       });
     } catch (parseErr) {
@@ -788,6 +881,7 @@ app.post('/api/admin/exhibits/:id/quiz', (req, res) => {
           return res.status(500).json({ success: false, message: '保存题目数据失败' });
         }
         console.log('Quiz updated for exhibit:', id);
+        addAdminLog('修改题目', '展点#' + id, '展点 ' + id + ' 题目已更新');
         return res.json({ success: true, message: '题目保存成功' });
       });
     } catch (parseErr) {
@@ -813,6 +907,7 @@ app.get('/api/admin/export/checkins', async (req, res) => {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=checkins.csv');
     res.send('\uFEFF' + csv);
+    addAdminLog('导出数据', '打卡数据', '导出 ' + rows.length + ' 条打卡记录');
   } catch (err) {
     console.error('Export checkins error:', err);
     res.status(500).json({ success: false, message: '导出失败' });
@@ -835,6 +930,7 @@ app.get('/api/admin/export/flowers', async (req, res) => {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=flowers.csv');
     res.send('\uFEFF' + csv);
+    addAdminLog('导出数据', '献花数据', '导出 ' + rows.length + ' 条献花记录');
   } catch (err) {
     console.error('Export flowers error:', err);
     res.status(500).json({ success: false, message: '导出失败' });
@@ -857,6 +953,7 @@ app.get('/api/admin/export/quiz', async (req, res) => {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=quiz.csv');
     res.send('\uFEFF' + csv);
+    addAdminLog('导出数据', '答题数据', '导出 ' + rows.length + ' 条答题记录');
   } catch (err) {
     console.error('Export quiz error:', err);
     res.status(500).json({ success: false, message: '导出失败' });
@@ -999,6 +1096,7 @@ app.post('/api/admin/import-exhibits', express.text({ type: 'text/csv' }), (req,
           return res.status(500).json({ success: false, message: '保存展点数据失败' });
         }
         console.log('Exhibits imported successfully');
+        addAdminLog('导入CSV', '展点数据', '导入展点 CSV 数据');
         res.json({ success: true, message: '导入成功' });
       });
     } catch (parseErr) {
