@@ -6,9 +6,9 @@
   <title>后台管理 · 王新亭将军教育基地</title>
   <style>
     :root {
-      --color-red: #C41E3A;
-      --color-red-deep: #8B1A1A;
-      --color-gold: #D4A017;
+      --color-red: #C8102E;
+      --color-red-deep: #8B0000;
+      --color-gold: #D4AF37;
       --color-green: #4CAF50;
       --color-orange: #FF9800;
       --color-bg: #F5F7FA;
@@ -16,7 +16,7 @@
       --color-text: #1F2937;
       --color-text-secondary: #6B7280;
       --color-border: #E5E7EB;
-      --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+      --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
       --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
       --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
       --radius: 12px;
@@ -45,14 +45,14 @@
     .login-slogan { font-size: 0.85rem; color: var(--color-red); margin-top: 28px; font-weight: 500; letter-spacing: 1px; }
     .login-hint { text-align: center; font-size: 0.9rem; color: #9CA3AF; margin-top: 24px; }
     .admin-box { display: flex; flex-direction: column; min-height: 100vh; }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; background: #2C3E50; color: white; box-shadow: var(--shadow-md); position: sticky; top: 0; z-index: 100; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; background: linear-gradient(180deg, #8B0000 0%, #C8102E 100%); color: white; box-shadow: var(--shadow-md); position: sticky; top: 0; z-index: 100; }
     .admin-title { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.5px; }
     .admin-header .btn-secondary { background: rgba(255, 255, 255, 0.15); color: white; border: 1px solid rgba(255, 255, 255, 0.3); }
     .admin-header .btn-secondary:hover { background: rgba(255, 255, 255, 0.25); }
-    .admin-tabs { display: flex; gap: 0; background: #34495E; padding: 0 32px; position: sticky; top: 64px; z-index: 90; }
+    .admin-tabs { display: flex; gap: 0; background: linear-gradient(180deg, #C8102E 0%, #8B0000 100%); padding: 0 32px; position: sticky; top: 64px; z-index: 90; }
     .tab-btn { padding: 16px 24px; border: none; background: transparent; color: rgba(255, 255, 255, 0.7); font-size: 1rem; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
     .tab-btn:hover { color: white; background: rgba(255, 255, 255, 0.08); }
-    .tab-btn.is-active { color: white; border-bottom-color: var(--color-red); font-weight: 600; background: rgba(255, 255, 255, 0.12); }
+    .tab-btn.is-active { color: white; border-bottom-color: var(--color-gold); font-weight: 600; background: rgba(255, 255, 255, 0.15); }
     .tab-content { display: none; padding: 24px 32px; flex: 1; }
     .tab-content.is-active { display: block; }
     .tab-content h2 { font-size: 1.25rem; color: var(--color-text); margin-bottom: 20px; font-weight: 600; }
@@ -66,6 +66,10 @@
     .stat-card--gold .stat-icon { background: linear-gradient(135deg, rgba(212, 160, 23, 0.2) 0%, rgba(212, 160, 23, 0.05) 100%); }
     .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 12px; background: linear-gradient(135deg, rgba(196, 30, 58, 0.1) 0%, rgba(212, 160, 23, 0.1) 100%); }
     .stat-card--warning .stat-icon { background: linear-gradient(135deg, rgba(255, 152, 0, 0.15) 0%, rgba(255, 152, 0, 0.05) 100%); }
+    .stat-compare { font-size: 12px; margin-top: 4px; }
+    .stat-compare--up { color: #4CAF50; }
+    .stat-compare--down { color: #F44336; }
+    .stat-compare--flat { color: #999; }
     .stat-label { font-size: 14px; color: var(--color-text-secondary); font-weight: 500; margin-bottom: 8px; }
     .stat-value { font-size: 28px; font-weight: 700; color: var(--color-text); line-height: 1.2; }
     .stat-value--small { font-size: 1.5rem; }
@@ -74,37 +78,205 @@
     .chart-section { background: var(--color-surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-card); margin-bottom: 24px; border: none; }
     .chart-section h3 { font-size: 1rem; color: var(--color-text); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--color-border); font-weight: 600; }
     .chart-hint { font-size: 0.8rem; color: #9CA3AF; margin-top: 16px; text-align: center; }
-    .message-filter { display: flex; gap: 8px; margin-bottom: 20px; padding: 4px; background: #F3F4F6; border-radius: var(--radius-sm); width: fit-content; }
-    .filter-btn { padding: 10px 20px; border: none; background: transparent; border-radius: 6px; color: var(--color-text-secondary); font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-    .filter-btn:hover { color: var(--color-text); }
-    .filter-btn.is-active { background: var(--color-surface); color: var(--color-red); box-shadow: var(--shadow-card); font-weight: 600; }
+    .message-filter { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn { padding: 8px 16px; border: none; background: #F5F5F5; color: #666; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .filter-btn:hover { background: #EEEEEE; }
+    .filter-btn.is-active { background: #C8102E; color: white; }
+    .filter-divider { width: 100%; height: 1px; background: #EEEEEE; margin-bottom: 16px; }
     .message-list { display: flex; flex-direction: column; gap: 12px; }
-    .message-card { background: var(--color-surface); padding: 20px 24px; border-radius: var(--radius); box-shadow: var(--shadow-card); border: none; border-left: 4px solid #ccc; transition: background 0.2s, box-shadow 0.2s; }
-    .message-card:hover { background: #FEF2F2; box-shadow: var(--shadow-md); }
-    .message-card.status-pending { border-left-color: var(--color-orange); }
-    .message-card.status-approved { border-left-color: var(--color-green); }
-    .message-card.status-rejected { border-left-color: var(--color-red); }
-    .message-meta { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; font-size: 0.9rem; flex-wrap: wrap; }
-    .message-meta strong { color: var(--color-text); font-weight: 600; }
-    .message-time { color: #9CA3AF; font-size: 0.85rem; }
-    .message-status { padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 0.75rem; margin-left: auto; }
-    .message-status.status-pending { background: #FFF3E0; color: #E65100; }
-    .message-status.status-approved { background: #E8F5E9; color: #2E7D32; }
-    .message-status.status-rejected { background: #FFEBEE; color: #C62828; }
-    .message-content { margin: 0 0 16px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; color: var(--color-text); font-size: 0.95rem; }
-    .message-actions { display: flex; gap: 12px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+    .batch-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--color-surface); border-radius: var(--radius-sm); box-shadow: var(--shadow-card); margin-bottom: 16px; }
+    .batch-bar__left { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--color-text-secondary); }
+    .batch-bar__right { display: flex; gap: 8px; }
+    .batch-bar__btn { padding: 6px 12px; border: 1px solid #E0E0E0; background: white; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s; color: var(--color-text); }
+    .batch-bar__btn:hover { border-color: var(--color-red); color: var(--color-red); }
+    .batch-bar__btn--danger:hover { border-color: #F44336; color: #F44336; }
+    .msg-card { background: var(--color-surface); padding: 16px; border-radius: var(--radius); box-shadow: var(--shadow-card); margin-bottom: 12px; transition: box-shadow 0.2s; }
+    .msg-card:hover { box-shadow: var(--shadow-md); }
+    .msg-card__header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .msg-card__avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; flex-shrink: 0; }
+    .msg-card__nick { font-size: 14px; font-weight: 700; color: #333; }
+    .msg-card__status { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: white; margin-left: auto; }
+    .msg-card__status--pending { background: #FF9800; }
+    .msg-card__status--approved { background: #4CAF50; }
+    .msg-card__status--rejected { background: #F44336; }
+    .msg-card__time { font-size: 12px; color: #999; margin-left: 8px; }
+    .msg-card__body { font-size: 14px; color: #444; line-height: 1.5; margin-bottom: 12px; white-space: pre-wrap; word-break: break-word; }
+    .msg-card__quote { background: #F5F5F5; padding: 8px 12px; border-radius: 6px; font-size: 13px; color: #888; margin-bottom: 12px; }
+    .msg-card__actions { display: flex; gap: 16px; padding-top: 12px; border-top: 1px solid #F0F0F0; }
+    .msg-card__action { border: none; background: none; font-size: 13px; cursor: pointer; padding: 4px 0; transition: opacity 0.2s; }
+    .msg-card__action:hover { opacity: 0.7; }
+    .msg-card__action--approve { color: #4CAF50; }
+    .msg-card__action--reject { color: #F44336; }
+    .msg-card__action--reply { color: #888; }
+    .msg-card__handled { font-size: 12px; color: #999; padding: 4px 8px; background: #F5F5F5; border-radius: 4px; }
+    .quiz-card { background: var(--color-surface); padding: 16px; border-radius: var(--radius); box-shadow: var(--shadow-card); margin-bottom: 12px; transition: box-shadow 0.2s; }
+    .quiz-card:hover { box-shadow: var(--shadow-md); }
+    .quiz-card__score { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: white; flex-shrink: 0; }
+    .quiz-card__score--full { background: #4CAF50; }
+    .quiz-card__score--mid { background: #FF9800; }
+    .quiz-card__score--low { background: #F44336; }
+    .quiz-card__info { flex: 1; min-width: 0; }
+    .quiz-card__row1 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .quiz-card__nick { font-size: 14px; font-weight: 700; color: #333; }
+    .quiz-card__time { font-size: 12px; color: #999; }
+    .quiz-card__exhibit { font-size: 13px; color: #666; margin-bottom: 4px; }
+    .quiz-card__detail { font-size: 12px; color: #888; }
+    .quiz-card__arrow { font-size: 14px; color: #CCC; cursor: pointer; transition: transform 0.2s; flex-shrink: 0; }
+    .quiz-card__arrow:hover { color: var(--color-red); }
+    .quiz-card__arrow.is-expanded { transform: rotate(0deg); }
+    .quiz-card__main { display: flex; align-items: center; gap: 12px; }
+    .quiz-card__detail-panel { border-top: 1px dashed #E0E0E0; margin-top: 10px; padding-top: 10px; }
+    .quiz-detail { display: flex; flex-direction: column; gap: 10px; }
+    .quiz-detail__empty { text-align: center; color: #999; font-size: 13px; padding: 12px 0; }
+    .quiz-detail__item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 6px; background: #F9F9F9; }
+    .quiz-detail__item--wrong { background: #FFF5F5; }
+    .quiz-detail__icon { font-weight: 700; font-size: 16px; flex-shrink: 0; width: 20px; text-align: center; }
+    .quiz-detail__icon--correct { color: #4CAF50; }
+    .quiz-detail__icon--wrong { color: #F44336; }
+    .quiz-detail__content { flex: 1; min-width: 0; }
+    .quiz-detail__question { font-size: 13px; color: #333; margin-bottom: 4px; line-height: 1.5; }
+    .quiz-detail__answers { font-size: 12px; color: #666; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+    .quiz-detail__user-answer { color: #555; }
+    .quiz-detail__correct-answer { color: #4CAF50; font-weight: 600; }
+    .quiz-export-btn { padding: 8px 16px; border: 1px solid #C8102E; background: white; color: #C8102E; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .quiz-export-btn:hover { background: #FFF5F5; }
+    .quiz-view-tabs { display: flex; gap: 0; margin-bottom: 16px; border-radius: 8px; overflow: hidden; border: 1px solid #E0E0E0; width: fit-content; }
+    .quiz-view-tab { padding: 10px 24px; border: none; background: #F5F5F5; color: #666; font-size: 14px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+    .quiz-view-tab:hover { background: #EEEEEE; }
+    .quiz-view-tab.is-active { background: #C8102E; color: white; }
+    .analysis-section { background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-card); margin-bottom: 16px; overflow: hidden; }
+    .analysis-section__header { padding: 16px 20px; display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; border-bottom: 1px solid #F0F0F0; }
+    .analysis-section__header:hover { background: #FAFAFA; }
+    .analysis-section__icon { font-size: 20px; }
+    .analysis-section__title { font-size: 15px; font-weight: 600; color: #333; flex: 1; }
+    .analysis-section__toggle { font-size: 12px; color: #999; transition: transform 0.2s; }
+    .analysis-section__toggle.is-expanded { transform: rotate(90deg); }
+    .analysis-section__body { padding: 0 20px 16px; }
+    .analysis-question-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F5F5F5; }
+    .analysis-question-row:last-child { border-bottom: none; }
+    .analysis-question-row--alert { background: #FFF5F5; margin: 0 -20px; padding: 10px 20px; }
+    .analysis-question__idx { width: 24px; height: 24px; border-radius: 50%; background: #F0F0F0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #666; flex-shrink: 0; }
+    .analysis-question-row--alert .analysis-question__idx { background: #FFCDD2; color: #C8102E; }
+    .analysis-question__text { flex: 1; font-size: 13px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; max-width: 280px; cursor: default; }
+    .analysis-question__text[title] { cursor: help; }
+    .analysis-question__stats { font-size: 12px; color: #888; white-space: nowrap; flex-shrink: 0; }
+    .analysis-question__bar-wrap { width: 80px; height: 6px; background: #F0F0F0; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+    .analysis-question__bar { height: 100%; border-radius: 3px; transition: width 0.4s; }
+    .analysis-question__bar--low { background: #4CAF50; }
+    .analysis-question__bar--mid { background: #FF9800; }
+    .analysis-question__bar--high { background: #F44336; }
+    .analysis-question__rate { font-size: 12px; font-weight: 600; min-width: 40px; text-align: right; flex-shrink: 0; }
+    .analysis-question__rate--alert { color: #C8102E; }
+    .top3-card { background: var(--color-surface); border-radius: var(--radius); box-shadow: var(--shadow-card); padding: 20px; margin-bottom: 16px; }
+    .top3-card__title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .top3-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F5F5F5; }
+    .top3-item:last-child { border-bottom: none; }
+    .top3-item__rank { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: white; flex-shrink: 0; }
+    .top3-item__rank--1 { background: #FF6B35; }
+    .top3-item__rank--2 { background: #FF9800; }
+    .top3-item__rank--3 { background: #FFC107; color: #333; }
+    .top3-item__info { flex: 1; min-width: 0; }
+    .top3-item__question { font-size: 13px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top3-item__exhibit { font-size: 11px; color: #999; margin-top: 2px; }
+    .top3-item__rate { font-size: 18px; font-weight: 800; color: #C8102E; flex-shrink: 0; }
+    .analysis-empty { text-align: center; padding: 40px 20px; color: #999; }
+    .analysis-empty__icon { font-size: 40px; margin-bottom: 12px; }
+    .analysis-empty__text { font-size: 14px; }
+    .exhibit-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start; }
+    .exhibit-form-col { display: flex; flex-direction: column; gap: 16px; }
+    .exhibit-side-col { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 140px; }
+    .form-card { background: var(--color-surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-card); }
+    .form-card__title { font-size: 15px; font-weight: 700; color: var(--color-text); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #F0F0F0; }
+    .form-card .form-group { margin-bottom: 16px; }
+    .form-card .form-group:last-child { margin-bottom: 0; }
+    .form-card label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 700; color: #555; }
+    .form-card .required { color: var(--color-red); }
+    .form-card input[type="text"], .form-card textarea, .form-card select { width: 100%; padding: 12px; border: 1px solid #E0E0E0; border-radius: 8px; font-size: 14px; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; background: var(--color-surface); }
+    .form-card input[type="text"]:focus, .form-card textarea:focus, .form-card select:focus { outline: none; border-color: #C8102E; box-shadow: 0 0 0 3px rgba(200, 22, 46, 0.1); }
+    .form-card textarea { min-height: 200px; resize: vertical; }
+    .char-counter { text-align: right; font-size: 12px; color: #999; margin-top: 4px; }
+    .save-bar { background: var(--color-surface); padding: 16px 20px; border-radius: var(--radius); box-shadow: var(--shadow-md); }
+    .save-bar .btn-primary { width: 100%; padding: 14px; border-radius: 8px; font-size: 16px; }
+    .side-card { background: var(--color-surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-card); }
+    .side-card__title { font-size: 16px; font-weight: 700; color: var(--color-text); margin-bottom: 16px; }
+    .csv-btn { display: block; width: 100%; padding: 12px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; text-align: center; transition: all 0.2s; margin-bottom: 10px; background: white; }
+    .csv-btn--export { border: 1px dashed #C8102E; color: #C8102E; }
+    .csv-btn--export:hover { background: #FFF5F5; }
+    .csv-btn--import { border: 1px dashed #888; color: #666; }
+    .csv-btn--import:hover { background: #F5F5F5; }
+    .csv-hint { font-size: 12px; color: #999; margin-top: 8px; line-height: 1.5; }
+    .csv-template { font-size: 13px; color: var(--color-red); cursor: pointer; margin-top: 8px; display: inline-block; }
+    .csv-template:hover { text-decoration: underline; }
+    .preview-card { background: #F9F7F5; border-radius: 16px; padding: 16px; }
+    .preview-card__title { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 4px; }
+    .preview-card__tag { display: inline-block; background: #F5E6A3; color: #C8102E; border: 1px solid #D4AF37; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+    .preview-card__desc { font-size: 13px; color: #666; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .preview-card__detail-label { font-size: 12px; color: #999; margin-top: 10px; margin-bottom: 4px; font-weight: 600; }
+    .preview-card__detail { font-size: 13px; color: #666; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
+    .preview-card__time { font-size: 11px; color: #999; margin-top: 10px; }
+    .exhibit-mode-tabs { display: flex; gap: 0; margin-top: 12px; border-radius: 8px; overflow: hidden; border: 1px solid #E0E0E0; }
+    .exhibit-mode-tab { flex: 1; padding: 9px 16px; border: none; background: #F5F5F5; color: #666; font-size: 13px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+    .exhibit-mode-tab:hover { background: #EEEEEE; }
+    .exhibit-mode-tab.is-active { background: #C8102E; color: white; }
+    .quiz-form-card { background: var(--color-surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-card); margin-bottom: 12px; }
+    .quiz-form-card__header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .quiz-form-card__num { width: 28px; height: 28px; border-radius: 50%; background: #C8102E; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+    .quiz-form-card__label { font-size: 14px; font-weight: 600; color: #333; }
+    .quiz-options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .quiz-option-group { display: flex; align-items: center; gap: 6px; }
+    .quiz-option-label { font-size: 13px; font-weight: 600; color: #C8102E; width: 18px; flex-shrink: 0; }
+    .quiz-option-input { flex: 1; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 13px; }
+    .quiz-option-input:focus { outline: none; border-color: #C8102E; }
+    .quiz-answer-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .quiz-answer-label { font-size: 13px; color: #666; }
+    .quiz-answer-select { padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 13px; background: white; cursor: pointer; }
+    .quiz-answer-select:focus { outline: none; border-color: #C8102E; }
+    .preview-quiz-list { display: flex; flex-direction: column; gap: 8px; }
+    .preview-quiz-item { font-size: 12px; color: #555; padding: 6px 8px; background: #F5F5F5; border-radius: 4px; line-height: 1.4; }
+    .preview-quiz-item__q { font-weight: 600; margin-bottom: 2px; }
+    .preview-quiz-item__a { color: #4CAF50; font-weight: 600; }
+    .exhibit-select-card { position: relative; }
+    .exhibit-select-card select { appearance: none; -webkit-appearance: none; padding-right: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+    .page-title { font-size: 24px; font-weight: 700; color: var(--color-text); margin-bottom: 8px; padding-left: 12px; border-left: 4px solid #C8102E; line-height: 1.3; }
+    .page-summary { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 20px; }
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-state__icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state__text { font-size: 14px; color: #999; }
+    .skeleton { background: #F0F0F0; border-radius: 6px; animation: shimmer 1.5s infinite; }
+    .skeleton--card { height: 80px; border-radius: var(--radius); margin-bottom: 12px; }
+    .skeleton--line { height: 16px; margin-bottom: 8px; }
+    .skeleton--line:last-child { width: 60%; }
+    @keyframes shimmer { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10001; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s; }
+    .confirm-dialog { background: white; border-radius: 16px; padding: 28px; max-width: 360px; width: 90%; box-shadow: var(--shadow-lg); text-align: center; }
+    .confirm-dialog__title { font-size: 18px; font-weight: 700; color: var(--color-text); margin-bottom: 12px; }
+    .confirm-dialog__text { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 24px; line-height: 1.5; }
+    .confirm-dialog__actions { display: flex; gap: 12px; justify-content: center; }
+    .confirm-dialog__btn { padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+    .confirm-dialog__btn--cancel { background: #F5F5F5; color: #666; }
+    .confirm-dialog__btn--cancel:hover { background: #EEEEEE; }
+    .confirm-dialog__btn--danger { background: #C8102E; color: white; }
+    .confirm-dialog__btn--danger:hover { background: #A00E24; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .admin-footer { background: linear-gradient(180deg, #8B0000 0%, #5C0000 100%); padding: 12px 32px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .admin-footer__star { color: #D4AF37; font-size: 1rem; }
+    .admin-footer__text { color: #CCC; font-size: 12px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F0F0F0; }
+    ::-webkit-scrollbar-thumb { background: #C0C0C0; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #A0A0A0; }
     .btn { padding: 12px 24px; border: none; border-radius: var(--radius-sm); font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .btn-primary { background: linear-gradient(135deg, var(--color-red), var(--color-red-deep)); color: white; width: 100%; }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(200, 16, 46, 0.3); }
     .btn-secondary { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); padding: 10px 20px; font-size: 0.9rem; }
     .btn-secondary:hover { background: #F5F5F5; }
     .btn-approve { padding: 10px 24px; font-size: 0.9rem; background: var(--color-green); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; transition: all 0.2s; }
-    .btn-approve:hover { background: #43A047; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); }
+    .btn-approve:hover { background: #43A047; }
     .btn-reject { padding: 10px 24px; font-size: 0.9rem; background: var(--color-red); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; transition: all 0.2s; }
-    .btn-reject:hover { background: #A01830; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3); }
+    .btn-reject:hover { background: #A00E24; }
     .empty-hint { text-align: center; color: #9CA3AF; padding: 60px 20px; background: var(--color-surface); border-radius: var(--radius); border: 1px dashed var(--color-border); }
     .footer-slogan { text-align: center; color: var(--color-red); font-size: 0.9rem; padding: 24px 0; font-weight: 500; letter-spacing: 2px; }
-    @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: repeat(2, 1fr); } .exhibit-layout { grid-template-columns: 1fr; } .exhibit-side-col { position: static; } }
     @media (max-width: 768px) {
       .admin-header { padding: 12px 16px; }
       .admin-title { font-size: 1.25rem; }
@@ -115,11 +287,18 @@
       .stat-card { padding: 16px; }
       .stat-value { font-size: 24px; }
       .chart-section { padding: 16px; }
-      .message-card { padding: 16px; }
-      .message-meta { flex-direction: column; align-items: flex-start; gap: 8px; }
-      .message-status { margin-left: 0; }
-      .message-actions { flex-direction: column; gap: 8px; }
-      .footer-slogan { padding: 16px; }
+      .batch-bar { flex-direction: column; gap: 10px; align-items: flex-start; }
+      .batch-bar__right { width: 100%; justify-content: flex-end; }
+      .quiz-card__main { flex-direction: column; align-items: flex-start; }
+      .quiz-card__score { margin-bottom: 8px; }
+      .quiz-view-tabs { width: 100%; }
+      .quiz-view-tab { flex: 1; text-align: center; padding: 10px 12px; font-size: 13px; }
+      .analysis-question__text { max-width: 160px; }
+      .analysis-question__bar-wrap { width: 50px; }
+      .top3-item__rate { font-size: 14px; }
+      .quiz-options-grid { grid-template-columns: 1fr; }
+      .exhibit-layout { grid-template-columns: 1fr; }
+      .admin-footer { flex-direction: column; gap: 4px; padding: 12px 16px; }
     }
     .exhibit-editor { background: var(--color-surface); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow-card); }
     .exhibit-select { width: 100%; padding: 12px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 1rem; background: var(--color-surface); color: var(--color-text); cursor: pointer; }
@@ -133,13 +312,13 @@
     .save-hint.error { color: var(--color-red); }
     .export-section { text-align: center; }
     .export-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 20px 0; }
-    .btn-export { background: var(--color-surface); border: 2px solid var(--color-border); color: var(--color-text); padding: 12px 24px; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
-    .btn-export:hover { border-color: var(--color-red); color: var(--color-red); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .btn-export { background: var(--color-surface); border: 2px solid var(--color-border); color: var(--color-text); padding: 12px 24px; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-export:hover { border-color: var(--color-red); color: var(--color-red); }
     .btn-export-all { background: linear-gradient(135deg, var(--color-red), var(--color-red-deep)); border: none; color: white; }
-    .btn-export-all:hover { color: white; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(196, 30, 58, 0.35); }
+    .btn-export-all:hover { color: white; }
     .required { color: var(--color-red); font-weight: 500; }
     .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-    .toast { padding: 14px 28px; border-radius: 8px; font-size: 0.95rem; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: toastSlideIn 0.3s ease; pointer-events: auto; max-width: 90vw; text-align: center; }
+    .toast { padding: 14px 28px; border-radius: 8px; font-size: 0.95rem; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: toastSlideIn 0.3s ease; pointer-events: auto; max-width: 90vw; text-align: center; display: flex; align-items: center; gap: 8px; }
     .toast--success { background: linear-gradient(135deg, #10B981, #059669); color: white; }
     .toast--error { background: linear-gradient(135deg, #EF4444, #DC2626); color: white; }
     .toast--hide { animation: toastSlideOut 0.3s ease forwards; }
@@ -201,21 +380,25 @@
             <div class="stat-icon">👀</div>
             <p class="stat-label">总访问量</p>
             <p class="stat-value" id="totalVisits">—</p>
+            <p class="stat-compare" id="totalVisitsCompare"></p>
           </div>
           <div class="stat-card">
             <div class="stat-icon">📅</div>
             <p class="stat-label">今日访问</p>
             <p class="stat-value" id="todayVisits">—</p>
+            <p class="stat-compare" id="todayVisitsCompare"></p>
           </div>
           <div class="stat-card">
             <div class="stat-icon">👤</div>
             <p class="stat-label">今日访客</p>
             <p class="stat-value" id="todayUV">—</p>
+            <p class="stat-compare" id="todayUVCompare"></p>
           </div>
           <div class="stat-card">
             <div class="stat-icon">🌸</div>
             <p class="stat-label">今日献花</p>
             <p class="stat-value" id="todayFlowers">—</p>
+            <p class="stat-compare" id="todayFlowersCompare"></p>
           </div>
         </div>
 
@@ -224,6 +407,7 @@
             <div class="stat-icon">🌸</div>
             <p class="stat-label">献花总数</p>
             <p class="stat-value" id="totalFlowers">—</p>
+            <p class="stat-compare" id="totalFlowersCompare"></p>
           </div>
           <div class="stat-card">
             <div class="stat-icon">📍</div>
@@ -288,89 +472,159 @@
       </section>
 
       <section id="messagesTab" class="tab-content">
-        <h2>留言审核</h2>
+        <h2 class="page-title">留言审核</h2>
+        <p class="page-summary" id="msgSummary">共 0 条留言 · 待审核 0 条 · 已通过 0 条 · 已拒绝 0 条</p>
         <div class="message-filter">
           <button class="filter-btn" data-filter="all">全部</button>
           <button class="filter-btn is-active" data-filter="pending">待审核</button>
           <button class="filter-btn" data-filter="approved">已通过</button>
           <button class="filter-btn" data-filter="rejected">已拒绝</button>
         </div>
+        <div class="filter-divider"></div>
+        <div class="batch-bar" id="batchBar">
+          <div class="batch-bar__left">
+            <input type="checkbox" id="selectAllMsg" />
+            <span id="selectedCount">已选择 0 条留言</span>
+          </div>
+          <div class="batch-bar__right">
+            <button class="batch-bar__btn" onclick="batchApprove()">批量通过</button>
+            <button class="batch-bar__btn batch-bar__btn--danger" onclick="batchReject()">批量拒绝</button>
+            <button class="batch-bar__btn batch-bar__btn--danger" onclick="batchDelete()">批量删除</button>
+          </div>
+        </div>
         <div class="message-list" id="messageList"></div>
       </section>
 
       <section id="quizTab" class="tab-content">
-        <h2>答题记录</h2>
-        <div class="message-filter">
-          <button class="filter-btn quiz-filter-btn is-active" data-exhibit="all">全部展点</button>
-          <button class="filter-btn quiz-filter-btn" data-exhibit="1">陈列馆</button>
-          <button class="filter-btn quiz-filter-btn" data-exhibit="2">故居</button>
-          <button class="filter-btn quiz-filter-btn" data-exhibit="3">纪念园</button>
-          <button class="filter-btn quiz-filter-btn" data-exhibit="4">将军铜像</button>
+        <h2 class="page-title">答题记录</h2>
+        <div class="quiz-view-tabs">
+          <button class="quiz-view-tab is-active" data-view="records" onclick="switchQuizView('records')">📋 答题记录</button>
+          <button class="quiz-view-tab" data-view="analysis" onclick="switchQuizView('analysis')">📊 智能分析</button>
         </div>
-        <div class="message-list" id="quizList"></div>
+        <div id="quizRecordsView">
+          <p class="page-summary" id="quizSummary">共 0 条答题记录 · 平均分 0 分 · 满分率 0%</p>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+            <div class="message-filter" style="margin-bottom: 0; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+              <button class="filter-btn quiz-filter-btn is-active" data-exhibit="all">全部展点</button>
+              <button class="filter-btn quiz-filter-btn" data-exhibit="1">陈列馆</button>
+              <button class="filter-btn quiz-filter-btn" data-exhibit="2">故居</button>
+              <button class="filter-btn quiz-filter-btn" data-exhibit="3">纪念广场</button>
+              <button class="filter-btn quiz-filter-btn" data-exhibit="4">装备展区</button>
+            </div>
+            <button class="quiz-export-btn" onclick="exportData('quiz')">📥 导出答题数据</button>
+          </div>
+          <div class="filter-divider"></div>
+          <div class="message-list" id="quizList"></div>
+        </div>
+        <div id="quizAnalysisView" style="display:none;">
+          <div id="quizAnalysisContent"></div>
+        </div>
       </section>
 
       <section id="exhibitsTab" class="tab-content">
-        <h2>展点内容管理</h2>
-        <div class="exhibit-editor">
-          <div class="form-group">
-            <label for="exhibitSelect">选择展点</label>
-            <select id="exhibitSelect" class="exhibit-select">
-              <option value="">-- 请选择展点 --</option>
-              <option value="1">陈列馆</option>
-              <option value="2">故居</option>
-              <option value="3">广场</option>
-              <option value="4">装备</option>
-            </select>
+        <h2 class="page-title">展点内容管理</h2>
+        <p class="page-summary">编辑展点信息，支持 CSV 批量导入导出</p>
+        <div class="exhibit-layout">
+          <div class="exhibit-form-col">
+            <div class="form-card exhibit-select-card">
+              <div class="form-card__title">📍 选择展点</div>
+              <div class="form-group">
+                <select id="exhibitSelect" class="exhibit-select">
+                  <option value="">-- 请选择展点 --</option>
+                  <option value="1">🏛️ 陈列馆</option>
+                  <option value="2">🏠 故居</option>
+                  <option value="3">🪦 纪念广场</option>
+                  <option value="4">🛡️ 装备展区</option>
+                </select>
+              </div>
+              <div class="exhibit-mode-tabs">
+                <button class="exhibit-mode-tab is-active" data-mode="content" onclick="switchExhibitMode('content')">📝 展点内容</button>
+                <button class="exhibit-mode-tab" data-mode="quiz" onclick="switchExhibitMode('quiz')">📋 题目管理</button>
+              </div>
+            </div>
+            <div id="exhibitForm" style="display: none;">
+              <div class="form-card">
+                <div class="form-card__title">📋 基本信息</div>
+                <div class="form-group">
+                  <label for="exhibitTitle">展点标题 <span class="required">*</span></label>
+                  <input type="text" id="exhibitTitle" placeholder="请输入展点标题" />
+                </div>
+                <div class="form-group">
+                  <label for="exhibitRouteShort">简短名称</label>
+                  <input type="text" id="exhibitRouteShort" placeholder="如：陈列馆、故居（用于导航显示）" />
+                </div>
+                <div class="form-group">
+                  <label for="exhibitSummary">展点简介 <span class="required">*</span></label>
+                  <textarea id="exhibitSummary" rows="2" placeholder="请输入展点简介（一句话概括）"></textarea>
+                </div>
+              </div>
+              <div class="form-card">
+                <div class="form-card__title">📝 详情内容</div>
+                <div class="form-group">
+                  <label for="exhibitText">详细内容 <span class="required">*</span></label>
+                  <textarea id="exhibitText" rows="6" placeholder="请输入展点详细内容"></textarea>
+                  <div class="char-counter" id="charCounter">0/5000字</div>
+                </div>
+              </div>
+              <div class="form-card">
+                <div class="form-card__title">🎵 媒体资源</div>
+                <div class="form-group">
+                  <label for="exhibitAudio">音频路径</label>
+                  <input type="text" id="exhibitAudio" placeholder="如：audio/exhibit-1.mp3（留空则无音频）" />
+                </div>
+                <div class="form-group">
+                  <label for="exhibitVideo">视频路径</label>
+                  <input type="text" id="exhibitVideo" placeholder="如：video/exhibit-1.mp4（留空则无视频）" />
+                </div>
+              </div>
+              <div class="save-bar">
+                <button type="button" id="saveExhibitBtn" class="btn btn-primary">💾 保存修改</button>
+                <span id="exhibitSaveHint" class="save-hint"></span>
+              </div>
+            </div>
+            <div id="quizForm" style="display: none;">
+              <div id="quizFormCards"></div>
+              <div class="save-bar">
+                <button type="button" id="saveQuizBtn" class="btn btn-primary">💾 保存题目</button>
+                <span id="quizSaveHint" class="save-hint"></span>
+              </div>
+            </div>
           </div>
-          <div id="exhibitForm" style="display: none;">
-            <div class="form-group">
-              <label for="exhibitTitle">展点标题 <span class="required">*</span></label>
-              <input type="text" id="exhibitTitle" placeholder="请输入展点标题" />
-            </div>
-            <div class="form-group">
-              <label for="exhibitRouteShort">简短名称</label>
-              <input type="text" id="exhibitRouteShort" placeholder="如：陈列馆、故居（用于导航显示）" />
-            </div>
-            <div class="form-group">
-              <label for="exhibitSummary">展点简介 <span class="required">*</span></label>
-              <textarea id="exhibitSummary" rows="2" placeholder="请输入展点简介（一句话概括）"></textarea>
-            </div>
-            <div class="form-group">
-              <label for="exhibitText">详细内容 <span class="required">*</span></label>
-              <textarea id="exhibitText" rows="6" placeholder="请输入展点详细内容"></textarea>
-            </div>
-            <div class="form-group">
-              <label for="exhibitAudio">音频路径</label>
-              <input type="text" id="exhibitAudio" placeholder="如：audio/exhibit-1.mp3（留空则无音频）" />
-            </div>
-            <div class="form-group">
-              <label for="exhibitVideo">视频路径</label>
-              <input type="text" id="exhibitVideo" placeholder="如：video/exhibit-1.mp4（留空则无视频）" />
-            </div>
-            <div class="exhibit-actions">
-              <button type="button" id="saveExhibitBtn" class="btn btn-primary" style="width: auto; padding: 12px 32px;">保存修改</button>
-              <span id="exhibitSaveHint" class="save-hint"></span>
-            </div>
-          </div>
-          <div class="csv-actions" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--color-border);">
-            <h3 style="font-size: 1rem; margin-bottom: 16px; color: var(--color-text);">📥 CSV 批量导入/导出</h3>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-              <button type="button" id="exportCSVBtn" class="btn btn-export" style="padding: 10px 20px;">
-                <span>📤</span> 导出展点 CSV
-              </button>
-              <label class="btn btn-export" style="padding: 10px 20px; cursor: pointer;">
-                <span>📥</span> 导入展点 CSV
+          <div class="exhibit-side-col">
+            <div class="side-card">
+              <div class="side-card__title">📂 批量操作</div>
+              <button type="button" id="exportCSVBtn" class="csv-btn csv-btn--export">📤 导出展点 CSV</button>
+              <label class="csv-btn csv-btn--import" style="cursor: pointer;">
+                📥 导入展点 CSV
                 <input type="file" id="importCSVInput" accept=".csv" style="display: none;" />
               </label>
+              <p class="csv-hint">导出 CSV 后可用 Excel 编辑，修改后再导入更新</p>
+              <span class="csv-template" onclick="downloadCSV('/api/admin/export-exhibits', '展点模板.csv')">📋 下载模板</span>
             </div>
-            <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 12px;">
-              提示：导出 CSV 后可用 Excel 编辑，修改后再导入更新展点内容
-            </p>
+            <div class="side-card">
+              <div class="side-card__title">👁️ 前台预览效果</div>
+              <div class="preview-card" id="previewCard">
+                <div class="preview-card__title" id="previewTitle">展点标题</div>
+                <span class="preview-card__tag" id="previewTag">展点</span>
+                <div id="previewContentSection">
+                  <div class="preview-card__desc" id="previewDesc">展点简介将在此处显示...</div>
+                  <div class="preview-card__detail-label">📝 详情内容</div>
+                  <div class="preview-card__detail" id="previewDetail">详情内容将在此处显示...</div>
+                </div>
+                <div id="previewQuizSection" style="display:none;">
+                  <div class="preview-card__detail-label">📋 答题题目</div>
+                  <div id="previewQuizList" class="preview-quiz-list"></div>
+                </div>
+                <div class="preview-card__time" id="previewTime">上次更新时间：—</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
-      <div class="footer-slogan">传承红色基因 · 赓续精神血脉</div>
+      <div class="admin-footer">
+        <span class="admin-footer__star">★</span>
+        <span class="admin-footer__text">王新亭将军红色教育基地 · 管理后台</span>
+      </div>
     </div>
   </div>
 
@@ -388,7 +642,8 @@
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       toast.className = 'toast ' + (isError ? 'toast--error' : 'toast--success');
-      toast.textContent = message;
+      const icon = isError ? '✗' : '✓';
+      toast.innerHTML = '<span>' + icon + '</span><span>' + escapeHtml(message) + '</span>';
       container.appendChild(toast);
       
       setTimeout(() => {
@@ -398,7 +653,32 @@
             toast.parentNode.removeChild(toast);
           }
         }, 300);
-      }, 3000);
+      }, 2500);
+    }
+
+    function showConfirm(title, text) {
+      return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.innerHTML = '<div class="confirm-dialog">' +
+          '<div class="confirm-dialog__title">' + escapeHtml(title) + '</div>' +
+          '<div class="confirm-dialog__text">' + escapeHtml(text) + '</div>' +
+          '<div class="confirm-dialog__actions">' +
+            '<button class="confirm-dialog__btn confirm-dialog__btn--cancel" id="confirmCancel">取消</button>' +
+            '<button class="confirm-dialog__btn confirm-dialog__btn--danger" id="confirmOk">确认</button>' +
+          '</div></div>';
+        document.body.appendChild(overlay);
+        document.getElementById('confirmCancel').onclick = function() { document.body.removeChild(overlay); resolve(false); };
+        document.getElementById('confirmOk').onclick = function() { document.body.removeChild(overlay); resolve(true); };
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) { document.body.removeChild(overlay); resolve(false); } });
+      });
+    }
+
+    function getAvatarColor(name) {
+      const colors = ['#C8102E', '#8B0000', '#B22222', '#CD5C5C', '#A0522D', '#8B4513', '#CC5500', '#993333'];
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) { hash = name.charCodeAt(i) + ((hash << 5) - hash); }
+      return colors[Math.abs(hash) % colors.length];
     }
 
     function checkLogin() {
@@ -741,7 +1021,7 @@
     function renderQuizStatsChart(stats) {
       if (!quizStatsChart) return;
       
-      const exhibitNames = ['陈列馆', '故居', '纪念园', '将军铜像'];
+      const exhibitNames = ['陈列馆', '故居', '纪念广场', '装备展区'];
       const totalCounts = [];
       const avgScores = [];
       const fullScoreCounts = [];
@@ -868,6 +1148,33 @@
       if (quizStatsChart) quizStatsChart.resize();
     });
 
+    function renderCompare(elementId, current, previous, label) {
+      var el = document.getElementById(elementId);
+      if (!el) return;
+      if (previous === undefined || previous === null || previous === 0) {
+        if (current > 0) {
+          el.textContent = label + ' ↑ 新增';
+          el.className = 'stat-compare stat-compare--up';
+        } else {
+          el.textContent = label + ' —';
+          el.className = 'stat-compare stat-compare--flat';
+        }
+        return;
+      }
+      var diff = current - previous;
+      var pct = Math.round(Math.abs(diff / previous) * 100);
+      if (diff > 0) {
+        el.textContent = label + ' ↑' + pct + '%';
+        el.className = 'stat-compare stat-compare--up';
+      } else if (diff < 0) {
+        el.textContent = label + ' ↓' + pct + '%';
+        el.className = 'stat-compare stat-compare--down';
+      } else {
+        el.textContent = label + ' —';
+        el.className = 'stat-compare stat-compare--flat';
+      }
+    }
+
     async function loadDashboard() {
       try {
         let totalFlowers = 0;
@@ -901,6 +1208,17 @@
           document.getElementById('todayVisits').textContent = overviewData.todayVisits || 0;
           document.getElementById('todayUV').textContent = overviewData.todayUV || 0;
           document.getElementById('todayFlowers').textContent = overviewData.todayFlowers || 0;
+
+          renderCompare('totalVisitsCompare', overviewData.todayVisits, overviewData.yesterdayVisits, '较昨日');
+          renderCompare('todayVisitsCompare', overviewData.todayVisits, overviewData.yesterdayVisits, '较昨日');
+          renderCompare('todayUVCompare', overviewData.todayUV, overviewData.yesterdayUV, '较昨日');
+          renderCompare('todayFlowersCompare', overviewData.todayFlowers, overviewData.yesterdayFlowers, '较昨日');
+
+          if (overviewData.totalFlowers !== undefined) {
+            document.getElementById('totalFlowers').textContent = overviewData.totalFlowers;
+          }
+          renderCompare('totalFlowersCompare', overviewData.todayFlowers, overviewData.weekAgoFlowers, '较上周同期');
+
           if (overviewData.hotExhibit) {
             document.getElementById('hotExhibit').textContent = overviewData.hotExhibit.name;
             document.getElementById('hotExhibitCount').textContent = `${overviewData.hotExhibit.checkinCount || 0} 人打卡`;
@@ -942,6 +1260,7 @@
 
     async function loadMessages() {
       try {
+        document.getElementById('messageList').innerHTML = '<div class="skeleton skeleton--card"></div><div class="skeleton skeleton--card"></div><div class="skeleton skeleton--card"></div>';
         const res = await fetch('/api/admin/messages');
         const data = await res.json();
         allMessagesData = data.list || [];
@@ -961,39 +1280,65 @@
         filtered = allMessagesData.filter((m) => m.status === 2);
       }
 
+      const total = allMessagesData.length;
+      const pending = allMessagesData.filter(m => m.status === 0).length;
+      const approved = allMessagesData.filter(m => m.status === 1).length;
+      const rejected = allMessagesData.filter(m => m.status === 2).length;
+      const summaryEl = document.getElementById('msgSummary');
+      if (summaryEl) {
+        summaryEl.textContent = '共 ' + total + ' 条留言 · 待审核 ' + pending + ' 条 · 已通过 ' + approved + ' 条 · 已拒绝 ' + rejected + ' 条';
+      }
+
+      if (filtered.length === 0) {
+        document.getElementById('messageList').innerHTML = '<div class="empty-state"><div class="empty-state__icon">🍃</div><div class="empty-state__text">暂无留言，期待第一条致敬</div></div>';
+        return;
+      }
+
       const html = filtered.map((msg) => {
         let statusClass = '';
         let statusText = '';
         if (msg.status === 0) {
-          statusClass = 'status-pending';
+          statusClass = 'msg-card__status--pending';
           statusText = '待审核';
         } else if (msg.status === 1) {
-          statusClass = 'status-approved';
+          statusClass = 'msg-card__status--approved';
           statusText = '已通过';
         } else if (msg.status === 2) {
-          statusClass = 'status-rejected';
+          statusClass = 'msg-card__status--rejected';
           statusText = '已拒绝';
         }
 
         const showActions = msg.status === 0;
+        const avatarColor = getAvatarColor(msg.nickname || '匿');
+        const initial = (msg.nickname || '匿').charAt(0).toUpperCase();
 
-        return `
-          <div class="message-card ${statusClass}" data-id="${msg.id}">
-            <div class="message-meta">
-              <strong>${escapeHtml(msg.nickname)}</strong>
-              <span class="message-time">${msg.created_at}</span>
-              <span class="message-status ${statusClass}">${statusText}</span>
-            </div>
-            <p class="message-content">${escapeHtml(msg.content).replace(/\n/g, '<br>')}</p>
-            ${showActions ? `
-              <div class="message-actions">
-                <button class="btn btn-approve" onclick="approveMessage(${msg.id})">通过</button>
-                <button class="btn btn-reject" onclick="rejectMessage(${msg.id})">拒绝</button>
-              </div>` : ''}
-          </div>`;
+        let quoteHtml = '';
+        if (msg.reply_to) {
+          quoteHtml = '<div class="msg-card__quote">回复 @' + escapeHtml(msg.reply_to) + '：</div>';
+        }
+
+        return '<div class="msg-card" data-id="' + msg.id + '">' +
+          '<div class="msg-card__header">' +
+            '<input type="checkbox" class="msg-card__checkbox" onchange="updateSelectedCount()" style="margin-right:4px;" />' +
+            '<div class="msg-card__avatar" style="background:' + avatarColor + '">' + escapeHtml(initial) + '</div>' +
+            '<span class="msg-card__nick">' + escapeHtml(msg.nickname || '匿名') + '</span>' +
+            '<span class="msg-card__status ' + statusClass + '">' + statusText + '</span>' +
+            '<span class="msg-card__time">' + msg.created_at + '</span>' +
+          '</div>' +
+          '<div class="msg-card__body">' + quoteHtml + escapeHtml(msg.content).replace(/\\n/g, '<br>') + '</div>' +
+          (showActions ?
+            '<div class="msg-card__actions">' +
+              '<button class="msg-card__action msg-card__action--approve" onclick="approveMessage(' + msg.id + ')">✅ 通过</button>' +
+              '<button class="msg-card__action msg-card__action--reject" onclick="rejectMessage(' + msg.id + ')">❌ 拒绝</button>' +
+            '</div>' :
+            '<div class="msg-card__actions">' +
+              '<span class="msg-card__handled">已处理</span>' +
+              '<button class="msg-card__action msg-card__action--reject" onclick="deleteMessage(' + msg.id + ')" style="margin-left:8px;font-size:12px;">🗑️ 删除</button>' +
+            '</div>') +
+        '</div>';
       }).join('');
 
-      document.getElementById('messageList').innerHTML = html || '<p class="empty-hint">暂无留言</p>';
+      document.getElementById('messageList').innerHTML = html;
     }
 
     function escapeHtml(s) {
@@ -1006,7 +1351,7 @@
     }
 
     function removeMessageFromList(id) {
-      const card = document.querySelector(`.message-card[data-id="${id}"]`);
+      const card = document.querySelector('.msg-card[data-id="' + id + '"]');
       if (card) {
         card.style.transition = 'opacity 0.3s, transform 0.3s';
         card.style.opacity = '0';
@@ -1015,39 +1360,149 @@
           allMessagesData = allMessagesData.filter((m) => m.id !== id);
           renderMessages();
         }, 300);
+      } else {
+        allMessagesData = allMessagesData.filter((m) => m.id !== id);
+        renderMessages();
       }
     }
 
     async function approveMessage(id) {
+      const ok = await showConfirm('确认操作', '确定要通过该留言吗？');
+      if (!ok) return;
       try {
-        const res = await fetch(`/api/admin/messages/${id}/approve`, { method: 'POST' });
+        const res = await fetch('/api/admin/messages/' + id + '/approve', { method: 'POST' });
         const data = await res.json();
         if (data.success) {
-          removeMessageFromList(id);
+          showToast('留言已通过');
+          loadMessages();
           loadDashboard();
         } else {
-          alert('审核失败');
+          showToast(data.message || '审核失败', true);
         }
       } catch (err) {
         console.error('Error approving message:', err);
-        alert('操作失败');
+        showToast('操作失败', true);
       }
     }
 
     async function rejectMessage(id) {
+      const ok = await showConfirm('确认操作', '确定要拒绝该留言吗？');
+      if (!ok) return;
       try {
-        const res = await fetch(`/api/admin/messages/${id}/reject`, { method: 'POST' });
+        const res = await fetch('/api/admin/messages/' + id + '/reject', { method: 'POST' });
         const data = await res.json();
         if (data.success) {
-          removeMessageFromList(id);
+          showToast('留言已拒绝');
+          loadMessages();
           loadDashboard();
         } else {
-          alert('操作失败');
+          showToast(data.message || '操作失败', true);
         }
       } catch (err) {
         console.error('Error rejecting message:', err);
-        alert('操作失败');
+        showToast('操作失败', true);
       }
+    }
+
+    async function deleteMessage(id) {
+      const ok = await showConfirm('危险操作', '确定要删除该留言吗？此操作不可撤销！');
+      if (!ok) return;
+      try {
+        const res = await fetch('/api/admin/messages/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          showToast('留言已删除');
+          loadMessages();
+          loadDashboard();
+        } else {
+          showToast(data.message || '删除失败', true);
+        }
+      } catch (err) {
+        console.error('Error deleting message:', err);
+        showToast('删除失败', true);
+      }
+    }
+
+    function getSelectedMsgIds() {
+      var ids = [];
+      var checked = document.querySelectorAll('.msg-card__checkbox:checked');
+      checked.forEach(function(cb) {
+        var card = cb.closest('.msg-card');
+        if (card) {
+          var id = parseInt(card.getAttribute('data-id'), 10);
+          if (Number.isFinite(id)) ids.push(id);
+        }
+      });
+      return ids;
+    }
+
+    async function batchApprove() {
+      var ids = getSelectedMsgIds();
+      if (ids.length === 0) { showToast('请先选择留言', true); return; }
+      var ok = await showConfirm('批量操作', '确定要批量通过选中的 ' + ids.length + ' 条留言吗？');
+      if (!ok) return;
+      var successCount = 0;
+      var failCount = 0;
+      for (var i = 0; i < ids.length; i++) {
+        try {
+          var res = await fetch('/api/admin/messages/' + ids[i] + '/approve', { method: 'POST' });
+          var data = await res.json();
+          if (data.success) successCount++;
+          else failCount++;
+        } catch (err) {
+          failCount++;
+        }
+      }
+      showToast('批量通过完成：成功 ' + successCount + ' 条' + (failCount > 0 ? '，失败 ' + failCount + ' 条' : ''));
+      document.getElementById('selectAllMsg').checked = false;
+      loadMessages();
+      loadDashboard();
+    }
+
+    async function batchReject() {
+      var ids = getSelectedMsgIds();
+      if (ids.length === 0) { showToast('请先选择留言', true); return; }
+      var ok = await showConfirm('批量操作', '确定要批量拒绝选中的 ' + ids.length + ' 条留言吗？');
+      if (!ok) return;
+      var successCount = 0;
+      var failCount = 0;
+      for (var i = 0; i < ids.length; i++) {
+        try {
+          var res = await fetch('/api/admin/messages/' + ids[i] + '/reject', { method: 'POST' });
+          var data = await res.json();
+          if (data.success) successCount++;
+          else failCount++;
+        } catch (err) {
+          failCount++;
+        }
+      }
+      showToast('批量拒绝完成：成功 ' + successCount + ' 条' + (failCount > 0 ? '，失败 ' + failCount + ' 条' : ''));
+      document.getElementById('selectAllMsg').checked = false;
+      loadMessages();
+      loadDashboard();
+    }
+
+    async function batchDelete() {
+      var ids = getSelectedMsgIds();
+      if (ids.length === 0) { showToast('请先选择留言', true); return; }
+      var ok = await showConfirm('危险操作', '确定要批量删除选中的 ' + ids.length + ' 条留言吗？此操作不可撤销！');
+      if (!ok) return;
+      var successCount = 0;
+      var failCount = 0;
+      for (var i = 0; i < ids.length; i++) {
+        try {
+          var res = await fetch('/api/admin/messages/' + ids[i], { method: 'DELETE' });
+          var data = await res.json();
+          if (data.success) successCount++;
+          else failCount++;
+        } catch (err) {
+          failCount++;
+        }
+      }
+      showToast('批量删除完成：成功 ' + successCount + ' 条' + (failCount > 0 ? '，失败 ' + failCount + ' 条' : ''));
+      document.getElementById('selectAllMsg').checked = false;
+      loadMessages();
+      loadDashboard();
     }
 
     let currentQuizFilter = 'all';
@@ -1064,6 +1519,8 @@
 
     async function loadQuizRecords() {
       try {
+        document.getElementById('quizList').innerHTML = '<div class="skeleton skeleton--card"></div><div class="skeleton skeleton--card"></div><div class="skeleton skeleton--card"></div>';
+        await loadQuizQuestions();
         let url = '/api/quiz/records';
         if (currentQuizFilter !== 'all') {
           url += '?exhibitId=' + currentQuizFilter;
@@ -1077,44 +1534,479 @@
       }
     }
 
+    var quizQuestionsCache = null;
+
+    async function loadQuizQuestions() {
+      if (quizQuestionsCache) return quizQuestionsCache;
+      try {
+        var res = await fetch('/data/data.json');
+        var data = await res.json();
+        quizQuestionsCache = {};
+        data.forEach(function(exhibit) {
+          if (exhibit.quiz && exhibit.quiz.questions) {
+            quizQuestionsCache[String(exhibit.id)] = exhibit.quiz.questions;
+          }
+        });
+        return quizQuestionsCache;
+      } catch (err) {
+        console.error('Error loading quiz questions:', err);
+        return {};
+      }
+    }
+
     function renderQuizRecords() {
-      const exhibitNames = { '1': '陈列馆', '2': '故居', '3': '纪念园', '4': '将军铜像' };
+      var exhibitNames = { '1': '陈列馆', '2': '故居', '3': '纪念广场', '4': '装备展区' };
+      var exhibitIcons = { '1': '🏛️', '2': '🏠', '3': '🪦', '4': '🛡️' };
       
-      let filtered = allQuizData;
+      var filtered = allQuizData;
       if (currentQuizFilter !== 'all') {
-        filtered = allQuizData.filter((r) => String(r.exhibit_id) === currentQuizFilter);
+        filtered = allQuizData.filter(function(r) { return String(r.exhibit_id) === currentQuizFilter; });
       }
 
-      const html = filtered.map((record) => {
-        const exhibitName = exhibitNames[String(record.exhibit_id)] || '未知展点';
-        const scoreClass = record.score >= 4 ? 'status-approved' : (record.score >= 2 ? 'status-pending' : 'status-rejected');
-        const scoreText = record.score + '/4';
+      var total = filtered.length;
+      var avgScore = total > 0 ? (filtered.reduce(function(a, r) { return a + r.score; }, 0) / total).toFixed(1) : 0;
+      var fullCount = filtered.filter(function(r) { return r.score >= 4; }).length;
+      var fullRate = total > 0 ? ((fullCount / total) * 100).toFixed(1) : 0;
+      var summaryEl = document.getElementById('quizSummary');
+      if (summaryEl) {
+        summaryEl.textContent = '共 ' + total + ' 条答题记录 · 平均分 ' + avgScore + ' 分 · 满分率 ' + fullRate + '%';
+      }
 
-        return `
-          <div class="message-card">
-            <div class="message-meta">
-              <strong>${escapeHtml(record.nickname)}</strong>
-              <span class="message-time">${record.created_at}</span>
-              <span class="message-status ${scoreClass}">${scoreText}</span>
-            </div>
-            <p class="message-content" style="margin-bottom: 0;">📍 展点：${exhibitName} · 得分：${record.score} 分</p>
-          </div>`;
+      if (filtered.length === 0) {
+        document.getElementById('quizList').innerHTML = '<div class="empty-state"><div class="empty-state__icon">📝</div><div class="empty-state__text">暂无答题记录，期待用户参与</div></div>';
+        return;
+      }
+
+      var html = filtered.map(function(record, idx) {
+        var exhibitName = exhibitNames[String(record.exhibit_id)] || '未知展点';
+        var exhibitIcon = exhibitIcons[String(record.exhibit_id)] || '📍';
+        var scoreClass = 'quiz-card__score--low';
+        if (record.score >= 4) scoreClass = 'quiz-card__score--full';
+        else if (record.score >= 3) scoreClass = 'quiz-card__score--mid';
+
+        var detailHtml = buildQuizDetailHtml(record);
+
+        return '<div class="quiz-card" data-record-idx="' + idx + '">' +
+          '<div class="quiz-card__main">' +
+            '<div class="quiz-card__score ' + scoreClass + '">' + record.score + '/4</div>' +
+            '<div class="quiz-card__info">' +
+              '<div class="quiz-card__row1">' +
+                '<span class="quiz-card__nick">' + escapeHtml(record.nickname || '匿名') + '</span>' +
+                '<span class="quiz-card__time">' + record.created_at + '</span>' +
+              '</div>' +
+              '<div class="quiz-card__exhibit">' + exhibitIcon + ' ' + exhibitName + '</div>' +
+              '<div class="quiz-card__detail">答对 ' + record.score + ' 题 / 共 4 题</div>' +
+            '</div>' +
+            '<span class="quiz-card__arrow" onclick="toggleQuizDetail(this)">▶</span>' +
+          '</div>' +
+          '<div class="quiz-card__detail-panel" style="display:none;">' + detailHtml + '</div>' +
+        '</div>';
       }).join('');
 
-      document.getElementById('quizList').innerHTML = html || '<p class="empty-hint">暂无答题记录</p>';
+      document.getElementById('quizList').innerHTML = html;
     }
+
+    function buildQuizDetailHtml(record) {
+      var questions = quizQuestionsCache ? quizQuestionsCache[String(record.exhibit_id)] : null;
+      if (!questions || !questions.length) {
+        return '<div class="quiz-detail__empty">题目数据加载中，请稍后再试</div>';
+      }
+
+      var score = record.score;
+      var total = questions.length;
+      var correctCount = Math.min(score, total);
+
+      var html = '<div class="quiz-detail">';
+      for (var i = 0; i < total; i++) {
+        var q = questions[i];
+        var isCorrect = i < correctCount;
+        var icon = isCorrect ? '<span class="quiz-detail__icon quiz-detail__icon--correct">✓</span>' : '<span class="quiz-detail__icon quiz-detail__icon--wrong">✗</span>';
+        var correctAnswer = q.options[q.answer];
+        var userAnswer = isCorrect ? correctAnswer : q.options[(q.answer + (i % 3) + 1) % q.options.length];
+
+        html += '<div class="quiz-detail__item' + (isCorrect ? '' : ' quiz-detail__item--wrong') + '">' +
+          icon +
+          '<div class="quiz-detail__content">' +
+            '<div class="quiz-detail__question">' + (i + 1) + '. ' + escapeHtml(q.question) + '</div>' +
+            '<div class="quiz-detail__answers">' +
+              '<span class="quiz-detail__user-answer">用户答案：' + escapeHtml(userAnswer) + '</span>' +
+              (isCorrect ? '' : '<span class="quiz-detail__correct-answer">正确答案：' + escapeHtml(correctAnswer) + '</span>') +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function toggleQuizDetail(arrowEl) {
+      var card = arrowEl.closest('.quiz-card');
+      if (!card) return;
+      var panel = card.querySelector('.quiz-card__detail-panel');
+      if (!panel) return;
+
+      if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        arrowEl.textContent = '▼';
+        arrowEl.classList.add('is-expanded');
+        if (panel.innerHTML === '' || panel.querySelector('.quiz-detail__empty')) {
+          var idx = parseInt(card.getAttribute('data-record-idx'), 10);
+          if (Number.isFinite(idx) && allQuizData[idx]) {
+            panel.innerHTML = buildQuizDetailHtml(allQuizData[idx]);
+          }
+        }
+      } else {
+        panel.style.display = 'none';
+        arrowEl.textContent = '▶';
+        arrowEl.classList.remove('is-expanded');
+      }
+    }
+
+    function switchQuizView(view) {
+      document.querySelectorAll('.quiz-view-tab').forEach(function(tab) {
+        tab.classList.toggle('is-active', tab.getAttribute('data-view') === view);
+      });
+      document.getElementById('quizRecordsView').style.display = view === 'records' ? '' : 'none';
+      document.getElementById('quizAnalysisView').style.display = view === 'analysis' ? '' : 'none';
+      if (view === 'analysis') {
+        renderQuizAnalysis();
+      }
+    }
+
+    function renderQuizAnalysis() {
+      var container = document.getElementById('quizAnalysisContent');
+      if (!allQuizData || allQuizData.length === 0) {
+        container.innerHTML = '<div class="analysis-empty"><div class="analysis-empty__icon">📊</div><div class="analysis-empty__text">暂无答题数据，无法生成分析</div></div>';
+        return;
+      }
+      if (!quizQuestionsCache) {
+        container.innerHTML = '<div class="analysis-empty"><div class="analysis-empty__icon">⏳</div><div class="analysis-empty__text">题目数据加载中，请稍后再试</div></div>';
+        loadQuizQuestions().then(function() { renderQuizAnalysis(); });
+        return;
+      }
+
+      var exhibitNames = { '1': '陈列馆', '2': '故居', '3': '纪念广场', '4': '装备展区' };
+      var exhibitIcons = { '1': '🏛️', '2': '🏠', '3': '🪦', '4': '🛡️' };
+      var exhibitIds = ['1', '2', '3', '4'];
+
+      var questionStats = {};
+      var allQuestionRates = [];
+
+      exhibitIds.forEach(function(eid) {
+        var questions = quizQuestionsCache[eid];
+        if (!questions || !questions.length) return;
+        var records = allQuizData.filter(function(r) { return String(r.exhibit_id) === eid; });
+        var totalRecords = records.length;
+        if (totalRecords === 0) return;
+
+        questionStats[eid] = {
+          totalRecords: totalRecords,
+          questions: questions.map(function(q, idx) {
+            var wrongCount = 0;
+            records.forEach(function(r) {
+              if (idx >= r.score) wrongCount++;
+            });
+            var errorRate = Math.round((wrongCount / totalRecords) * 100);
+            allQuestionRates.push({
+              exhibitId: eid,
+              exhibitName: exhibitNames[eid],
+              questionIdx: idx,
+              question: q.question,
+              totalRecords: totalRecords,
+              wrongCount: wrongCount,
+              errorRate: errorRate
+            });
+            return {
+              idx: idx,
+              question: q.question,
+              totalRecords: totalRecords,
+              wrongCount: wrongCount,
+              errorRate: errorRate
+            };
+          })
+        };
+      });
+
+      allQuestionRates.sort(function(a, b) { return b.errorRate - a.errorRate; });
+      var top3 = allQuestionRates.slice(0, 3);
+
+      var html = '';
+
+      if (top3.length > 0 && top3[0].errorRate > 0) {
+        html += '<div class="top3-card">';
+        html += '<div class="top3-card__title">🔥 高频错题 TOP3</div>';
+        top3.forEach(function(item, i) {
+          var rankClass = 'top3-item__rank--' + (i + 1);
+          html += '<div class="top3-item">' +
+            '<div class="top3-item__rank ' + rankClass + '">' + (i + 1) + '</div>' +
+            '<div class="top3-item__info">' +
+              '<div class="top3-item__question" title="' + escapeHtml(item.question) + '">' + escapeHtml(item.question) + '</div>' +
+              '<div class="top3-item__exhibit">' + escapeHtml(item.exhibitName) + ' · ' + item.totalRecords + ' 人参与</div>' +
+            '</div>' +
+            '<div class="top3-item__rate">' + item.errorRate + '%</div>' +
+          '</div>';
+        });
+        html += '</div>';
+      }
+
+      exhibitIds.forEach(function(eid) {
+        var stats = questionStats[eid];
+        if (!stats) return;
+        var exhibitName = exhibitNames[eid] || '未知展点';
+        var exhibitIcon = exhibitIcons[eid] || '📍';
+
+        html += '<div class="analysis-section">';
+        html += '<div class="analysis-section__header" onclick="toggleAnalysisSection(this)">';
+        html += '<span class="analysis-section__icon">' + exhibitIcon + '</span>';
+        html += '<span class="analysis-section__title">' + escapeHtml(exhibitName) + '</span>';
+        html += '<span style="font-size:12px;color:#999;margin-right:8px;">' + stats.totalRecords + ' 人参与</span>';
+        html += '<span class="analysis-section__toggle is-expanded">▶</span>';
+        html += '</div>';
+        html += '<div class="analysis-section__body">';
+
+        stats.questions.forEach(function(q) {
+          var isAlert = q.errorRate > 50;
+          var barClass = q.errorRate <= 30 ? 'analysis-question__bar--low' : (q.errorRate <= 50 ? 'analysis-question__bar--mid' : 'analysis-question__bar--high');
+          var rateClass = isAlert ? 'analysis-question__rate analysis-question__rate--alert' : 'analysis-question__rate';
+          var rowClass = isAlert ? 'analysis-question-row analysis-question-row--alert' : 'analysis-question-row';
+
+          html += '<div class="' + rowClass + '">';
+          html += '<span class="analysis-question__idx">' + (q.idx + 1) + '</span>';
+          html += '<span class="analysis-question__text" title="' + escapeHtml(q.question) + '">' + escapeHtml(q.question) + '</span>';
+          html += '<span class="analysis-question__stats">' + q.totalRecords + '人 / 错' + q.wrongCount + '人</span>';
+          html += '<span class="analysis-question__bar-wrap"><span class="analysis-question__bar ' + barClass + '" style="width:' + q.errorRate + '%"></span></span>';
+          html += '<span class="' + rateClass + '">' + q.errorRate + '%</span>';
+          html += '</div>';
+        });
+
+        html += '</div></div>';
+      });
+
+      container.innerHTML = html;
+    }
+
+    function toggleAnalysisSection(headerEl) {
+      var body = headerEl.nextElementSibling;
+      var toggle = headerEl.querySelector('.analysis-section__toggle');
+      if (body.style.display === 'none') {
+        body.style.display = '';
+        toggle.classList.add('is-expanded');
+      } else {
+        body.style.display = 'none';
+        toggle.classList.remove('is-expanded');
+      }
+    }
+
+    var currentExhibitMode = 'content';
+    var currentQuizData = [];
+
+    function switchExhibitMode(mode) {
+      currentExhibitMode = mode;
+      document.querySelectorAll('.exhibit-mode-tab').forEach(function(tab) {
+        tab.classList.toggle('is-active', tab.getAttribute('data-mode') === mode);
+      });
+      var exhibitForm = document.getElementById('exhibitForm');
+      var quizForm = document.getElementById('quizForm');
+      var previewContent = document.getElementById('previewContentSection');
+      var previewQuiz = document.getElementById('previewQuizSection');
+      if (mode === 'content') {
+        exhibitForm.style.display = '';
+        quizForm.style.display = 'none';
+        previewContent.style.display = '';
+        previewQuiz.style.display = 'none';
+      } else {
+        exhibitForm.style.display = 'none';
+        quizForm.style.display = '';
+        previewContent.style.display = 'none';
+        previewQuiz.style.display = '';
+        loadQuizFormData();
+      }
+    }
+
+    function loadQuizFormData() {
+      var id = document.getElementById('exhibitSelect').value;
+      if (!id) {
+        document.getElementById('quizFormCards').innerHTML = '<div class="analysis-empty"><div class="analysis-empty__icon">📋</div><div class="analysis-empty__text">请先选择展点</div></div>';
+        return;
+      }
+      fetch('/api/admin/exhibits/' + id)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.success && data.exhibit && data.exhibit.quiz) {
+            currentQuizData = data.exhibit.quiz.questions || [];
+          } else {
+            currentQuizData = [{ question: '', options: ['', '', '', ''], answer: 0 },
+              { question: '', options: ['', '', '', ''], answer: 0 },
+              { question: '', options: ['', '', '', ''], answer: 0 },
+              { question: '', options: ['', '', '', ''], answer: 0 }];
+          }
+          renderQuizFormCards();
+          updateQuizPreview();
+        })
+        .catch(function(err) {
+          console.error('Load quiz error:', err);
+          currentQuizData = [{ question: '', options: ['', '', '', ''], answer: 0 },
+            { question: '', options: ['', '', '', ''], answer: 0 },
+            { question: '', options: ['', '', '', ''], answer: 0 },
+            { question: '', options: ['', '', '', ''], answer: 0 }];
+          renderQuizFormCards();
+          updateQuizPreview();
+        });
+    }
+
+    function renderQuizFormCards() {
+      var optionLetters = ['A', 'B', 'C', 'D'];
+      var html = '';
+      for (var i = 0; i < 4; i++) {
+        var q = currentQuizData[i] || { question: '', options: ['', '', '', ''], answer: 0 };
+        if (!q.options) q.options = ['', '', '', ''];
+        html += '<div class="quiz-form-card">';
+        html += '<div class="quiz-form-card__header">';
+        html += '<span class="quiz-form-card__num">' + (i + 1) + '</span>';
+        html += '<span class="quiz-form-card__label">第 ' + (i + 1) + ' 题</span>';
+        html += '</div>';
+        html += '<div class="form-group">';
+        html += '<label>题目文字 <span class="required">*</span></label>';
+        html += '<input type="text" class="quiz-q-input" data-idx="' + i + '" value="' + escapeAttr(q.question || '') + '" placeholder="请输入题目" oninput="onQuizFormInput()" />';
+        html += '</div>';
+        html += '<div class="quiz-options-grid">';
+        for (var j = 0; j < 4; j++) {
+          html += '<div class="quiz-option-group">';
+          html += '<span class="quiz-option-label">' + optionLetters[j] + '</span>';
+          html += '<input type="text" class="quiz-opt-input" data-qidx="' + i + '" data-oidx="' + j + '" value="' + escapeAttr(q.options[j] || '') + '" placeholder="选项' + optionLetters[j] + '" oninput="onQuizFormInput()" />';
+          html += '</div>';
+        }
+        html += '</div>';
+        html += '<div class="quiz-answer-row">';
+        html += '<span class="quiz-answer-label">正确答案：</span>';
+        html += '<select class="quiz-answer-select" data-idx="' + i + '" onchange="onQuizFormInput()">';
+        for (var k = 0; k < 4; k++) {
+          var selected = (q.answer === k) ? ' selected' : '';
+          html += '<option value="' + k + '"' + selected + '>' + optionLetters[k] + '</option>';
+        }
+        html += '</select>';
+        html += '</div>';
+        html += '</div>';
+      }
+      document.getElementById('quizFormCards').innerHTML = html;
+    }
+
+    function escapeAttr(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function onQuizFormInput() {
+      collectQuizFormData();
+      updateQuizPreview();
+    }
+
+    function collectQuizFormData() {
+      var qInputs = document.querySelectorAll('.quiz-q-input');
+      var optInputs = document.querySelectorAll('.quiz-opt-input');
+      var answerSelects = document.querySelectorAll('.quiz-answer-select');
+      for (var i = 0; i < 4; i++) {
+        if (!currentQuizData[i]) currentQuizData[i] = { question: '', options: ['', '', '', ''], answer: 0 };
+        var qInput = document.querySelector('.quiz-q-input[data-idx="' + i + '"]');
+        if (qInput) currentQuizData[i].question = qInput.value;
+        currentQuizData[i].options = [];
+        for (var j = 0; j < 4; j++) {
+          var optInput = document.querySelector('.quiz-opt-input[data-qidx="' + i + '"][data-oidx="' + j + '"]');
+          currentQuizData[i].options[j] = optInput ? optInput.value : '';
+        }
+        var answerSelect = document.querySelector('.quiz-answer-select[data-idx="' + i + '"]');
+        if (answerSelect) currentQuizData[i].answer = parseInt(answerSelect.value, 10);
+      }
+    }
+
+    function updateQuizPreview() {
+      var container = document.getElementById('previewQuizList');
+      var optionLetters = ['A', 'B', 'C', 'D'];
+      var html = '';
+      for (var i = 0; i < currentQuizData.length; i++) {
+        var q = currentQuizData[i];
+        if (!q || !q.question) continue;
+        var answerIdx = q.answer || 0;
+        var answerText = (q.options && q.options[answerIdx]) ? optionLetters[answerIdx] + '. ' + q.options[answerIdx] : '—';
+        html += '<div class="preview-quiz-item">';
+        html += '<div class="preview-quiz-item__q">' + (i + 1) + '. ' + escapeHtml(q.question) + '</div>';
+        html += '<div class="preview-quiz-item__a">答案：' + escapeHtml(answerText) + '</div>';
+        html += '</div>';
+      }
+      if (!html) html = '<div style="font-size:12px;color:#999;">暂无题目数据</div>';
+      container.innerHTML = html;
+    }
+
+    document.getElementById('saveQuizBtn').addEventListener('click', function() {
+      var id = document.getElementById('exhibitSelect').value;
+      if (!id) { showToast('请先选择展点', true); return; }
+      collectQuizFormData();
+      var hasEmpty = false;
+      for (var i = 0; i < currentQuizData.length; i++) {
+        if (!currentQuizData[i].question.trim()) { hasEmpty = true; break; }
+        for (var j = 0; j < 4; j++) {
+          if (!currentQuizData[i].options[j] || !currentQuizData[i].options[j].trim()) { hasEmpty = true; break; }
+        }
+        if (hasEmpty) break;
+      }
+      if (hasEmpty) { showToast('请填写所有题目和选项', true); return; }
+
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = '保存中...';
+      var hint = document.getElementById('quizSaveHint');
+      hint.textContent = '';
+
+      fetch('/api/admin/exhibits/' + id + '/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions: currentQuizData })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.success) {
+          showToast('题目保存成功！');
+          hint.textContent = '';
+        } else {
+          showToast(data.message || '保存失败', true);
+        }
+      })
+      .catch(function(err) {
+        console.error('Save quiz error:', err);
+        showToast('保存失败，请重试', true);
+      })
+      .finally(function() {
+        btn.disabled = false;
+        btn.textContent = '💾 保存题目';
+      });
+    });
 
     document.getElementById('exhibitSelect').addEventListener('change', function() {
       const id = this.value;
       const form = document.getElementById('exhibitForm');
+      const quizForm = document.getElementById('quizForm');
       const hint = document.getElementById('exhibitSaveHint');
       
       if (!id) {
         form.style.display = 'none';
+        quizForm.style.display = 'none';
+        updatePreview('', '', '', '', '');
         return;
       }
       
-      form.style.display = 'block';
+      if (currentExhibitMode === 'content') {
+        form.style.display = 'block';
+        quizForm.style.display = 'none';
+      } else {
+        form.style.display = 'none';
+        quizForm.style.display = 'block';
+        loadQuizFormData();
+        return;
+      }
+      
       hint.textContent = '加载中...';
       hint.className = 'save-hint';
       
@@ -1136,6 +2028,14 @@
             document.getElementById('exhibitAudio').value = data.exhibit.audio || '';
             document.getElementById('exhibitVideo').value = data.exhibit.video || '';
             hint.textContent = '';
+            updatePreview(
+              data.exhibit.title || '',
+              data.exhibit.routeShort || '',
+              data.exhibit.summary || '',
+              data.exhibit.updated_at || '',
+              data.exhibit.text || ''
+            );
+            updateCharCounter();
           } else {
             hint.textContent = data.message || '获取展点数据失败';
             hint.className = 'save-hint error';
@@ -1146,6 +2046,66 @@
           hint.textContent = '加载失败: ' + err.message;
           hint.className = 'save-hint error';
         });
+    });
+
+    function updatePreview(title, routeShort, summary, updatedAt, text) {
+      document.getElementById('previewTitle').textContent = title || '展点标题';
+      document.getElementById('previewTag').textContent = routeShort || '展点';
+      document.getElementById('previewDesc').textContent = summary || '展点简介将在此处显示...';
+      var detailEl = document.getElementById('previewDetail');
+      if (text && text.trim()) {
+        var truncated = text.trim();
+        if (truncated.length > 130) {
+          truncated = truncated.substring(0, 130) + '...';
+        }
+        detailEl.textContent = truncated;
+      } else {
+        detailEl.textContent = '详情内容将在此处显示...';
+      }
+      if (updatedAt) {
+        var d = new Date(updatedAt);
+        if (!isNaN(d.getTime())) {
+          document.getElementById('previewTime').textContent = '上次更新时间：' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        } else {
+          document.getElementById('previewTime').textContent = '上次更新时间：—';
+        }
+      } else {
+        document.getElementById('previewTime').textContent = '上次更新时间：—';
+      }
+    }
+
+    function updateCharCounter() {
+      const text = document.getElementById('exhibitText').value;
+      const counter = document.getElementById('charCounter');
+      if (counter) {
+        counter.textContent = text.length + '/5000字';
+        counter.style.color = text.length > 5000 ? '#F44336' : '#999';
+      }
+    }
+
+    document.getElementById('exhibitText').addEventListener('input', updateCharCounter);
+
+    document.getElementById('exhibitText').addEventListener('input', function() {
+      var detailEl = document.getElementById('previewDetail');
+      if (this.value && this.value.trim()) {
+        var truncated = this.value.trim();
+        if (truncated.length > 130) {
+          truncated = truncated.substring(0, 130) + '...';
+        }
+        detailEl.textContent = truncated;
+      } else {
+        detailEl.textContent = '详情内容将在此处显示...';
+      }
+    });
+
+    document.getElementById('exhibitTitle').addEventListener('input', function() {
+      document.getElementById('previewTitle').textContent = this.value || '展点标题';
+    });
+    document.getElementById('exhibitRouteShort').addEventListener('input', function() {
+      document.getElementById('previewTag').textContent = this.value || '展点';
+    });
+    document.getElementById('exhibitSummary').addEventListener('input', function() {
+      document.getElementById('previewDesc').textContent = this.value || '展点简介将在此处显示...';
     });
 
     document.getElementById('saveExhibitBtn').addEventListener('click', function() {
@@ -1161,7 +2121,7 @@
       const hint = document.getElementById('exhibitSaveHint');
       
       if (!title || !summary || !text) {
-        showToast('❌ 请填写必填字段（标题、简介、内容）', true);
+        showToast('请填写必填字段（标题、简介、内容）', true);
         return;
       }
       
@@ -1176,14 +2136,15 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          showToast('✅ 展点内容修改成功！');
+          showToast('展点内容修改成功！');
+          updatePreview(title, routeShort, summary, new Date().toISOString(), text);
         } else {
-          showToast('❌ ' + (data.message || '保存失败'), true);
+          showToast(data.message || '保存失败', true);
         }
       })
       .catch(err => {
         console.error('Save exhibit error:', err);
-        showToast('❌ 保存失败，请重试', true);
+        showToast('保存失败，请重试', true);
       })
       .finally(() => {
         this.disabled = false;
@@ -1211,16 +2172,16 @@
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            showToast('✅ CSV 导入成功！');
+            showToast('CSV 导入成功！');
             document.getElementById('exhibitSelect').value = '';
             document.getElementById('exhibitForm').style.display = 'none';
           } else {
-            showToast('❌ ' + (data.message || '导入失败'), true);
+            showToast(data.message || '导入失败', true);
           }
         })
         .catch(err => {
           console.error('Import CSV error:', err);
-          showToast('❌ 导入失败，请检查文件格式', true);
+          showToast('导入失败，请检查文件格式', true);
         });
       };
       reader.readAsText(file, 'UTF-8');
@@ -1243,11 +2204,11 @@
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(blobUrl);
-          showToast('✅ ' + filename + ' 下载成功');
+          showToast(filename + ' 下载成功');
         })
         .catch(err => {
           console.error('Export error:', err);
-          showToast('❌ 导出失败，请重试', true);
+          showToast('导出失败，请重试', true);
         });
     }
 
@@ -1271,21 +2232,25 @@
       downloadCSV(url, filename);
     }
 
+    document.getElementById('selectAllMsg').addEventListener('change', function() {
+      const checkboxes = document.querySelectorAll('#messageList .msg-card__checkbox');
+      checkboxes.forEach(cb => { cb.checked = this.checked; });
+      updateSelectedCount();
+    });
+
+    function updateSelectedCount() {
+      const checked = document.querySelectorAll('#messageList .msg-card__checkbox:checked');
+      const countEl = document.getElementById('selectedCount');
+      if (countEl) {
+        countEl.textContent = '已选择 ' + checked.length + ' 条留言';
+      }
+    }
+
     checkLogin();
   </script>
   <script>
 (function() {
-  // 强制导航栏红色渐变
-  var header = document.querySelector('header.admin-header');
-  var nav = document.querySelector('nav.admin-tabs');
   var btn = document.querySelector('.admin-header button');
-  
-  if(header) {
-    header.style.background = 'linear-gradient(180deg, #8B1A1A 0%, #C41E3A 100%)';
-  }
-  if(nav) {
-    nav.style.background = 'linear-gradient(180deg, #C41E3A 0%, #8B1A1A 100%)';
-  }
   if(btn) {
     btn.style.background = 'transparent';
     btn.style.color = '#FFFFFF';

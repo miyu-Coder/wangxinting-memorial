@@ -57,25 +57,28 @@
       </div>
       
       <!-- 留言板模块（插入：在 id="btn-offer-flower" 按钮下方） -->
-      <div class="divider" style="margin-top:16px;"><span>表达您的敬意</span></div>
+      <div class="divider"><span>表达您的敬意</span></div>
       <h3 class="section-title">💬 留言致敬</h3>
 
-      <div class="message-module" style="background:#fff;padding:16px;border:1px solid rgba(196,30,58,0.08);border-left:6px solid #d4a843;border-radius:8px;margin-top:12px;">
-        <div class="message-inputs" style="display:flex;flex-direction:column;gap:8px;">
+      <div class="message-module">
+        <div class="message-inputs">
           <input id="nicknameInput" type="text" placeholder="您的称呼（默认游客）" maxlength="40" />
           <textarea id="messageInput" placeholder="写下您想说的话..." maxlength="200" rows="3"></textarea>
-          <div style="text-align:right;">
+          <div class="message-submit-row">
             <button id="submitBtn" class="btn btn-primary">提交留言</button>
           </div>
         </div>
 
-        <div id="messageList" class="message-list" style="margin-top:16px;"></div>
+        <div id="messageList" class="message-list"></div>
       </div>
     </main>
 
-    <footer class="site-footer site-footer--compact flower-wall-footer" role="contentinfo">
-      <p class="site-footer__name">王新亭将军红色教育基地</p>
-      <p class="site-footer__addr">湖北省孝感市孝南区朋兴乡北庙村</p>
+    <footer class="site-footer site-footer--military flower-wall-footer" role="contentinfo">
+      <div class="site-footer__bar">
+        <span class="site-footer__star" aria-hidden="true">★</span>
+        <span class="site-footer__slogan">传承红色基因，担当强军重任</span>
+      </div>
+      <p class="site-footer__disclaimer">本页面为导览辅助，展陈内容以馆内说明为准</p>
     </footer>
   </div>
 
@@ -88,8 +91,8 @@
       }
     })();
   </script>
-  <script src="js/flowers.js?v=2"></script>
-  <script src="js/messages.js"></script>
+  <script src="js/flowers.js?v=3"></script>
+  <script src="js/messages.js?v=2"></script>
   <script src="js/lazy-load.js?v=1" defer></script>
   <script>
     (function() {

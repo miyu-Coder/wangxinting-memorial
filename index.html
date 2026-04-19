@@ -77,42 +77,88 @@
         <h2 id="life-heading" class="section-title section-title--serif">将军生平</h2>
         <img src="images/portrait.jpg" alt="王新亭将军肖像" class="portrait-image" />
 
-        <div class="life-timeline">
-          <article class="life-card">
-            <p class="life-card__era">1908 — 1930</p>
-            <h3 class="life-card__title">从学徒到将军</h3>
-            <p class="life-card__text">
-              1908年生于孝感贫苦农家，12岁当铺学徒。1930年参加红军，因有文化、作战勇敢，三年内从战士升至军政治部主任。
-            </p>
-          </article>
-          <article class="life-card">
-            <p class="life-card__era">1937 — 1945</p>
-            <h3 class="life-card__title">建功抗日前线</h3>
-            <p class="life-card__text">
-              任八路军129师386旅政委，与旅长陈赓搭档，指挥神头岭、响堂铺、香城固等著名战斗，三战三捷。香城固战斗歼灭日军250余人，日军坦克上写下「专打三八六旅」标语。坚守太行山及周边地区整整12年。
-            </p>
-          </article>
-          <article class="life-card">
-            <p class="life-card__era">1945 — 1949</p>
-            <h3 class="life-card__title">扬威解放战场</h3>
-            <p class="life-card__text">
-              率部打运城、攻临汾、克太原，战功赫赫。1949年任60军首任军长，太原解放后率部从大西北席卷大西南。
-            </p>
-          </article>
-          <article class="life-card">
-            <p class="life-card__era">1949 — 1984</p>
-            <h3 class="life-card__title">献身军队建设</h3>
-            <p class="life-card__text">
-              1955年授上将军衔，获一级八一勋章、一级独立自由勋章、一级解放勋章。曾任副总参谋长、军事科学院政委等职。毛主席评价其「风格很高，顾全大局」。
-            </p>
-          </article>
+        <div class="life-timeline life-timeline--horizontal" style="overflow: visible;">
+          <div class="life-timeline__track" id="life-timeline-track" style="overflow-y: visible; padding: 12px 8px 16px 8px;">
+            <article class="life-medal" data-era="0">
+              <div class="life-medal__ribbon"></div>
+              <div class="life-medal__circle">
+                <span class="life-medal__year">1908</span>
+              </div>
+              <span class="life-medal__label">从学徒到将军</span>
+              <div class="life-medal__content">
+                <p class="life-card__era">1908 — 1930</p>
+                <h3 class="life-card__title">从学徒到将军</h3>
+                <p class="life-card__text">
+                  1908年生于孝感贫苦农家，12岁当铺学徒。1930年参加红军，因有文化、作战勇敢，三年内从战士升至军政治部主任。
+                </p>
+              </div>
+            </article>
+            <article class="life-medal" data-era="1">
+              <div class="life-medal__ribbon"></div>
+              <div class="life-medal__circle">
+                <span class="life-medal__year">1937</span>
+              </div>
+              <span class="life-medal__label">建功抗日前线</span>
+              <div class="life-medal__content">
+                <p class="life-card__era">1937 — 1945</p>
+                <h3 class="life-card__title">建功抗日前线</h3>
+                <p class="life-card__text">
+                  任八路军129师386旅政委，与旅长陈赓搭档，指挥神头岭、响堂铺、香城固等著名战斗，三战三捷。香城固战斗歼灭日军250余人，日军坦克上写下「专打三八六旅」标语。坚守太行山及周边地区整整12年。
+                </p>
+              </div>
+            </article>
+            <article class="life-medal" data-era="2">
+              <div class="life-medal__ribbon"></div>
+              <div class="life-medal__circle">
+                <span class="life-medal__year">1945</span>
+              </div>
+              <span class="life-medal__label">扬威解放战场</span>
+              <div class="life-medal__content">
+                <p class="life-card__era">1945 — 1949</p>
+                <h3 class="life-card__title">扬威解放战场</h3>
+                <p class="life-card__text">
+                  率部打运城、攻临汾、克太原，战功赫赫。1949年任60军首任军长，太原解放后率部从大西北席卷大西南。
+                </p>
+              </div>
+            </article>
+            <article class="life-medal" data-era="3">
+              <div class="life-medal__ribbon"></div>
+              <div class="life-medal__circle">
+                <span class="life-medal__year">1949</span>
+              </div>
+              <span class="life-medal__label">献身军队建设</span>
+              <div class="life-medal__content">
+                <p class="life-card__era">1949 — 1984</p>
+                <h3 class="life-card__title">献身军队建设</h3>
+                <p class="life-card__text">
+                  1955年授上将军衔，获一级八一勋章、一级独立自由勋章、一级解放勋章。曾任副总参谋长、军事科学院政委等职。毛主席评价其「风格很高，顾全大局」。
+                </p>
+              </div>
+            </article>
+          </div>
+          <div class="life-timeline__detail" id="life-timeline-detail"></div>
         </div>
       </section>
 
       <section class="section section--battle" aria-labelledby="battle-heading">
         <h2 id="battle-heading" class="section-title section-title--serif">经典战例</h2>
+        <div class="battle-quote">
+          <span class="battle-quote__mark" aria-hidden="true">"</span>
+          <p class="battle-quote__text">平原模范伏击战</p>
+          <p class="battle-quote__source">—— 刘伯承</p>
+        </div>
+        <div class="battle-data-cards">
+          <div class="battle-data-card">
+            <span class="battle-data-card__number text-number">250+</span>
+            <span class="battle-data-card__label">歼灭日军</span>
+          </div>
+          <div class="battle-data-card">
+            <span class="battle-data-card__number text-number">50+</span>
+            <span class="battle-data-card__label">我方伤亡</span>
+          </div>
+        </div>
         <p class="section-body section-body--cream">
-          <strong>香城固战斗</strong>——被刘伯承誉为「平原模范伏击战」，歼灭日军250余人，八路军仅伤亡50余人，创造平原歼敌范例。
+          <strong>香城固战斗</strong>——创造平原歼敌范例，日军坦克上写下「专打三八六旅」标语。
         </p>
         <img src="images/battle-map.jpg" alt="香城固战斗示意图" class="section-image" />
       </section>
@@ -142,28 +188,18 @@
       </section>
 
       <div class="map-entry map-entry--home">
-        <button type="button" class="btn btn-map-nav btn-full-width" id="btn-open-map">
+        <button type="button" class="fab-nav" id="btn-open-map" aria-label="导航到基地">
           📍 导航到基地
         </button>
       </div>
     </main>
 
-    <footer class="site-footer" role="contentinfo">
-      <div class="site-footer__mark">
-        <p class="site-footer__name">王新亭将军红色教育基地</p>
-        <p class="site-footer__badge">湖北省爱国主义教育基地 · 老区精神教育基地</p>
+    <footer class="site-footer site-footer--military" role="contentinfo">
+      <div class="site-footer__bar">
+        <span class="site-footer__star" aria-hidden="true">★</span>
+        <span class="site-footer__slogan">传承红色基因，担当强军重任</span>
       </div>
-      <dl class="site-footer__meta">
-        <div class="site-footer__row">
-          <dt>地址</dt>
-          <dd>湖北省孝感市孝南区朋兴乡北庙村</dd>
-        </div>
-        <div class="site-footer__row">
-          <dt>开放时间</dt>
-          <dd>请以基地现场公告及官方发布为准；参观前建议提前确认。</dd>
-        </div>
-      </dl>
-      <p class="site-footer__note">本页面为导览辅助，展陈内容以馆内说明与主管单位审定为准。</p>
+      <p class="site-footer__disclaimer">本页面为导览辅助，展陈内容以馆内说明为准</p>
     </footer>
   </div>
   <script>
@@ -176,13 +212,108 @@
     })();
   </script>
   <script src="js/nav-utils.js?v=3"></script>
-  <script src="js/timeline.js?v=3"></script>
+  <script src="js/timeline.js?v=5"></script>
   <script src="js/storage.js?v=2"></script>
   <script src="js/checkin.js?v=1"></script>
   <script src="js/flowers.js?v=1"></script>
   <script src="js/map-navigation.js" defer></script>
   <script src="js/index.js?v=8" defer></script>
   <script src="js/lazy-load.js?v=1" defer></script>
+  <script>
+  (function() {
+    function initImageFadeIn() {
+      var imgs = document.querySelectorAll('.hero-image, .section-image, .portrait-image');
+      for (var i = 0; i < imgs.length; i++) {
+        (function(img) {
+          if (img.complete && img.naturalWidth > 0) {
+            img.classList.add('is-loaded');
+          } else {
+            img.addEventListener('load', function() { img.classList.add('is-loaded'); });
+            img.addEventListener('error', function() { img.classList.add('is-loaded'); });
+          }
+        })(imgs[i]);
+      }
+    }
+
+    function initLifeTimeline() {
+      var track = document.getElementById('life-timeline-track');
+      if (!track) return;
+      var medals = track.querySelectorAll('.life-medal');
+      if (!medals.length) return;
+      var detailEl = document.getElementById('life-timeline-detail');
+
+      function showDetail(medal) {
+        if (!detailEl) return;
+        var content = medal.querySelector('.life-medal__content');
+        if (!content) return;
+        var era = content.querySelector('.life-card__era');
+        var title = content.querySelector('.life-card__title');
+        var text = content.querySelector('.life-card__text');
+        detailEl.innerHTML = '';
+        if (era) {
+          var p = document.createElement('p');
+          p.className = 'life-card__era';
+          p.textContent = era.textContent;
+          detailEl.appendChild(p);
+        }
+        if (title) {
+          var h = document.createElement('h3');
+          h.className = 'life-card__title';
+          h.textContent = title.textContent;
+          detailEl.appendChild(h);
+        }
+        if (text) {
+          var t = document.createElement('p');
+          t.className = 'life-card__text';
+          t.textContent = text.textContent;
+          detailEl.appendChild(t);
+        }
+      }
+
+      medals[0].classList.add('is-active');
+      showDetail(medals[0]);
+
+      for (var i = 0; i < medals.length; i++) {
+        (function(m) {
+          m.addEventListener('click', function() {
+            for (var j = 0; j < medals.length; j++) medals[j].classList.remove('is-active');
+            m.classList.add('is-active');
+            showDetail(m);
+            m.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          });
+        })(medals[i]);
+      }
+
+      var startX = 0;
+      var scrollLeft = 0;
+      var isDragging = false;
+
+      track.parentElement.addEventListener('touchstart', function(e) {
+        isDragging = true;
+        startX = e.touches[0].pageX - track.parentElement.offsetLeft;
+        scrollLeft = track.parentElement.scrollLeft;
+      }, { passive: true });
+
+      track.parentElement.addEventListener('touchmove', function(e) {
+        if (!isDragging) return;
+        var x = e.touches[0].pageX - track.parentElement.offsetLeft;
+        var walk = (x - startX) * 1.2;
+        track.parentElement.scrollLeft = scrollLeft - walk;
+      }, { passive: true });
+
+      track.parentElement.addEventListener('touchend', function() {
+        isDragging = false;
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLifeTimeline);
+    } else {
+      initLifeTimeline();
+    }
+    initImageFadeIn();
+  })();
+  </script>
   <script>
     (function() {
       var sessionId = localStorage.getItem('visitor_session_id');

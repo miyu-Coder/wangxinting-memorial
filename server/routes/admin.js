@@ -113,6 +113,17 @@ router.post('/api/admin/messages/:id/reject', async function (req, res) {
   }
 });
 
+router.delete('/api/admin/messages/:id', async function (req, res) {
+  var id = Number(req.params.id);
+  if (!id || id < 1) return R.fail(res, '无效的 id');
+  try {
+    await db.runAsync('DELETE FROM messages WHERE id = ?', [id]);
+    return R.success(res);
+  } catch (err) {
+    return R.serverError(res, err, 'Delete message error');
+  }
+});
+
 /**
  * GET /api/admin/exhibits
  * 获取展点列表（仅 id、title、routeShort）

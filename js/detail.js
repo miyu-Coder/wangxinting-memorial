@@ -383,6 +383,11 @@
           imgEl.classList.add("lazy-loaded");
           imgEl.removeAttribute("data-src");
         }
+        imgEl.classList.remove("is-loaded");
+        imgEl.addEventListener("load", function onLoad() {
+          imgEl.removeEventListener("load", onLoad);
+          imgEl.classList.add("is-loaded");
+        });
       } else if (s.kind === "placeholder" && imgEl && phEl && phText) {
         imgEl.hidden = true;
         imgEl.removeAttribute("src");

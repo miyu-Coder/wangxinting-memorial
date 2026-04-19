@@ -24,6 +24,7 @@
   padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
 }
 
+/* ========== 一、献花墙头部区域美化 ========== */
 .flower-wall-hero {
   text-align: center;
   padding: 28px 18px 32px;
@@ -31,13 +32,8 @@
   margin-right: calc(-1 * var(--shell-pad-x));
   padding-left: var(--shell-pad-x);
   padding-right: var(--shell-pad-x);
-  background: linear-gradient(
-    165deg,
-    #7a1528 0%,
-    #c41e3a 45%,
-    #9e1830 100%
-  );
-  color: #fff8ef;
+  background: linear-gradient(165deg, #C8102E 0%, #8B0000 100%);
+  color: #ffffff;
   border-radius: 0 0 16px 16px;
   box-shadow: 0 10px 36px rgba(61, 24, 24, 0.22);
 }
@@ -56,14 +52,15 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.2);
+  color: #ffffff;
 }
 
 .flower-wall-hero__decor {
   display: flex;
   justify-content: center;
-  gap: 14px;
+  gap: 8px;
   margin-top: 18px;
-  font-size: 1.75rem;
+  font-size: 20px;
   line-height: 1;
   opacity: 0.95;
 }
@@ -118,17 +115,17 @@
 .flower-wall-total__number {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: clamp(2.5rem, 12vw, 3.25rem);
-  font-weight: 700;
+  font-size: 64px;
+  font-weight: 800;
   line-height: 1.1;
-  color: #d4a843;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  color: #D4AF37;
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
 }
 
 .flower-wall-total__sub {
   margin: 12px 0 0;
-  font-size: 0.78rem;
-  color: #777777;
+  font-size: 12px;
+  color: #999999;
   line-height: 1.5;
 }
 
@@ -142,13 +139,14 @@
   padding: 0 8px;
 }
 
+/* ========== 二、展点献花状态模块优化 ========== */
 .flower-wall-section-title {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   font-family: var(--font-serif);
   font-size: 1.06rem;
   font-weight: 700;
-  color: #c41e3a;
-  border-left: 4px solid #d4a843;
+  color: #8B0000;
+  border-left: 4px solid #C8102E;
   padding-left: 10px;
 }
 
@@ -163,62 +161,127 @@
   margin: 0;
   padding: 0;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: row;
+  gap: 12px;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  position: relative;
+}
+
+.flower-wall-exhibit-list::-webkit-scrollbar {
+  display: none;
+}
+
+.flower-wall-exhibits {
+  position: relative;
+}
+
+.flower-wall-exhibits::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8));
+  pointer-events: none;
+  z-index: 2;
 }
 
 .flower-wall-exhibit-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 14px;
-  background: #ffffff;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 12px;
+  background: #FFF5F5;
   border-radius: 12px;
-  border: 1px solid rgba(196, 30, 58, 0.1);
-  border-left: 5px solid #c41e3a;
-  box-shadow: 0 4px 16px rgba(61, 24, 24, 0.06);
+  border: none;
+  border-left: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  min-width: 120px;
+  max-width: 120px;
+  flex: 0 0 120px;
+  scroll-snap-align: start;
+  text-align: center;
 }
 
 .flower-wall-exhibit-item.is-done {
-  border-left-color: #d4a843;
-  background: linear-gradient(135deg, #fffdfb, #fdf8f2);
+  background: linear-gradient(135deg, #FFF5F5, #FFEBEB);
+  border-left: none;
+}
+
+.flower-wall-exhibit-item__icon {
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 2px;
 }
 
 .flower-wall-exhibit-item__name {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #3d1818;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333333;
   line-height: 1.4;
-  text-align: left;
-  flex: 1;
+  text-align: center;
+  flex: none;
   min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .flower-wall-exhibit-item__status {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #777777;
+  font-size: 18px;
+  font-weight: 700;
+  color: #C8102E;
   white-space: nowrap;
 }
 
 .flower-wall-exhibit-item.is-done .flower-wall-exhibit-item__status {
-  color: #7a1528;
+  color: #C8102E;
 }
 
+.flower-wall-exhibit-item:not(.is-done) .flower-wall-exhibit-item__status {
+  color: #999999;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ========== 三、献花按钮升级 ========== */
 .flower-wall-actions {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 12px;
   margin-top: 28px;
   padding: 0 2px;
 }
 
 .flower-wall-btn-primary {
-  min-height: 52px;
+  min-height: 48px;
+  width: 200px;
   border-radius: 30px;
   font-weight: 700;
   letter-spacing: 0.04em;
+  background: #C8102E;
+  color: #ffffff;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(200, 22, 46, 0.3);
+  padding: 14px 24px;
+  position: relative;
+  overflow: visible;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.flower-wall-btn-primary:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(200, 22, 46, 0.2);
 }
 
 .flower-wall-btn-back {
@@ -231,17 +294,352 @@
   justify-content: center;
 }
 
+.flower-particle {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #C8102E;
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 9999;
+  animation: flowerParticleUp 0.5s ease-out forwards;
+}
+
+@keyframes flowerParticleUp {
+  0% {
+    opacity: 0.6;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--px), -30px) scale(0.5);
+  }
+}
+
+/* ========== 四、留言板头部优化 ========== */
+.flower-wall-main .divider {
+  margin-top: 16px;
+  background: linear-gradient(180deg, #FFF5F5, #FFEBEB);
+  border-radius: 12px 12px 0 0;
+  padding: 16px 16px 12px;
+  border: none;
+}
+
+.flower-wall-main .divider span {
+  color: #8B0000;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.flower-wall-main .section-title {
+  background: linear-gradient(180deg, #FFEBEB, #FFF5F5);
+  margin: 0;
+  padding: 8px 16px 12px;
+  border-left: none;
+  color: #8B0000;
+}
+
+.flower-wall-main .section-title::after {
+  display: none;
+}
+
+.message-module {
+  background: linear-gradient(180deg, #FFF5F5, #ffffff) !important;
+  padding: 16px !important;
+  border: 1px solid rgba(196, 30, 58, 0.08) !important;
+  border-left: 6px solid #d4a843 !important;
+  border-radius: 0 0 12px 12px !important;
+  margin-top: 0 !important;
+}
+
+.message-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message-inputs input,
+.message-inputs textarea {
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+  background: #ffffff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.message-inputs input:focus,
+.message-inputs textarea:focus {
+  border-color: #C8102E;
+}
+
+.message-inputs textarea {
+  resize: vertical;
+}
+
+.message-inputs input::placeholder,
+.message-inputs textarea::placeholder {
+  color: #BBBBBB;
+}
+
+.message-inputs .message-submit-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.message-inputs .message-submit-row .btn-primary,
+.message-inputs .message-submit-row button {
+  background: #C8102E;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  width: 100px;
+  min-height: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.message-inputs .message-submit-row .btn-primary:hover,
+.message-inputs .message-submit-row button:hover {
+  background: #a50d26;
+}
+
+/* ========== 五、留言列表美化 ========== */
+.message-list {
+  margin-top: 16px;
+  list-style: none;
+  padding: 0;
+}
+
+.message-list .messages-empty {
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+.message-item {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  list-style: none;
+}
+
+.message-item__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.message-item__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #8B0000;
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+.message-item__nick {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333333;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message-item__time {
+  font-size: 11px;
+  color: #999999;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.message-item__content {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #444444;
+  margin: 0;
+  word-break: break-word;
+}
+
+.message-item__reply {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #F0F0F0;
+  text-align: right;
+}
+
+.message-item__reply-btn {
+  font-size: 12px;
+  color: #C8102E;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.message-item__reply-btn:hover {
+  background: #FFF5F5;
+}
+
+/* ========== 六、热门致敬词标签 ========== */
+.flower-wall-tags {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 0 12px;
+  scrollbar-width: none;
+  position: relative;
+}
+
+.flower-wall-tags::-webkit-scrollbar {
+  display: none;
+}
+
+.flower-wall-tags::after {
+  content: "";
+  position: sticky;
+  right: 0;
+  flex-shrink: 0;
+  width: 24px;
+  background: linear-gradient(90deg, transparent, #ffffff);
+  pointer-events: none;
+}
+
+.flower-wall-tag {
+  flex-shrink: 0;
+  background: #F0F0F0;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #555555;
+  cursor: pointer;
+  white-space: nowrap;
+  border: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.flower-wall-tag:hover,
+.flower-wall-tag:active {
+  background: #FFE0E0;
+  color: #C8102E;
+}
+
+/* ========== 七、底部信息栏 ========== */
 .flower-wall-footer {
   margin-top: 32px;
 }
 
+/* ========== 八、结尾文案 ========== */
+.flower-wall-ending {
+  text-align: center;
+  padding: 20px 0 8px;
+  font-size: 12px;
+  color: #999999;
+  line-height: 1.6;
+}
+
+.flower-wall-ending__line {
+  display: inline-block;
+  width: 40px;
+  height: 1px;
+  background: #E0E0E0;
+  vertical-align: middle;
+  margin: 0 8px;
+}
+
+/* ========== 献花成功轻提示 ========== */
+.flower-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 10000;
+  pointer-events: none;
+  animation: flowerToastFade 2s ease forwards;
+}
+
+@keyframes flowerToastFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+}
+
+/* ========== 数字滚动动画 ========== */
+.flower-wall-total__number.is-animating {
+  animation: numberPulse 0.3s ease;
+}
+
+@keyframes numberPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ========== 响应式 ========== */
 @media (max-width: 360px) {
   .flower-wall-exhibit-item {
-    flex-direction: column;
-    align-items: flex-start;
+    min-width: 110px;
+    max-width: 110px;
+    flex: 0 0 110px;
+    padding: 12px 8px;
+  }
+
+  .flower-wall-exhibit-item__name {
+    font-size: 13px;
   }
 
   .flower-wall-exhibit-item__status {
-    align-self: flex-end;
+    font-size: 16px;
+  }
+
+  .flower-wall-total__number {
+    font-size: 52px;
   }
 }

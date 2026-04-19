@@ -391,13 +391,47 @@ app.get('/api/stats/overview', async (req, res) => {
     );
     const todayUV = todayUVRow ? todayUVRow.cnt : 0;
     
+    const yesterdayVisitsRow = await db.getAsync(
+      "SELECT COUNT(*) AS cnt FROM page_views WHERE DATE(visit_time) = DATE('now', '-1 day')"
+    );
+    const yesterdayVisits = yesterdayVisitsRow ? yesterdayVisitsRow.cnt : 0;
+    
+    const yesterdayUVRow = await db.getAsync(
+      "SELECT COUNT(DISTINCT session_id) AS cnt FROM page_views WHERE DATE(visit_time) = DATE('now', '-1 day')"
+    );
+    const yesterdayUV = yesterdayUVRow ? yesterdayUVRow.cnt : 0;
+    
+    const yesterdayFlowersRow = await db.getAsync(
+      "SELECT COUNT(*) AS cnt FROM flowers WHERE DATE(created_at) = DATE('now', '-1 day')"
+    );
+    const yesterdayFlowers = yesterdayFlowersRow ? yesterdayFlowersRow.cnt : 0;
+    
+    const weekAgoVisitsRow = await db.getAsync(
+      "SELECT COUNT(*) AS cnt FROM page_views WHERE DATE(visit_time) = DATE('now', '-7 day')"
+    );
+    const weekAgoVisits = weekAgoVisitsRow ? weekAgoVisitsRow.cnt : 0;
+    
+    const totalFlowersRow = await db.getAsync('SELECT COUNT(*) AS cnt FROM flowers');
+    const totalFlowers = totalFlowersRow ? totalFlowersRow.cnt : 0;
+    
+    const weekAgoFlowersRow = await db.getAsync(
+      "SELECT COUNT(*) AS cnt FROM flowers WHERE DATE(created_at) = DATE('now', '-7 day')"
+    );
+    const weekAgoFlowers = weekAgoFlowersRow ? weekAgoFlowersRow.cnt : 0;
+    
     return res.json({
       success: true,
       totalVisits,
       todayVisits,
       hotExhibit,
       todayFlowers,
-      todayUV
+      todayUV,
+      yesterdayVisits,
+      yesterdayUV,
+      yesterdayFlowers,
+      weekAgoVisits,
+      totalFlowers,
+      weekAgoFlowers
     });
   } catch (err) {
     console.error('Stats overview error:', err);
@@ -619,6 +653,19 @@ app.post('/api/admin/messages/:id/reject', async (req, res) => {
   }
 });
 
+// DELETE /api/admin/messages/:id - 删除留言
+app.delete('/api/admin/messages/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id || id < 1) return res.status(400).json({ success: false, message: '无效的 id' });
+  try {
+    await db.runAsync('DELETE FROM messages WHERE id = ?', [id]);
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Delete message error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
 // GET /api/admin/exhibits - 获取所有展点列表
 app.get('/api/admin/exhibits', (req, res) => {
   const dataPath = path.join(__dirname, 'data', 'data.json');
@@ -695,6 +742,7 @@ app.post('/api/admin/exhibits/:id', (req, res) => {
       exhibits[index].text = text;
       if (audio !== undefined) exhibits[index].audio = audio;
       if (video !== undefined) exhibits[index].video = video;
+      exhibits[index].updated_at = new Date().toISOString();
       fs.writeFile(dataPath, JSON.stringify(exhibits, null, 2), 'utf8', (writeErr) => {
         if (writeErr) {
           console.error('Write exhibits error:', writeErr);
@@ -702,6 +750,45 @@ app.post('/api/admin/exhibits/:id', (req, res) => {
         }
         console.log('Exhibit updated:', id, title);
         return res.json({ success: true, message: '保存成功' });
+      });
+    } catch (parseErr) {
+      return res.status(500).json({ success: false, message: '解析展点数据失败' });
+    }
+  });
+});
+
+// POST /api/admin/exhibits/:id/quiz - 更新展点题目
+app.post('/api/admin/exhibits/:id/quiz', (req, res) => {
+  const id = Number(req.params.id);
+  if (!id || id < 1 || id > 4) {
+    return res.status(400).json({ success: false, message: '无效的展点ID' });
+  }
+  const { questions } = req.body;
+  if (!questions || !Array.isArray(questions)) {
+    return res.status(400).json({ success: false, message: '题目数据无效' });
+  }
+  const dataPath = path.join(__dirname, 'data', 'data.json');
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Read exhibits error:', err);
+      return res.status(500).json({ success: false, message: '读取展点数据失败' });
+    }
+    try {
+      const exhibits = JSON.parse(data);
+      const index = exhibits.findIndex(e => e.id === id);
+      if (index === -1) {
+        return res.status(404).json({ success: false, message: '展点不存在' });
+      }
+      if (!exhibits[index].quiz) exhibits[index].quiz = {};
+      exhibits[index].quiz.questions = questions;
+      exhibits[index].updated_at = new Date().toISOString();
+      fs.writeFile(dataPath, JSON.stringify(exhibits, null, 2), 'utf8', (writeErr) => {
+        if (writeErr) {
+          console.error('Write quiz error:', writeErr);
+          return res.status(500).json({ success: false, message: '保存题目数据失败' });
+        }
+        console.log('Quiz updated for exhibit:', id);
+        return res.json({ success: true, message: '题目保存成功' });
       });
     } catch (parseErr) {
       return res.status(500).json({ success: false, message: '解析展点数据失败' });

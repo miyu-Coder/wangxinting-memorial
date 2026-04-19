@@ -6,11 +6,13 @@
   "use strict";
 
   var EXHIBIT_META = [
-    { id: "1", name: "陈列馆", full: "将军生平事迹陈列馆" },
-    { id: "2", name: "故居", full: "将军故居" },
-    { id: "3", name: "广场", full: "纪念广场与将军纪念碑" },
-    { id: "4", name: "装备", full: "退役军事装备实物展区" },
+    { id: "1", name: "陈列馆", full: "将军生平事迹陈列馆", icon: "\uD83C\uDFDB\uFE0F" },
+    { id: "2", name: "故居", full: "将军故居", icon: "\uD83C\uDFE0" },
+    { id: "3", name: "广场", full: "纪念广场与将军纪念碑", icon: "\uD83E\uDEA6" },
+    { id: "4", name: "装备", full: "退役军事装备实物展区", icon: "\uD83D\uDEE1\uFE0F" }
   ];
+
+  var HOT_TAGS = ["永垂不朽", "吾辈楷模", "将军千古", "红色传承", "不忘初心"];
 
   function normExhibitId(v) {
     if (v == null) return null;
@@ -24,9 +26,7 @@
       var u = new URL(window.location.href);
       var v = u.searchParams.get(name);
       if (v != null && String(v).trim() !== "") return String(v).trim();
-    } catch (e) {
-      /* fallback */
-    }
+    } catch (e) {}
     var m = new RegExp('[?&#]' + name + '=(\\d+)').exec(window.location.href);
     if (m) return m[1];
     return null;
@@ -42,9 +42,6 @@
     });
   }
 
-  /**
-   * 获取指定展点的献花总数，返回 Promise<number|null>
-   */
   function getExhibitTotal(exhibitId) {
     var id = normExhibitId(exhibitId);
     if (!id) return Promise.resolve(null);
@@ -66,9 +63,6 @@
     });
   }
 
-  /**
-   * 向后端发起献花请求，返回 Promise<{ ok:boolean, already?:boolean, displayTotal?:number }>
-   */
   function offerFlower(exhibitId) {
     var id = normExhibitId(exhibitId);
     if (!id) return Promise.resolve({ ok: false });
@@ -78,7 +72,6 @@
       body: JSON.stringify({ exhibitId: Number(id) })
     }).then(function (res) {
       if (res.ok) {
-        // 请求成功后再拉取最新总数
         return getExhibitTotal(id).then(function (total) {
           return { ok: true, displayTotal: total };
         });
@@ -94,13 +87,10 @@
 
   function getExhibitList() {
     return EXHIBIT_META.map(function (m) {
-      return { id: m.id, name: m.name, full: m.full };
+      return { id: m.id, name: m.name, full: m.full, icon: m.icon };
     });
   }
 
-  /**
-   * 查询当前用户是否已对该展点献花，返回 Promise<boolean>
-   */
   function getUserFlowered(exhibitId) {
     var id = normExhibitId(exhibitId);
     if (!id) return Promise.resolve(false);
@@ -112,7 +102,53 @@
 
   function formatHomeLine(total) {
     if (total == null || !Number.isFinite(total)) return '\uD83C\uDF38 - 人已献花';
-    return '\uD83C\uDF38 ' + String(total) + '+ \u4EBA\u5DF2\u732E\u82B1';
+    return '\uD83C\uDF38 ' + String(total) + '+ 人已献花';
+  }
+
+  function showToast(text) {
+    var el = document.createElement('div');
+    el.className = 'flower-toast';
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.remove(); }, 2100);
+  }
+
+  function animateNumber(el, from, to, duration) {
+    if (!el) return;
+    var start = performance.now();
+    var diff = to - from;
+    el.classList.add('is-animating');
+    function step(now) {
+      var elapsed = now - start;
+      var progress = Math.min(elapsed / duration, 1);
+      var current = Math.round(from + diff * progress);
+      el.textContent = String(current);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.classList.remove('is-animating');
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  function spawnParticles(btn) {
+    if (!btn) return;
+    var rect = btn.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var offsets = [-20, 0, 20];
+    for (var i = 0; i < 3; i++) {
+      var dot = document.createElement('div');
+      dot.className = 'flower-particle';
+      dot.style.left = cx + 'px';
+      dot.style.top = cy + 'px';
+      dot.style.setProperty('--px', offsets[i] + 'px');
+      document.body.appendChild(dot);
+      (function (d) {
+        setTimeout(function () { if (d.parentNode) d.remove(); }, 600);
+      })(dot);
+    }
   }
 
   function showThankDialog() {
@@ -219,15 +255,106 @@
     });
   }
 
+  function injectHotTags() {
+    var messageModule = document.querySelector('.message-module');
+    if (!messageModule) return;
+    var inputArea = messageModule.querySelector('.message-inputs');
+    if (!inputArea) return;
+
+    var existing = messageModule.querySelector('.flower-wall-tags');
+    if (existing) return;
+
+    var tagContainer = document.createElement('div');
+    tagContainer.className = 'flower-wall-tags';
+
+    for (var i = 0; i < HOT_TAGS.length; i++) {
+      (function (text) {
+        var tag = document.createElement('button');
+        tag.type = 'button';
+        tag.className = 'flower-wall-tag';
+        tag.textContent = text;
+        tag.addEventListener('click', function () {
+          var textarea = document.getElementById('messageInput');
+          if (textarea) {
+            textarea.value = textarea.value ? textarea.value + text : text;
+            textarea.focus();
+          }
+        });
+        tagContainer.appendChild(tag);
+      })(HOT_TAGS[i]);
+    }
+
+    inputArea.parentNode.insertBefore(tagContainer, inputArea.nextSibling);
+  }
+
+  function injectEndingText() {
+    var messageModule = document.querySelector('.message-module');
+    if (!messageModule) return;
+    var existing = messageModule.querySelector('.flower-wall-ending');
+    if (existing) return;
+
+    var ending = document.createElement('div');
+    ending.className = 'flower-wall-ending';
+    ending.id = 'flower-wall-ending';
+    messageModule.appendChild(ending);
+    updateEndingText();
+  }
+
+  function updateEndingText() {
+    var ending = document.getElementById('flower-wall-ending');
+    if (!ending) return;
+    var listEl = document.getElementById('messageList');
+    var count = 0;
+    if (listEl) {
+      var items = listEl.querySelectorAll('.message-item');
+      count = items.length;
+    }
+    var text = count > 0
+      ? '已有 ' + count + ' 条留言，每一句都是传承'
+      : '暂无留言，留下第一句敬意';
+    ending.innerHTML = '<span class="flower-wall-ending__line"></span>' +
+      '\u2014\u2014 ' + text + ' \u2014\u2014' +
+      '<span class="flower-wall-ending__line"></span>';
+  }
+
+  function updateExhibitCount(exhibitId, newTotal) {
+    var listEl = document.getElementById('flower-wall-exhibit-list');
+    if (!listEl) return;
+    var items = listEl.querySelectorAll('.flower-wall-exhibit-item');
+    var idx = parseInt(exhibitId, 10) - 1;
+    if (idx >= 0 && idx < items.length) {
+      var statusEl = items[idx].querySelector('.flower-wall-exhibit-item__status');
+      if (statusEl && typeof newTotal === 'number') {
+        statusEl.textContent = String(newTotal);
+        items[idx].classList.add('is-done');
+      }
+    }
+  }
+
   function mountFlowerWallPage() {
     var totalEl = document.getElementById('flower-wall-total');
     var listEl = document.getElementById('flower-wall-exhibit-list');
     var offerBtn = document.getElementById('btn-offer-flower');
+
+    var heroBlooms = document.querySelectorAll('.flower-wall-hero__bloom');
+    for (var b = 0; b < heroBlooms.length; b++) {
+      heroBlooms[b].textContent = '\u2605';
+    }
+
+    var subEl = document.querySelector('.flower-wall-total__sub');
+    if (subEl) {
+      subEl.textContent = '朵朵鲜花寄哀思，颗颗红心向将军';
+    }
+
+    if (offerBtn) {
+      offerBtn.textContent = '\uD83C\uDF38 献花致敬';
+    }
+
     if (totalEl) {
-      totalEl.textContent = '…';
+      totalEl.textContent = '\u2026';
       getTotalsForAllExhibits().then(function (sum) {
-        totalEl.textContent = (sum == null ? '—' : String(sum));
-      }).catch(function () { totalEl.textContent = '—'; });
+        totalEl.textContent = (sum == null ? '\u2014' : String(sum));
+      }).catch(function () { totalEl.textContent = '\u2014'; });
     }
 
     if (listEl) {
@@ -237,12 +364,21 @@
         (function (r) {
           var li = document.createElement('li');
           li.className = 'flower-wall-exhibit-item';
+
+          var icon = document.createElement('span');
+          icon.className = 'flower-wall-exhibit-item__icon';
+          icon.textContent = r.icon || '';
+          icon.setAttribute('aria-hidden', 'true');
+
           var name = document.createElement('span');
           name.className = 'flower-wall-exhibit-item__name';
-          name.textContent = '展点 ' + r.id + ' · ' + r.full;
+          name.textContent = r.name;
+
           var st = document.createElement('span');
           st.className = 'flower-wall-exhibit-item__status';
           st.textContent = '\u52A0\u8F7D\u4E2D...';
+
+          li.appendChild(icon);
           li.appendChild(name);
           li.appendChild(st);
           listEl.appendChild(li);
@@ -251,7 +387,7 @@
             if (n == null) {
               st.textContent = '\u2014';
             } else if (Number(n) > 0) {
-              st.textContent = '已献花 ' + String(n) + ' 人';
+              st.textContent = String(n);
               li.classList.add('is-done');
             } else {
               st.textContent = '未献花';
@@ -260,6 +396,10 @@
             st.textContent = '\u2014';
           });
         })(rows[i]);
+      }
+
+      if (rows.length <= 4) {
+        listEl.style.justifyContent = 'center';
       }
     }
 
@@ -272,20 +412,25 @@
           offerBtn.setAttribute('aria-disabled', 'true');
           offerBtn.style.pointerEvents = 'none';
 
+          spawnParticles(offerBtn);
+
           offerFlower(id).then(function (res) {
             if (res.ok) {
-              if (totalEl && typeof res.displayTotal === 'number') {
-                totalEl.textContent = String(res.displayTotal);
+              if (totalEl) {
+                var oldVal = parseInt(totalEl.textContent, 10);
+                if (Number.isFinite(oldVal) && typeof res.displayTotal === 'number') {
+                  animateNumber(totalEl, oldVal, res.displayTotal, 200);
+                } else if (typeof res.displayTotal === 'number') {
+                  totalEl.textContent = String(res.displayTotal);
+                }
               }
+              updateExhibitCount(id, res.displayTotal);
+              showToast('献花成功，感谢您的敬意');
               showThankDialog();
             } else if (res.already) {
-              if (typeof window.wxFlowers.showAlreadyDialog === 'function') window.wxFlowers.showAlreadyDialog();
+              showAlreadyDialog();
             } else {
-              if (typeof window.wxFlowers.showAlreadyDialog === 'function') {
-                alert('献花失败，请稍后重试');
-              } else {
-                alert('献花失败，请稍后重试');
-              }
+              alert('献花失败，请稍后重试');
             }
           }).finally(function () {
             offerBtn.classList.remove('btn-disabled');
@@ -297,6 +442,8 @@
           offerBtn.classList.add('btn-disabled');
           offerBtn.setAttribute('aria-disabled', 'true');
           offerBtn.style.pointerEvents = 'none';
+
+          spawnParticles(offerBtn);
 
           findFirstUnfloweredExhibit().then(function (unfloweredId) {
             if (unfloweredId) {
@@ -313,12 +460,14 @@
         }
       });
     }
+
+    injectHotTags();
+    injectEndingText();
   }
 
   function updateHomeCountEl() {
     var el = document.getElementById('home-flower-count');
     if (!el) return;
-    // 汇总所有展点的总数并更新文案
     getTotalsForAllExhibits().then(function (sum) {
       el.textContent = formatHomeLine(sum);
     }).catch(function () {
@@ -338,7 +487,11 @@
     showAlreadyDialog: showAlreadyDialog,
     showAllFloweredDialog: showAllFloweredDialog,
     findFirstUnfloweredExhibit: findFirstUnfloweredExhibit,
-    formatHomeLine: formatHomeLine
+    formatHomeLine: formatHomeLine,
+    showToast: showToast,
+    animateNumber: animateNumber,
+    updateEndingText: updateEndingText,
+    updateExhibitCount: updateExhibitCount
   };
 
   function autoMountWall() {

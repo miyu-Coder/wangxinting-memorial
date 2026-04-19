@@ -42,6 +42,25 @@
     }
   }
 
+  function hashNicknameToColor(nick) {
+    var str = nick || '游客';
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    var r = 255;
+    var g = 192 + Math.abs(hash) % 48;
+    var b = 192 + Math.abs(hash >> 8) % 48;
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  function getInitial(nick) {
+    var str = (nick || '游客').trim();
+    if (!str) return '游';
+    var chars = Array.from(str);
+    return chars[0];
+  }
+
   function queryFirst(arr, root) {
     root = root || document;
     for (var i = 0; i < arr.length; i++) {
@@ -95,23 +114,57 @@
     var li = document.createElement('li');
     li.className = 'message-item';
 
-    var meta = document.createElement('div');
-    meta.className = 'message-item__meta';
+    var metaRow = document.createElement('div');
+    metaRow.className = 'message-item__meta';
+
+    var avatar = document.createElement('span');
+    avatar.className = 'message-item__avatar';
+    avatar.style.background = hashNicknameToColor(item.nickname);
+    avatar.textContent = getInitial(item.nickname);
+
+    var nickWrap = document.createElement('span');
+    nickWrap.style.display = 'flex';
+    nickWrap.style.alignItems = 'center';
+    nickWrap.style.flex = '1';
+    nickWrap.style.minWidth = '0';
+
     var nick = document.createElement('span');
     nick.className = 'message-item__nick';
     nick.innerHTML = escapeHtml(item.nickname || '游客');
+
+    nickWrap.appendChild(avatar);
+    nickWrap.appendChild(nick);
+
     var time = document.createElement('span');
     time.className = 'message-item__time';
     time.textContent = formatTime(item.created_at || item.createdAt || '');
-    meta.appendChild(nick);
-    meta.appendChild(time);
+
+    metaRow.appendChild(nickWrap);
+    metaRow.appendChild(time);
 
     var p = document.createElement('p');
     p.className = 'message-item__content';
     p.innerHTML = escapeHtml(item.content || '').replace(/\n/g, '<br>');
 
-    li.appendChild(meta);
+    var reply = document.createElement('div');
+    reply.className = 'message-item__reply';
+    var replyBtn = document.createElement('button');
+    replyBtn.type = 'button';
+    replyBtn.className = 'message-item__reply-btn';
+    replyBtn.textContent = '\uD83C\uDF38 回复敬意';
+    replyBtn.addEventListener('click', function () {
+      var textarea = document.getElementById('messageInput');
+      if (textarea) {
+        var prefix = '@' + (item.nickname || '游客') + ' ';
+        textarea.value = prefix;
+        textarea.focus();
+      }
+    });
+    reply.appendChild(replyBtn);
+
+    li.appendChild(metaRow);
     li.appendChild(p);
+    li.appendChild(reply);
     return li;
   }
 
@@ -120,7 +173,7 @@
     el.className = 'load-more-btn';
     el.id = 'loadMoreBtn';
     el.innerHTML = '<span class="load-more-text">加载更多</span><span class="load-more-loading" style="display:none;">加载中...</span>';
-    el.style.cssText = 'text-align:center;padding:16px;cursor:pointer;color:#C41E3A;font-size:0.95rem;';
+    el.style.cssText = 'text-align:center;padding:16px;cursor:pointer;color:#C8102E;font-size:0.95rem;';
     return el;
   }
 
@@ -128,7 +181,7 @@
     if (!loadMoreEl) return;
     var textEl = loadMoreEl.querySelector('.load-more-text');
     var loadingEl = loadMoreEl.querySelector('.load-more-loading');
-    
+
     if (isLoading) {
       if (textEl) textEl.style.display = 'none';
       if (loadingEl) loadingEl.style.display = 'inline';
@@ -148,33 +201,34 @@
       }
       if (loadingEl) loadingEl.style.display = 'none';
       loadMoreEl.style.cursor = 'pointer';
-      loadMoreEl.style.color = '#C41E3A';
+      loadMoreEl.style.color = '#C8102E';
     }
   }
 
   function appendMessages(list) {
     if (!listEl) return;
-    
+
     if (loadMoreEl && loadMoreEl.parentNode) {
       loadMoreEl.parentNode.removeChild(loadMoreEl);
     }
-    
+
     if (!Array.isArray(list) || !list.length) {
       if (currentPage === 1) {
         listEl.innerHTML = '';
         var empty = document.createElement('p');
         empty.className = 'messages-empty';
-        empty.textContent = '暂无留言';
+        empty.textContent = '暂无留言，留下第一句敬意';
         listEl.appendChild(empty);
       }
+      updateEndingText();
       return;
     }
-    
+
     if (currentPage === 1) {
       listEl.innerHTML = '';
       allMessages = [];
     }
-    
+
     for (var i = 0; i < list.length; i++) {
       try {
         var it = list[i];
@@ -183,20 +237,27 @@
         listEl.appendChild(node);
       } catch (e) {}
     }
-    
+
     loadMoreEl = createLoadMoreElement();
     loadMoreEl.addEventListener('click', loadMoreMessages);
     listEl.appendChild(loadMoreEl);
     updateLoadMoreState();
+    updateEndingText();
+  }
+
+  function updateEndingText() {
+    if (typeof global.wxFlowers !== 'undefined' && typeof global.wxFlowers.updateEndingText === 'function') {
+      global.wxFlowers.updateEndingText();
+    }
   }
 
   function loadMessages(page) {
     page = page || 1;
     if (isLoading) return Promise.resolve([]);
-    
+
     isLoading = true;
     updateLoadMoreState();
-    
+
     return fetch('/api/messages?page=' + page + '&limit=' + PAGE_SIZE, { cache: 'no-store' })
       .then(function (res) {
         if (!res.ok) return Promise.resolve({ list: [], pagination: { hasMore: false } });
@@ -266,13 +327,13 @@
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     var nick = nickEl ? nickEl.value : '';
     var content = contentEl ? contentEl.value : '';
-    
+
     if (nick && nick.trim()) {
       try {
         localStorage.setItem('userNickname', nick.trim());
       } catch (e) {}
     }
-    
+
     if (submitBtn) submitBtn.disabled = true;
     submitMessage(nick, content).then(function (result) {
       if (submitBtn) submitBtn.disabled = false;
@@ -281,11 +342,11 @@
 
   function handleScroll() {
     if (isLoading || !hasMore) return;
-    
+
     var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     var scrollHeight = document.documentElement.scrollHeight;
     var clientHeight = window.innerHeight;
-    
+
     if (scrollTop + clientHeight >= scrollHeight - 200) {
       loadMoreMessages();
     }
@@ -296,6 +357,10 @@
     nickEl = queryFirst(NICK_SELECTORS);
     contentEl = queryFirst(CONTENT_SELECTORS);
     submitBtn = document.getElementById('submitBtn');
+
+    if (contentEl) {
+      contentEl.placeholder = '\uD83D\uDCAC 写下您想对将军说的话...';
+    }
 
     if (nickEl) {
       try {
@@ -314,7 +379,7 @@
     }
 
     window.addEventListener('scroll', handleScroll);
-    
+
     loadMessages(1);
   }
 
