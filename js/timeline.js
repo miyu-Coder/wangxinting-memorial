@@ -116,15 +116,17 @@
     svg.appendChild(path);
 
     var startLabel = document.createElementNS(svgNS, "text");
-    startLabel.setAttribute("x", nodes[0].x - 30);
-    startLabel.setAttribute("y", nodes[0].y + 28);
+    startLabel.setAttribute("x", nodes[0].x - 8);
+    startLabel.setAttribute("y", nodes[0].y - 18);
+    startLabel.setAttribute("text-anchor", "end");
     startLabel.setAttribute("class", "route-svg__endpoint");
     startLabel.textContent = "\uD83C\uDFC1 起点";
     svg.appendChild(startLabel);
 
     var endLabel = document.createElementNS(svgNS, "text");
-    endLabel.setAttribute("x", nodes[nodes.length - 1].x + 10);
-    endLabel.setAttribute("y", nodes[nodes.length - 1].y + 28);
+    endLabel.setAttribute("x", nodes[nodes.length - 1].x + 8);
+    endLabel.setAttribute("y", nodes[nodes.length - 1].y - 18);
+    endLabel.setAttribute("text-anchor", "start");
     endLabel.setAttribute("class", "route-svg__endpoint");
     endLabel.textContent = "\uD83C\uDFC1 终点";
     svg.appendChild(endLabel);

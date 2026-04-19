@@ -1050,6 +1050,7 @@
           countP.innerHTML = '\u5DF2\u6709 <strong>—</strong> \u4EBA\u732E\u82B1';
         } else {
           countP.innerHTML = '\u5DF2\u6709 <strong>' + n + '</strong> \u4EBA\u732E\u82B1';
+          updateAvatars(n);
         }
       }).catch(function () {
         countP.innerHTML = '\u5DF2\u6709 <strong>—</strong> \u4EBA\u732E\u82B1';
@@ -1088,6 +1089,7 @@
             window.setTimeout(function () { btn.classList.remove('flower-tribute-btn--pop'); }, 600);
             if (typeof res.displayTotal === 'number') {
               countP.innerHTML = '\u5DF2\u6709 <strong>' + res.displayTotal + '</strong> \u4EBA\u732E\u82B1';
+              updateAvatars(res.displayTotal);
             }
             if (typeof window.wxFlowers.updateHomeCountEl === 'function') {
               window.wxFlowers.updateHomeCountEl();
@@ -1121,6 +1123,7 @@
         countP.innerHTML = '\u5DF2\u6709 <strong>—</strong> \u4EBA\u732E\u82B1';
       } else {
         countP.innerHTML = '\u5DF2\u6709 <strong>' + n + '</strong> \u4EBA\u732E\u82B1';
+        updateAvatars(n);
       }
       if (has) {
         setButtonToAlready();
@@ -1135,6 +1138,34 @@
     card.appendChild(iconWrap);
     card.appendChild(tag);
     card.appendChild(countP);
+
+    var avatarNames = ['张', '李', '王', '刘', '陈'];
+    var avatarColors = ['#E57373', '#64B5F6', '#81C784', '#FFB74D', '#BA68C8'];
+    var avatarList = document.createElement('div');
+    avatarList.className = 'flower-tribute-avatars';
+    for (var ai = 0; ai < avatarNames.length; ai++) {
+      var av = document.createElement('span');
+      av.className = 'flower-tribute-avatar';
+      av.style.background = avatarColors[ai];
+      av.textContent = avatarNames[ai];
+      avatarList.appendChild(av);
+    }
+    var moreTag = document.createElement('span');
+    moreTag.className = 'flower-tribute-avatar flower-tribute-avatar--more';
+    moreTag.textContent = '+N';
+    moreTag.style.display = 'none';
+    avatarList.appendChild(moreTag);
+    card.appendChild(avatarList);
+
+    function updateAvatars(total) {
+      if (total != null && total > 5) {
+        moreTag.textContent = '+' + (total - 5);
+        moreTag.style.display = '';
+      } else {
+        moreTag.style.display = 'none';
+      }
+    }
+
     card.appendChild(btn);
     root.appendChild(card);
   }
@@ -1586,7 +1617,44 @@
         "展点 " + curNum + " / 共 " + total + " 处 · 下一展点按动线循环";
     }
     if (textEl) {
-      textEl.textContent = loc.text || "";
+      var rawText = loc.text || "";
+      var eid = normId(loc.id);
+      if (eid === 1) {
+        rawText = rawText.replace(/150张/g, '<span class="detail-text-highlight--red">150张</span>');
+        rawText = rawText.replace(/70余件/g, '<span class="detail-text-highlight--red">70余件</span>');
+        rawText = rawText.replace(/仿徽派建筑风格/g, '<span class="detail-text-highlight--gold">仿徽派建筑风格</span>');
+      } else if (eid === 2) {
+        rawText = rawText.replace(/80平方米/g, '<span class="detail-text-highlight--red">80平方米</span>');
+        rawText = rawText.replace(/1908年/g, '<span class="detail-text-highlight--red">1908年</span>');
+        rawText = rawText.replace(/12岁/g, '<span class="detail-text-highlight--red">12岁</span>');
+        rawText = rawText.replace(/1930年/g, '<span class="detail-text-highlight--red">1930年</span>');
+        rawText = rawText.replace(/22岁/g, '<span class="detail-text-highlight--red">22岁</span>');
+      } else if (eid === 3) {
+        rawText = rawText.replace(/5000平方米/g, '<span class="detail-text-highlight--red">5000平方米</span>');
+        rawText = rawText.replace(/数百人/g, '<span class="detail-text-highlight--red">数百人</span>');
+      } else if (eid === 4) {
+        rawText = rawText.replace(/63式装甲输送车/g, '<span class="detail-text-highlight--gold">63式装甲输送车</span>');
+        rawText = rawText.replace(/59式中型坦克/g, '<span class="detail-text-highlight--gold">59式中型坦克</span>');
+      }
+      textEl.innerHTML = rawText;
+
+      var expandBtn = document.getElementById("detail-text-expand");
+      if (expandBtn) {
+        requestAnimationFrame(function () {
+          if (textEl.scrollHeight > textEl.clientHeight + 4) {
+            expandBtn.classList.add("is-visible");
+          } else {
+            expandBtn.classList.remove("is-visible");
+          }
+        });
+        expandBtn.onclick = function () {
+          var isExpanded = textEl.classList.toggle("is-expanded");
+          expandBtn.textContent = isExpanded ? "▲ 收起" : "▼ 展开全文";
+          if (!isExpanded) {
+            textEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        };
+      }
     }
 
     renderRouteStrip(loc);

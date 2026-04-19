@@ -653,7 +653,8 @@ body {
   display: flex;
   gap: 12px;
   min-width: min-content;
-  padding: 12px 8px 16px 8px !important;
+  justify-content: center;
+  padding: 12px 16px 16px !important;
   overflow-y: visible !important;
 }
 
@@ -662,6 +663,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
   cursor: pointer;
   transition: transform 0.3s ease;
   overflow: visible !important;
@@ -696,6 +698,7 @@ body {
   z-index: 2;
   transition: box-shadow 0.3s ease;
   transform: none !important;
+  margin: 0 auto;
 }
 
 .life-medal.is-active .life-medal__circle {
@@ -983,7 +986,7 @@ body {
 
 .route-svg__endpoint {
   font-size: 11px;
-  fill: #999;
+  fill: #888;
   font-family: var(--font-sans);
 }
 
@@ -1239,6 +1242,11 @@ body {
   margin-top: 20px;
 }
 
+.action-bar--single:last-of-type {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+}
+
 .btn-home-only {
   width: 100%;
   min-height: 52px;
@@ -1331,13 +1339,14 @@ body {
 }
 
 .site-footer--military {
-  margin-top: 0;
-  padding: 0;
+  margin-top: 20px;
+  padding: 8px 0;
   background: linear-gradient(180deg, #8B0000 0%, #5C0000 100%);
   border-radius: 0;
   border-top: none;
   box-shadow: none;
-  height: 40px;
+  min-height: 40px;
+  height: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1503,13 +1512,48 @@ body {
 }
 
 .detail-text-scroll {
-  max-height: 46vh;
-  overflow-y: auto;
+  max-height: calc(1.75em * 6);
+  overflow: hidden;
   padding-right: 6px;
   color: var(--color-body);
   white-space: pre-wrap;
   font-size: 0.95rem;
   line-height: 1.75;
+  transition: max-height 0.35s ease;
+  position: relative;
+}
+
+.detail-text-scroll.is-expanded {
+  max-height: none;
+  overflow: visible;
+}
+
+.detail-text-expand {
+  display: none;
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: #C8102E;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.detail-text-expand.is-visible {
+  display: block;
+}
+
+.detail-text-highlight--red {
+  color: #C8102E;
+  font-weight: 700;
+}
+
+.detail-text-highlight--gold {
+  color: #D4AF37;
+  font-weight: 700;
 }
 
 /* —— 轮播 —— */
@@ -2288,7 +2332,7 @@ body {
   }
 
   .detail-text-scroll {
-    max-height: 52vh;
+    max-height: calc(1.75em * 6);
     font-size: 1rem;
   }
 
@@ -3487,6 +3531,47 @@ body {
 .flower-tribute-card__count strong {
   color: var(--color-gold);
   font-weight: 700;
+}
+
+.flower-tribute-avatars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.flower-tribute-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  margin-left: -8px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+.flower-tribute-avatar:first-child {
+  margin-left: 0;
+}
+
+.flower-tribute-avatar--more {
+  background: #F0F0F0;
+  color: #666;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 12px;
+  width: auto;
+  min-width: 28px;
+  padding: 4px 8px;
+  height: auto;
 }
 
 .flower-tribute-btn {

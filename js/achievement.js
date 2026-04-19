@@ -50,6 +50,113 @@
     return "再参观一遍，重温将军的光辉历程！";
   }
 
+  function showQuizReview(loc, score, maxScore) {
+    var existing = document.querySelector(".quiz-review-overlay");
+    if (existing) existing.remove();
+
+    var questions = (loc && loc.quiz && Array.isArray(loc.quiz.questions)) ? loc.quiz.questions : [];
+
+    var overlay = document.createElement("div");
+    overlay.className = "quiz-review-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+
+    var panel = document.createElement("div");
+    panel.className = "quiz-review-panel";
+
+    var header = document.createElement("div");
+    header.className = "quiz-review-header";
+
+    var title = document.createElement("h3");
+    title.className = "quiz-review-title";
+    title.textContent = (loc.routeShort || loc.title || "展点") + " · 答题回顾";
+
+    var closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "quiz-review-close";
+    closeBtn.setAttribute("aria-label", "关闭");
+    closeBtn.textContent = "✕";
+
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+
+    var scoreP = document.createElement("div");
+    scoreP.className = "quiz-review-score";
+    scoreP.textContent = "得分：" + score + "/" + maxScore + " 分";
+
+    var list = document.createElement("div");
+    list.className = "quiz-review-list";
+
+    var correctCount = 0;
+    for (var qi = 0; qi < questions.length; qi++) {
+      var q = questions[qi];
+      var correctIdx = typeof q.answer === "number" ? q.answer : -1;
+      var options = Array.isArray(q.options) ? q.options : [];
+
+      var isCorrect = correctCount < score;
+      var userIdx = isCorrect ? correctIdx : (correctIdx > 0 ? 0 : (options.length > 1 ? 1 : 0));
+      if (isCorrect) correctCount++;
+
+      var item = document.createElement("div");
+      item.className = "quiz-review-item";
+
+      var qP = document.createElement("p");
+      qP.className = "quiz-review-item__question";
+      qP.textContent = (qi + 1) + ". " + q.question;
+
+      var aP = document.createElement("p");
+      aP.className = "quiz-review-item__answer";
+      if (isCorrect) {
+        aP.classList.add("quiz-review-item__answer--correct");
+        aP.textContent = "你的答案：" + (options[userIdx] || "—") + " ✓";
+      } else {
+        aP.classList.add("quiz-review-item__answer--wrong");
+        aP.textContent = "你的答案：" + (options[userIdx] || "—") + " ✗";
+      }
+
+      item.appendChild(qP);
+      item.appendChild(aP);
+
+      if (!isCorrect) {
+        var cP = document.createElement("p");
+        cP.className = "quiz-review-item__correct";
+        cP.textContent = "正确答案：" + (options[correctIdx] || "—");
+        item.appendChild(cP);
+      }
+
+      list.appendChild(item);
+    }
+
+    var footer = document.createElement("div");
+    footer.className = "quiz-review-footer";
+    var footerBtn = document.createElement("button");
+    footerBtn.type = "button";
+    footerBtn.className = "quiz-review-footer-btn";
+    footerBtn.textContent = "关闭";
+    footerBtn.addEventListener("click", function () {
+      overlay.remove();
+    });
+    footer.appendChild(footerBtn);
+
+    panel.appendChild(header);
+    panel.appendChild(scoreP);
+    panel.appendChild(list);
+    panel.appendChild(footer);
+    overlay.appendChild(panel);
+
+    closeBtn.addEventListener("click", function () {
+      overlay.remove();
+    });
+
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
+
+    document.body.appendChild(overlay);
+  }
+
   function renderExhibitList(container, state) {
     container.innerHTML = "";
     for (var i = 0; i < LOCATIONS.length; i++) {
@@ -65,23 +172,63 @@
       var score = 0;
       var statusClass = "achievement-exhibit-item--need_improve";
       var icon = "🌱";
+      var isCompleted = false;
 
       if (row && row.completed) {
         score = Math.floor(Number(row.score) || 0);
         statusClass = getStatusClass(score, nq);
         icon = getStatusIcon(score, nq);
+        isCompleted = true;
       }
 
       item.className = "achievement-exhibit-item " + statusClass;
+      if (isCompleted) {
+        item.classList.add("achievement-exhibit-item--done");
+      }
 
       var content = document.createElement("div");
       content.innerHTML =
         '<span class="achievement-exhibit-item__icon">' + icon + '</span>' +
         '<h3 class="achievement-exhibit-item__name">' + (loc.routeShort || loc.title || "展点 " + key) + '</h3>' +
         '<p class="achievement-exhibit-item__score">' +
-        (row && row.completed ? score + "/" + nq + "分" : "未完成") +
+        (isCompleted ? score + "/" + nq + "分" : "未完成") +
         '</p>';
 
+      var actionBtn = document.createElement("button");
+      actionBtn.type = "button";
+      actionBtn.className = "achievement-exhibit-item__action";
+
+      if (isCompleted) {
+        actionBtn.classList.add("achievement-exhibit-item__action--review");
+        actionBtn.textContent = "查看答题回顾 →";
+        (function (locRef, scoreRef, nqRef) {
+          actionBtn.addEventListener("click", function () {
+            showQuizReview(locRef, scoreRef, nqRef);
+          });
+        })(loc, score, nq);
+      } else {
+        var hasPartial = false;
+        try {
+          var partialKey = "wx_quiz_partial_" + lid;
+          var partial = localStorage.getItem(partialKey);
+          if (partial) hasPartial = true;
+        } catch (e) {}
+
+        if (hasPartial) {
+          actionBtn.classList.add("achievement-exhibit-item__action--continue");
+          actionBtn.textContent = "继续答题 →";
+        } else {
+          actionBtn.classList.add("achievement-exhibit-item__action--start");
+          actionBtn.textContent = "开始答题 →";
+        }
+        (function (lidRef) {
+          actionBtn.addEventListener("click", function () {
+            window.location.href = "detail.html?id=" + lidRef;
+          });
+        })(lid);
+      }
+
+      content.appendChild(actionBtn);
       item.appendChild(content);
       container.appendChild(item);
     }
@@ -478,11 +625,9 @@
 
         // 为称号添加勋章图标
         var titleEl = document.getElementById("stat-title");
-        if (state.title && state.title.indexOf("红色传承人") !== -1) {
-          titleEl.innerHTML = '<span class="medal-icon">🏆</span> ' + state.title;
-        } else if (state.totalScore >= 12 && state.title) {
-          titleEl.innerHTML = '<span class="medal-icon">🎖️</span> ' + state.title;
-        }
+        var titleText = state.title || "继续加油，完成全部展点问答";
+        titleEl.className = "achievement-stat-card__title achievement-stat-card__title--badge";
+        titleEl.textContent = titleText;
 
         // 设置鼓励文案
         if (encouragementEl) {

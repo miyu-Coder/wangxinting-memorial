@@ -75,6 +75,7 @@
     var sitesList = document.getElementById("certificate-sites");
     if (sitesList && LOCATIONS.length > 0) {
       var listHtml = '';
+      var siteIcons = ['🏛️', '🏠', '🪦', '🛡️'];
 
       for (var i = 0; i < 4; i++) {
         var loc = LOCATIONS[i];
@@ -85,13 +86,14 @@
 
         var time = checkTimes[lid];
         var checked = time ? true : false;
+        var icon = siteIcons[i] || '🏠';
 
         listHtml += '<div class="certificate-site-item">';
-        listHtml += '<div class="certificate-site-icon">🏠</div>';
+        listHtml += '<div class="certificate-site-icon">' + icon + '</div>';
         listHtml += '<div class="certificate-site-info">';
         listHtml += '<div class="certificate-site-name">' + (loc.routeShort || loc.title) + '</div>';
         if (checked && time) {
-          listHtml += '<p class="certificate-site-time">' + window.wxCheckin.formatTime(new Date(time)) + '</p>';
+          listHtml += '<p class="certificate-site-time">🕐 ' + window.wxCheckin.formatTime(new Date(time)) + '</p>';
         } else {
           listHtml += '<p class="certificate-site-time">未完成打卡</p>';
         }
@@ -280,8 +282,9 @@
       });
     }
 
-    var detailItems = siteList.map(function (site) {
-      return '🏠 ' + site.name + '  ' + site.time;
+    var detailItems = siteList.map(function (site, idx) {
+      var posterIcons = ['🏛️', '🏠', '🪦', '🛡️'];
+      return (posterIcons[idx] || '🏠') + ' ' + site.name + '  ' + site.time;
     });
 
     return {
