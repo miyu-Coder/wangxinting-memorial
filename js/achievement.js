@@ -238,8 +238,12 @@
    * 准备海报数据
    */
   function preparePosterData(state, grandMax) {
+    var nickname = "";
+    try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+
     var userData = {
       title: state.title || "继续加油，完成全部展点问答",
+      nickname: nickname,
       stats: [
         { label: "答题总得分", value: state.totalScore + " / " + grandMax },
         { label: "已完成展点", value: window.wxQuizStorage.countCompletedWithQuiz(LOCATIONS).done + " / 4" }
@@ -327,6 +331,14 @@
     ctx.fillStyle = "#c41e3a";
     ctx.font = "bold 44px 'Noto Serif SC', 'SimSun', serif";
     ctx.fillText("红色传承之旅", w / 2, 168);
+
+    var canvasNickname = "";
+    try { canvasNickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+    if (canvasNickname) {
+      ctx.fillStyle = "#D4A843";
+      ctx.font = "bold 24px 'Noto Sans SC', sans-serif";
+      ctx.fillText(canvasNickname + " 的红色传承", w / 2, 200);
+    }
 
     ctx.fillStyle = "#555555";
     ctx.font = "28px 'Noto Sans SC', sans-serif";
@@ -613,6 +625,13 @@
         var state = window.wxQuizStorage.getState(LOCATIONS);
         var grandMax = window.wxQuizStorage.grandMaxScore(LOCATIONS);
         if (grandMax < 1) grandMax = 16;
+
+        var nicknameEl = document.getElementById("achievement-nickname");
+        if (nicknameEl) {
+          var nickname = "";
+          try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+          nicknameEl.textContent = nickname ? nickname + "，您好！" : "致敬人：尊敬的参观者";
+        }
 
         var c = window.wxQuizStorage.countCompletedWithQuiz(LOCATIONS);
 

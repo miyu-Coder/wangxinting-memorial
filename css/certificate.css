@@ -176,6 +176,15 @@
   border-radius: 2px;
 }
 
+.certificate-card-nickname {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #D4AF37;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
 /* 证书介绍文字 */
 .certificate-card-intro {
   text-align: center;

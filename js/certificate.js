@@ -59,6 +59,13 @@
     var dateEl = document.querySelector("#certificate-date span");
     var latestTime = null;
 
+    var nicknameEl = document.getElementById("certificate-nickname");
+    if (nicknameEl) {
+      var nickname = "";
+      try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+      nicknameEl.textContent = nickname ? "致敬人：" + nickname : "致敬人：尊敬的参观者";
+    }
+
     // 获取最新打卡时间
     for (var id in checkTimes) {
       var time = checkTimes[id];
@@ -180,6 +187,12 @@
     ctx.font = "bold 52px 'Noto Serif SC', 'SimSun', serif";
     ctx.fillText("红色足迹纪念证书", w / 2, 180);
 
+    if (checkData.nickname) {
+      ctx.fillStyle = "#D4A843";
+      ctx.font = "bold 24px 'Noto Sans SC', sans-serif";
+      ctx.fillText("致敬人：" + checkData.nickname, w / 2, 220);
+    }
+
     // 用户完成信息
     if (checkData.userDate) {
       ctx.fillStyle = "#555555";
@@ -287,8 +300,12 @@
       return (posterIcons[idx] || '🏠') + ' ' + site.name + '  ' + site.time;
     });
 
+    var nickname = "";
+    try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+
     return {
       userDate: formattedDate,
+      nickname: nickname,
       sites: siteList,
       detailItems: detailItems
     };

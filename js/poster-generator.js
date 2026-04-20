@@ -168,6 +168,19 @@
     siteName.textContent = '王新亭将军红色教育基地';
     header.appendChild(siteName);
 
+    if (options.userData && options.userData.nickname) {
+      var nicknameLine = document.createElement('div');
+      nicknameLine.style.cssText = [
+        'font-size: 18px',
+        'font-weight: 600',
+        'color: #D4A843',
+        'margin-bottom: 8px',
+        'letter-spacing: 0.04em'
+      ].join(';');
+      nicknameLine.textContent = options.userData.nickname + ' 的红色传承';
+      header.appendChild(nicknameLine);
+    }
+
     if (options.subtitle) {
       var subtitle = document.createElement('div');
       subtitle.style.cssText = [

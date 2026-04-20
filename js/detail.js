@@ -1039,7 +1039,7 @@
 
     var btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'flower-tribute-btn';
+    btn.className = 'flower-tribute-btn btn-ripple';
     btn.disabled = false;
     btn.textContent = '\uD83C\uDF38 \u732E\u82B1\u81F4\u656C';
 

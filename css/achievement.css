@@ -82,6 +82,15 @@ html.achievement-doc {
   text-transform: uppercase;
 }
 
+.achievement-hero__nickname {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #D4AF37;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
+}
+
 .achievement-hero__title {
   margin: 0 0 14px;
   font-family: var(--font-serif);
