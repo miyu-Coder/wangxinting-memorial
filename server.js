@@ -899,7 +899,7 @@ app.get('/api/admin/export/checkins', async (req, res) => {
       ORDER BY visited_at DESC
     `);
     console.log('Export checkins:', rows.length, 'records');
-    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备展区' };
     let csv = '用户标识,展点,打卡时间\n';
     rows.forEach(r => {
       csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.visited_at}\n`;
@@ -922,7 +922,7 @@ app.get('/api/admin/export/flowers', async (req, res) => {
       FROM flowers 
       ORDER BY created_at DESC
     `);
-    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备展区' };
     let csv = '用户标识,展点,献花时间\n';
     rows.forEach(r => {
       csv += `${r.user_identifier},${exhibitNames[r.exhibit_id] || '未知'},${r.created_at}\n`;
@@ -945,7 +945,7 @@ app.get('/api/admin/export/quiz', async (req, res) => {
       FROM quiz_records 
       ORDER BY created_at DESC
     `);
-    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备展区' };
     let csv = '昵称,展点,得分,答题时间\n';
     rows.forEach(r => {
       csv += `${r.nickname},${exhibitNames[r.exhibit_id] || '未知'},${r.score}/4,${r.created_at}\n`;
@@ -963,7 +963,7 @@ app.get('/api/admin/export/quiz', async (req, res) => {
 // GET /api/admin/export/all - 导出所有数据（合并CSV）
 app.get('/api/admin/export/all', async (req, res) => {
   try {
-    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
+    const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备展区' };
     let csv = '';
     
     const checkins = await db.allAsync('SELECT user_identifier, exhibit_id, visited_at FROM visits ORDER BY visited_at DESC');

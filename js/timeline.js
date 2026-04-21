@@ -5,7 +5,7 @@
 (function (global) {
   "use strict";
 
-  var ROUTE_SHORT_FALLBACK = ["陈列馆", "故居", "广场", "装备"];
+  var ROUTE_SHORT_FALLBACK = ["陈列馆", "故居", "广场", "装备展区"];
 
   function normId(v) {
     var n = parseInt(String(v), 10);

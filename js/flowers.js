@@ -9,7 +9,7 @@
     { id: "1", name: "陈列馆", full: "将军生平事迹陈列馆", icon: "\uD83C\uDFDB\uFE0F" },
     { id: "2", name: "故居", full: "将军故居", icon: "\uD83C\uDFE0" },
     { id: "3", name: "广场", full: "纪念广场与将军纪念碑", icon: "\uD83E\uDEA6" },
-    { id: "4", name: "装备", full: "退役军事装备实物展区", icon: "\uD83D\uDEE1\uFE0F" }
+    { id: "4", name: "装备展区", full: "退役军事装备实物展区", icon: "\uD83D\uDEE1\uFE0F" }
   ];
 
   var HOT_TAGS = ["永垂不朽", "吾辈楷模", "将军千古", "红色传承", "不忘初心"];

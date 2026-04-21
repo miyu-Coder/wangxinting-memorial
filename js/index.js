@@ -186,7 +186,7 @@
       { id: 1, title: "将军生平事迹陈列馆", summary: "离线备用", routeShort: "陈列馆" },
       { id: 2, title: "将军故居", summary: "离线备用", routeShort: "故居" },
       { id: 3, title: "纪念广场与将军纪念碑", summary: "离线备用", routeShort: "广场" },
-      { id: 4, title: "退役军事装备实物展区", summary: "离线备用", routeShort: "装备" },
+      { id: 4, title: "退役军事装备实物展区", summary: "离线备用", routeShort: "装备展区" },
     ];
     if (ul) {
       ul.innerHTML = "";

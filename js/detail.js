@@ -731,7 +731,7 @@
     // 初始骨架，稍后根据后端返回的状态更新按钮与进度
     container.innerHTML =
       '<div class="checkin-header">' +
-      '  <h3 class="checkin-title">📍 参观打卡</h3>' +
+      '  <h3 class="checkin-title">参观打卡</h3>' +
       '</div>' +
       '<div class="checkin-info">' +
       '  <p class="checkin-message">在这里留下您的足迹，集齐四个展点解锁纪念证书！</p>' +

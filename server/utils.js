@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 
 /** 展点编号 → 中文名称映射 */
-const EXHIBIT_NAMES = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备' };
+const EXHIBIT_NAMES = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备展区' };
 
 /**
  * Promise 化 fs.readFile
