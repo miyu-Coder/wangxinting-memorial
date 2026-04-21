@@ -328,21 +328,17 @@
     ctx.textAlign = "center";
     ctx.fillText("王新亭将军红色教育基地", w / 2, 100);
 
-    ctx.fillStyle = "#c41e3a";
-    ctx.font = "bold 44px 'Noto Serif SC', 'SimSun', serif";
-    ctx.fillText("红色传承之旅", w / 2, 168);
-
     var canvasNickname = "";
     try { canvasNickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
     if (canvasNickname) {
       ctx.fillStyle = "#D4A843";
       ctx.font = "bold 24px 'Noto Sans SC', sans-serif";
-      ctx.fillText(canvasNickname + " 的红色传承", w / 2, 200);
+      ctx.fillText(canvasNickname + " 的红色传承", w / 2, 148);
     }
 
     ctx.fillStyle = "#555555";
     ctx.font = "28px 'Noto Sans SC', sans-serif";
-    ctx.fillText("知识问答成就证书", w / 2, 230);
+    ctx.fillText("知识问答成就证书", w / 2, 190);
 
     ctx.fillStyle = "#b8923a";
     ctx.font = "bold 56px 'Noto Sans SC', sans-serif";

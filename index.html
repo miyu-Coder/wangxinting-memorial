@@ -79,8 +79,8 @@
         <h2 id="life-heading" class="section-title section-title--serif">将军生平</h2>
         <img src="images/portrait.jpg" alt="王新亭将军肖像" class="portrait-image" />
 
-        <div class="life-timeline life-timeline--horizontal" style="overflow: visible;">
-          <div class="life-timeline__track" id="life-timeline-track" style="overflow-y: visible; padding: 12px 16px 16px;">
+        <div class="life-timeline life-timeline--horizontal">
+          <div class="life-timeline__medals-row" id="life-timeline-track">
             <article class="life-medal" data-era="0">
               <div class="life-medal__ribbon"></div>
               <div class="life-medal__circle">
@@ -281,31 +281,9 @@
             for (var j = 0; j < medals.length; j++) medals[j].classList.remove('is-active');
             m.classList.add('is-active');
             showDetail(m);
-            m.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
           });
         })(medals[i]);
       }
-
-      var startX = 0;
-      var scrollLeft = 0;
-      var isDragging = false;
-
-      track.parentElement.addEventListener('touchstart', function(e) {
-        isDragging = true;
-        startX = e.touches[0].pageX - track.parentElement.offsetLeft;
-        scrollLeft = track.parentElement.scrollLeft;
-      }, { passive: true });
-
-      track.parentElement.addEventListener('touchmove', function(e) {
-        if (!isDragging) return;
-        var x = e.touches[0].pageX - track.parentElement.offsetLeft;
-        var walk = (x - startX) * 1.2;
-        track.parentElement.scrollLeft = scrollLeft - walk;
-      }, { passive: true });
-
-      track.parentElement.addEventListener('touchend', function() {
-        isDragging = false;
-      });
     }
 
     if (document.readyState === 'loading') {

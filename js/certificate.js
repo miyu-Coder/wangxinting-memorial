@@ -75,7 +75,10 @@
     }
 
     if (dateEl && latestTime) {
-      dateEl.textContent = window.wxCheckin.formatTime(new Date(latestTime));
+      var ld = new Date(latestTime);
+      dateEl.textContent = ld.getFullYear() + '.' +
+        String(ld.getMonth() + 1).padStart(2, '0') + '.' +
+        String(ld.getDate()).padStart(2, '0');
     }
 
     // 渲染展点列表
@@ -183,14 +186,10 @@
     ctx.textAlign = "center";
     ctx.fillText("王新亭将军红色教育基地", w / 2, 100);
 
-    ctx.fillStyle = "#c41e3a";
-    ctx.font = "bold 52px 'Noto Serif SC', 'SimSun', serif";
-    ctx.fillText("红色足迹纪念证书", w / 2, 180);
-
     if (checkData.nickname) {
       ctx.fillStyle = "#D4A843";
-      ctx.font = "bold 24px 'Noto Sans SC', sans-serif";
-      ctx.fillText("致敬人：" + checkData.nickname, w / 2, 220);
+      ctx.font = "bold 28px 'Noto Sans SC', sans-serif";
+      ctx.fillText("致敬人：" + checkData.nickname, w / 2, 160);
     }
 
     // 用户完成信息
@@ -268,7 +267,7 @@
 
     if (latestTime) {
       var d = new Date(latestTime);
-      formattedDate = d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日";
+      formattedDate = d.getFullYear() + "." + String(d.getMonth() + 1).padStart(2, '0') + "." + String(d.getDate()).padStart(2, '0');
     }
 
     // 获取展点列表

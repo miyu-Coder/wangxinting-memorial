@@ -45,7 +45,7 @@
 /* 头部 */
 .certificate-hero {
   text-align: center;
-  padding: 32px 20px 24px;
+  padding: 28px 20px 20px;
   background: linear-gradient(
     165deg,
     #7a1528 0%,
@@ -93,7 +93,7 @@
 
 /* 主体内容 */
 .certificate-main {
-  padding: 24px 16px 8px;
+  padding: 20px 16px 8px;
   flex: 1;
   position: relative;
 }
@@ -104,8 +104,8 @@
 .certificate-card {
   background: #FDF8F2;
   border-radius: 16px;
-  padding: 24px 20px 28px;
-  margin-bottom: 24px;
+  padding: 20px 18px 24px;
+  margin-bottom: 20px;
   position: relative;
   box-shadow:
     0 4px 0 0 #D4A843,
@@ -151,33 +151,8 @@
   background-size: contain;
 }
 
-/* 证书标题 */
-.certificate-card-title {
-  margin: 0 0 20px;
-  font-family: var(--font-serif);
-  font-size: 24px;
-  font-weight: 700;
-  color: #C41E3A;
-  text-align: center;
-  letter-spacing: 0.06em;
-  position: relative;
-  padding-bottom: 16px;
-}
-
-.certificate-card-title::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #D4A843, transparent);
-  border-radius: 2px;
-}
-
 .certificate-card-nickname {
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   font-size: 15px;
   font-weight: 600;
   color: #D4AF37;
@@ -197,45 +172,32 @@
 /* 完成信息 */
 .certificate-card-info {
   background: rgba(212, 168, 67, 0.06);
-  padding: 16px 18px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
   text-align: center;
   border: 1px solid rgba(212, 168, 67, 0.15);
 }
 
 .certificate-card-date {
-  margin: 0 0 8px;
-  font-size: 0.95rem;
-  color: var(--color-muted);
-}
-
-.certificate-card-count {
   margin: 0;
-  font-size: 1.05rem;
-  color: var(--color-red-deep);
-  font-weight: 600;
-}
-
-.certificate-card-count strong {
-  font-size: 1.3em;
-  color: #D4A843;
-  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-muted);
 }
 
 /* 展点列表 */
 .certificate-card-sites {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .certificate-site-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
   background: linear-gradient(135deg, rgba(196, 30, 58, 0.04), rgba(212, 168, 67, 0.04));
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid rgba(196, 30, 58, 0.08);
   transition: all 0.3s ease;
 }
@@ -251,15 +213,15 @@
 }
 
 .certificate-site-icon {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(212, 168, 67, 0.15);
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .certificate-site-info {
@@ -268,39 +230,41 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 
 .certificate-site-name {
   font-weight: 600;
   color: var(--color-red-deep);
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .certificate-site-time {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--color-muted);
   font-weight: 500;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* 感谢语 */
 .certificate-card-message {
   text-align: center;
-  padding: 18px 16px;
+  padding: 14px 14px;
   background: linear-gradient(135deg, rgba(196, 30, 58, 0.03), rgba(212, 168, 67, 0.05));
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid rgba(196, 30, 58, 0.06);
 }
 
 .certificate-card-message p {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   color: var(--color-red-deep);
-  font-size: 0.95rem;
-  line-height: 1.6;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .certificate-card-message p:last-child {
@@ -344,7 +308,7 @@
   flex-direction: row;
   justify-content: center;
   gap: 12px;
-  margin-top: 28px;
+  margin-top: 20px;
   flex-wrap: wrap;
 }
 

@@ -612,7 +612,6 @@
     return generatePoster({
       width: 750,
       height: 1100,
-      subtitle: '红色传承之旅',
       type: '知识问答成就证书',
       userData: userData,
       detailItems: detailItems,
@@ -640,8 +639,6 @@
     return generatePoster({
       width: 750,
       height: 1000,
-      subtitle: '红色足迹纪念证书',
-      type: '红色足迹证明',
       userData: userData,
       detailItems: detailItems,
       detailTitle: '已打卡展点',

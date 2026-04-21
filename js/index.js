@@ -286,6 +286,14 @@
         }
         updateFlowerWallEntry();
       });
+
+    // 为 #btn-open-map 绑定点击事件，打开地图导航选择器
+    var btnOpenMap = document.getElementById("btn-open-map");
+    if (btnOpenMap && window.MapNavigation && typeof window.MapNavigation.openMapChooser === "function") {
+      btnOpenMap.addEventListener("click", function () {
+        window.MapNavigation.openMapChooser();
+      });
+    }
   }
 
   if (document.readyState === "loading") {
