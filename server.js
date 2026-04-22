@@ -62,6 +62,7 @@ function initDatabase() {
       user_identifier TEXT NOT NULL,
       exhibit_id INTEGER NOT NULL,
       visited_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      nickname TEXT,
       UNIQUE(user_identifier, exhibit_id)
     )
   `, (err) => {
@@ -84,6 +85,16 @@ function initDatabase() {
       console.error('Failed to create flowers table:', err.message);
     } else {
       console.log('Table flowers ready');
+    }
+  });
+  db.run(`ALTER TABLE flowers ADD COLUMN nickname TEXT`, function(err) {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Failed to add nickname column:', err.message);
+    }
+  });
+  db.run(`ALTER TABLE visits ADD COLUMN nickname TEXT`, function(err) {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Failed to add nickname column to visits:', err.message);
     }
   });
   db.run(`
@@ -151,7 +162,7 @@ function initDatabase() {
 // ===== 打卡 (checkin) 接口 =====
 // POST /api/checkin
 app.post('/api/checkin', async (req, res) => {
-  const { exhibitId } = req.body;
+  const { exhibitId, nickname } = req.body;
   const userIdentifier = req.userIdentifier;
 
   if (!exhibitId || ![1, 2, 3, 4].includes(Number(exhibitId))) {
@@ -160,8 +171,8 @@ app.post('/api/checkin', async (req, res) => {
 
   try {
     await db.runAsync(
-      "INSERT INTO visits (user_identifier, exhibit_id, visited_at) VALUES (?, ?, datetime('now'))",
-      [userIdentifier, exhibitId]
+      "INSERT INTO visits (user_identifier, exhibit_id, nickname, visited_at) VALUES (?, ?, ?, datetime('now'))",
+      [userIdentifier, exhibitId, (nickname || '').trim() || null]
     );
     return res.json({ success: true, message: '打卡成功' });
   } catch (err) {
@@ -554,7 +565,7 @@ app.get('/api/admin/logs', async (req, res) => {
 
 // API 路由：献花 (POST)
 app.post('/api/flower', async (req, res) => {
-  const { exhibitId } = req.body;
+  const { exhibitId, nickname } = req.body;
   const userIdentifier = req.userIdentifier;
 
   if (!exhibitId || ![1, 2, 3, 4].includes(Number(exhibitId))) {
@@ -563,8 +574,8 @@ app.post('/api/flower', async (req, res) => {
 
   try {
     await db.runAsync(
-      'INSERT INTO flowers (user_identifier, exhibit_id) VALUES (?, ?)',
-      [userIdentifier, exhibitId]
+      'INSERT INTO flowers (user_identifier, exhibit_id, nickname) VALUES (?, ?, ?)',
+      [userIdentifier, exhibitId, (nickname || '').trim() || null]
     );
     res.json({ success: true, message: '献花成功' });
   } catch (err) {
@@ -611,6 +622,27 @@ app.get('/api/flower/user/:exhibitId', async (req, res) => {
     return res.json({ exhibitId: Number(exhibitId), hasFlowered: !!row });
   } catch (err) {
     console.error('User flowered check error:', err);
+    return res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+app.get('/api/flower/recent/:exhibitId', async (req, res) => {
+  const { exhibitId } = req.params;
+  const limit = Math.min(parseInt(req.query.limit) || 5, 20);
+
+  if (![1, 2, 3, 4].includes(Number(exhibitId))) {
+    return res.status(400).json({ error: '展点 ID 必须为 1-4' });
+  }
+
+  try {
+    const rows = await db.allAsync(
+      'SELECT nickname FROM flowers WHERE exhibit_id = ? AND nickname IS NOT NULL AND nickname != "" ORDER BY created_at DESC LIMIT ?',
+      [exhibitId, limit]
+    );
+    const names = rows.map(r => r.nickname);
+    return res.json({ success: true, exhibitId: Number(exhibitId), names: names });
+  } catch (err) {
+    console.error('Recent flower query error:', err);
     return res.status(500).json({ error: '服务器错误' });
   }
 });
@@ -668,7 +700,8 @@ app.get('/api/messages', async (req, res) => {
     
     const countRow = await db.getAsync('SELECT COUNT(*) as total FROM messages WHERE status = 1');
     const total = countRow ? countRow.total : 0;
-    const hasMore = offset + rows.length < total;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const hasMore = page < totalPages;
     
     return res.json({ 
       success: true, 
@@ -677,6 +710,7 @@ app.get('/api/messages', async (req, res) => {
         page: page,
         limit: limit,
         total: total,
+        totalPages: totalPages,
         hasMore: hasMore
       }
     });
@@ -1123,6 +1157,64 @@ app.use('/admin', express.static(__dirname + '/server/admin'));
 app.use(express.static(__dirname));
 
 // 全局 404 处理
+app.get('/api/activity/recent', async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 10, 30);
+  const exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备展区' };
+
+  try {
+    var activities = [];
+
+    const visits = await db.allAsync(
+      'SELECT user_identifier, exhibit_id, nickname, visited_at FROM visits ORDER BY visited_at DESC LIMIT ?',
+      [limit]
+    );
+    visits.forEach(function(r) {
+      activities.push({
+        type: 'checkin',
+        nickname: r.nickname || '参观者',
+        exhibit: exhibitNames[r.exhibit_id] || '展点',
+        time: r.visited_at
+      });
+    });
+
+    const flowers = await db.allAsync(
+      'SELECT nickname, user_identifier, exhibit_id, created_at FROM flowers ORDER BY created_at DESC LIMIT ?',
+      [limit]
+    );
+    flowers.forEach(function(r) {
+      activities.push({
+        type: 'flower',
+        nickname: r.nickname || r.user_identifier || '参观者',
+        exhibit: exhibitNames[r.exhibit_id] || '展点',
+        time: r.created_at
+      });
+    });
+
+    const quizzes = await db.allAsync(
+      'SELECT nickname, exhibit_id, created_at FROM quiz_records ORDER BY created_at DESC LIMIT ?',
+      [limit]
+    );
+    quizzes.forEach(function(r) {
+      activities.push({
+        type: 'quiz',
+        nickname: r.nickname || '参观者',
+        exhibit: exhibitNames[r.exhibit_id] || '展点',
+        time: r.created_at
+      });
+    });
+
+    activities.sort(function(a, b) {
+      return new Date(b.time) - new Date(a.time);
+    });
+    activities = activities.slice(0, limit);
+
+    res.json({ success: true, list: activities });
+  } catch (err) {
+    console.error('Activity recent error:', err);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found', path: req.path });
 });

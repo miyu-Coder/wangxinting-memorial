@@ -77,7 +77,7 @@ db.allAsync = function (sql, params) {
  */
 function initDatabase() {
   var tables = [
-    'CREATE TABLE IF NOT EXISTS visits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_identifier TEXT NOT NULL, exhibit_id INTEGER NOT NULL, visited_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_identifier, exhibit_id))',
+    'CREATE TABLE IF NOT EXISTS visits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_identifier TEXT NOT NULL, exhibit_id INTEGER NOT NULL, visited_at DATETIME DEFAULT CURRENT_TIMESTAMP, nickname TEXT, UNIQUE(user_identifier, exhibit_id))',
     'CREATE TABLE IF NOT EXISTS flowers (id INTEGER PRIMARY KEY AUTOINCREMENT, user_identifier TEXT NOT NULL, exhibit_id INTEGER NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_identifier, exhibit_id))',
     'CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, nickname TEXT NOT NULL, content TEXT NOT NULL, status INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)',
     'CREATE TABLE IF NOT EXISTS page_views (id INTEGER PRIMARY KEY AUTOINCREMENT, page VARCHAR(50), session_id VARCHAR(32), visit_time DATETIME DEFAULT CURRENT_TIMESTAMP)',

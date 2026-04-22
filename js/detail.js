@@ -841,7 +841,11 @@
     var btn = document.getElementById('btn-checkin');
     if (!btn || !window.wxCheckin || typeof window.wxCheckin.checkIn !== 'function') return;
 
-    // 防止重复点击并给出反馈
+    var nickname = '';
+    if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+      nickname = window.WxCommon.getUserNickname();
+    }
+
     btn.disabled = true;
     btn.classList.add('checkin-shake-animation');
     var originalText = btn.textContent;
@@ -850,12 +854,14 @@
     setTimeout(function () {
       btn.classList.remove('checkin-shake-animation');
 
-      // 调用后端打卡（异步）
-      window.wxCheckin.checkIn(exhibitId).then(function (result) {
+      window.wxCheckin.checkIn(exhibitId, nickname).then(function (result) {
         if (result && result.success) {
-          // 成功先给出动画与提示
           btn.classList.add('checkin-success-animation');
           try { btn.textContent = '✅ 已打卡'; } catch (e) {}
+
+          if (window.WxCommon && typeof window.WxCommon.showCelebration === 'function') {
+            window.WxCommon.showCelebration('star');
+          }
 
           var container = document.getElementById('checkin-container');
           var successMsg = document.createElement('div');
@@ -1087,9 +1093,15 @@
             btn.classList.add('flower-tribute-btn--pop');
             spawnFlowerPetals(card);
             window.setTimeout(function () { btn.classList.remove('flower-tribute-btn--pop'); }, 600);
+
+            if (window.WxCommon && typeof window.WxCommon.showCelebration === 'function') {
+              window.WxCommon.showCelebration('flower');
+            }
+
             if (typeof res.displayTotal === 'number') {
               countP.innerHTML = '\u5DF2\u6709 <strong>' + res.displayTotal + '</strong> \u4EBA\u732E\u82B1';
               updateAvatars(res.displayTotal);
+              loadRecentAvatars();
             }
             if (typeof window.wxFlowers.updateHomeCountEl === 'function') {
               window.wxFlowers.updateHomeCountEl();
@@ -1139,30 +1151,84 @@
     card.appendChild(tag);
     card.appendChild(countP);
 
-    var avatarNames = ['张', '李', '王', '刘', '陈'];
-    var avatarColors = ['#E57373', '#64B5F6', '#81C784', '#FFB74D', '#BA68C8'];
     var avatarList = document.createElement('div');
     avatarList.className = 'flower-tribute-avatars';
-    for (var ai = 0; ai < avatarNames.length; ai++) {
-      var av = document.createElement('span');
-      av.className = 'flower-tribute-avatar';
-      av.style.background = avatarColors[ai];
-      av.textContent = avatarNames[ai];
-      avatarList.appendChild(av);
-    }
-    var moreTag = document.createElement('span');
-    moreTag.className = 'flower-tribute-avatar flower-tribute-avatar--more';
-    moreTag.textContent = '+N';
-    moreTag.style.display = 'none';
-    avatarList.appendChild(moreTag);
     card.appendChild(avatarList);
+
+    var avatarHint = document.createElement('p');
+    avatarHint.className = 'flower-tribute-avatar-hint';
+    avatarHint.style.display = 'none';
+    card.appendChild(avatarHint);
+
+    function hashNicknameToRed(nick) {
+      var hash = 0;
+      for (var i = 0; i < nick.length; i++) {
+        hash = nick.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      var h = 0 + Math.abs(hash) % 15;
+      var s = 65 + Math.abs(hash >> 8) % 20;
+      var l = 55 + Math.abs(hash >> 16) % 15;
+      return 'hsl(' + h + ',' + s + '%,' + l + '%)';
+    }
+
+    function getInitial(nick) {
+      if (window.WxCommon && typeof window.WxCommon.getNicknameInitial === 'function') {
+        return window.WxCommon.getNicknameInitial(nick);
+      }
+      var str = (nick || '').trim();
+      if (!str) return '\uD83C\uDF38';
+      var chars = Array.from(str);
+      return chars[0] || '\uD83C\uDF38';
+    }
+
+    function loadRecentAvatars() {
+      fetch('/api/flower/recent/' + exhibitId + '?limit=5', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          avatarList.innerHTML = '';
+          if (data && data.success && Array.isArray(data.names) && data.names.length > 0) {
+            data.names.forEach(function (name, idx) {
+              var av = document.createElement('span');
+              av.className = 'flower-tribute-avatar';
+              av.style.background = hashNicknameToRed(name);
+              av.textContent = getInitial(name);
+              av.title = name;
+              if (idx === 0) av.style.marginLeft = '0';
+              avatarList.appendChild(av);
+            });
+          } else {
+            for (var fi = 0; fi < 3; fi++) {
+              var fav = document.createElement('span');
+              fav.className = 'flower-tribute-avatar flower-tribute-avatar--placeholder';
+              fav.textContent = '\uD83C\uDF38';
+              if (fi === 0) fav.style.marginLeft = '0';
+              avatarList.appendChild(fav);
+            }
+          }
+        })
+        .catch(function () {
+          avatarList.innerHTML = '';
+          for (var ei = 0; ei < 3; ei++) {
+            var eav = document.createElement('span');
+            eav.className = 'flower-tribute-avatar flower-tribute-avatar--placeholder';
+            eav.textContent = '\uD83C\uDF38';
+            if (ei === 0) eav.style.marginLeft = '0';
+            avatarList.appendChild(eav);
+          }
+        });
+    }
+
+    loadRecentAvatars();
 
     function updateAvatars(total) {
       if (total != null && total > 5) {
-        moreTag.textContent = '+' + (total - 5);
-        moreTag.style.display = '';
+        avatarHint.textContent = '等 ' + total + ' 人已献花';
+        avatarHint.style.display = '';
+      } else if (total != null && total > 0) {
+        avatarHint.textContent = total + ' 人已献花';
+        avatarHint.style.display = '';
       } else {
-        moreTag.style.display = 'none';
+        avatarHint.style.display = 'none';
       }
     }
 
@@ -1203,16 +1269,15 @@
     }
 
     var quizNickname = '';
-    try {
-      quizNickname = localStorage.getItem('userNickname') || '';
-    } catch (e) {}
-
-    if (!quizNickname) {
-      renderNicknameInput(loc);
-      return;
+    if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+      quizNickname = window.WxCommon.getUserNickname();
+    } else {
+      try {
+        quizNickname = localStorage.getItem('userNickname') || '';
+      } catch (e) {}
     }
 
-    startQuiz(loc, quizNickname);
+    renderNicknameInput(loc);
   }
 
   function renderNicknameInput(loc) {
@@ -1234,7 +1299,7 @@
 
     var hint = document.createElement('p');
     hint.className = 'quiz-nickname-hint';
-    hint.textContent = '请输入您的昵称，开始本展点知识问答';
+    hint.textContent = '\uD83D\uDCDD 您的称呼（可修改）';
     card.appendChild(hint);
 
     var inputWrap = document.createElement('div');
@@ -1248,12 +1313,16 @@
     input.maxLength = 20;
     input.setAttribute('aria-label', '昵称');
 
-    var savedNickname = '';
-    try {
-      savedNickname = localStorage.getItem('userNickname') || '';
-    } catch (e) {}
-    if (savedNickname) {
-      input.value = savedNickname;
+    if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+      input.value = window.WxCommon.getUserNickname();
+    } else {
+      var savedNickname = '';
+      try {
+        savedNickname = localStorage.getItem('userNickname') || '';
+      } catch (e) {}
+      if (savedNickname) {
+        input.value = savedNickname;
+      }
     }
 
     inputWrap.appendChild(input);
@@ -1278,9 +1347,13 @@
       var nickname = input.value.trim();
       if (!nickname) return;
 
-      try {
-        localStorage.setItem('userNickname', nickname);
-      } catch (e) {}
+      if (window.WxCommon && typeof window.WxCommon.updateUserNickname === 'function') {
+        window.WxCommon.updateUserNickname(nickname);
+      } else {
+        try {
+          localStorage.setItem('userNickname', nickname);
+        } catch (e) {}
+      }
 
       startQuiz(loc, nickname);
     });
@@ -1319,10 +1392,14 @@
       }
 
       var submitNickname = '';
-      try {
-        submitNickname = localStorage.getItem('userNickname') || '游客';
-      } catch (e) {
-        submitNickname = '游客';
+      if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+        submitNickname = window.WxCommon.getUserNickname();
+      } else {
+        try {
+          submitNickname = localStorage.getItem('userNickname') || '游客';
+        } catch (e) {
+          submitNickname = '游客';
+        }
       }
 
       fetch('/api/quiz/submit', {

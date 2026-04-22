@@ -102,14 +102,18 @@
     return Math.round((getTotalChecked() / EXHIBIT_IDS.length) * 100);
   }
 
-  function checkIn(exhibitId) {
+  function checkIn(exhibitId, nickname) {
     var id = Number(exhibitId);
     if (!Number.isFinite(id)) return Promise.resolve({ success: false });
     var prevTotal = getTotalChecked();
+    var body = { exhibitId: id };
+    if (nickname && nickname.trim()) {
+      body.nickname = nickname.trim();
+    }
     return fetch('/api/checkin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ exhibitId: id })
+      body: JSON.stringify(body)
     }).then(function (res) {
       if (res.ok) {
         // fetch updated user status for this exhibit

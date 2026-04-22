@@ -480,6 +480,74 @@
   background: #FFF5F5;
 }
 
+.msg-stats {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.msg-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 0 4px;
+  flex-wrap: wrap;
+}
+
+.msg-pager__btn {
+  min-width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 20px;
+  background: #F5F5F5;
+  color: #666;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  outline: none;
+}
+
+.msg-pager__btn:hover:not(:disabled):not(.msg-pager__btn--active) {
+  background: #E8E8E8;
+  color: #333;
+}
+
+.msg-pager__btn--active {
+  background: #C8102E;
+  color: #fff;
+  font-weight: 600;
+}
+
+.msg-pager__btn--nav {
+  font-size: 0.75rem;
+  padding: 0 10px;
+}
+
+.msg-pager__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.msg-pager__dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 34px;
+  color: #999;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
 /* ========== 六、热门致敬词标签 ========== */
 .flower-wall-tags {
   display: flex;

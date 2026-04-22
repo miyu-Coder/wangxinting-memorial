@@ -62,7 +62,11 @@
     var nicknameEl = document.getElementById("certificate-nickname");
     if (nicknameEl) {
       var nickname = "";
-      try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+      if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+        nickname = window.WxCommon.getUserNickname();
+      } else {
+        try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+      }
       nicknameEl.textContent = nickname ? "致敬人：" + nickname : "致敬人：尊敬的参观者";
     }
 
@@ -300,7 +304,11 @@
     });
 
     var nickname = "";
-    try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+    if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+      nickname = window.WxCommon.getUserNickname();
+    } else {
+      try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+    }
 
     return {
       userDate: formattedDate,

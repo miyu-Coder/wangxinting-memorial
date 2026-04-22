@@ -22,6 +22,7 @@ var R = require('../res-helper');
  */
 router.post('/api/checkin', async function (req, res) {
   var exhibitId = req.body.exhibitId;
+  var nickname = req.body.nickname || '';
   var userIdentifier = req.userIdentifier;
 
   if (!exhibitId || ![1, 2, 3, 4].includes(Number(exhibitId))) {
@@ -30,8 +31,8 @@ router.post('/api/checkin', async function (req, res) {
 
   try {
     await db.runAsync(
-      "INSERT INTO visits (user_identifier, exhibit_id, visited_at) VALUES (?, ?, datetime('now'))",
-      [userIdentifier, exhibitId]
+      "INSERT INTO visits (user_identifier, exhibit_id, nickname, visited_at) VALUES (?, ?, ?, datetime('now'))",
+      [userIdentifier, exhibitId, nickname.trim() || null]
     );
     return R.success(res, { message: '打卡成功' });
   } catch (err) {

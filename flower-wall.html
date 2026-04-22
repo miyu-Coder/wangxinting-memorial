@@ -64,7 +64,7 @@
 
       <div class="message-module">
         <div class="message-inputs">
-          <input id="nicknameInput" type="text" placeholder="您的称呼（默认游客）" maxlength="40" />
+          <input id="nicknameInput" type="text" placeholder="📝 您的称呼（可修改）" maxlength="40" />
           <textarea id="messageInput" placeholder="写下您想说的话..." maxlength="200" rows="3"></textarea>
           <div class="message-submit-row">
             <button id="submitBtn" class="btn btn-primary btn-ripple">提交留言</button>
@@ -72,6 +72,8 @@
         </div>
 
         <div id="messageList" class="message-list"></div>
+        <div id="msgStats" class="msg-stats"></div>
+        <div id="msgPager" class="msg-pager"></div>
       </div>
     </main>
 
@@ -93,8 +95,9 @@
       }
     })();
   </script>
+  <script src="js/common.js?v=1"></script>
   <script src="js/flowers.js?v=3"></script>
-  <script src="js/messages.js?v=2"></script>
+  <script src="js/messages.js?v=3"></script>
   <script src="js/lazy-load.js?v=1" defer></script>
   <script>
     (function() {

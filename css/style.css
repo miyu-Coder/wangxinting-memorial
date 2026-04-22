@@ -1323,6 +1323,58 @@ body {
   color: var(--color-footer-text);
 }
 
+.activity-ticker {
+  background: linear-gradient(90deg, #FFF5F5, #FFEBEB, #FFF5F5);
+  overflow: hidden;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid rgba(200, 16, 46, 0.08);
+  border-bottom: 1px solid rgba(200, 16, 46, 0.08);
+}
+
+.activity-ticker__inner {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: tickerScroll 30s linear infinite;
+  gap: 24px;
+  padding: 0 24px;
+}
+
+.activity-ticker__item {
+  color: #C8102E;
+  font-size: 0.82rem;
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+.activity-ticker__item strong {
+  font-weight: 700;
+}
+
+.activity-ticker__sep {
+  color: rgba(200, 16, 46, 0.3);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+@keyframes tickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (max-width: 480px) {
+  .activity-ticker__inner {
+    animation-duration: 20s;
+    gap: 16px;
+    padding: 0 16px;
+  }
+  .activity-ticker__item {
+    font-size: 0.75rem;
+  }
+}
+
 .site-footer--military {
   margin-top: 20px;
   padding: 8px 0;
@@ -3563,6 +3615,20 @@ body {
   height: auto;
 }
 
+.flower-tribute-avatar--placeholder {
+  background: #E0C8C8;
+  color: #C8102E;
+  font-size: 12px;
+}
+
+.flower-tribute-avatar-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #999;
+  margin: 4px 0 12px;
+  line-height: 1.4;
+}
+
 .flower-tribute-btn {
   display: flex;
   align-items: center;
@@ -3925,4 +3991,55 @@ img.lazy-error {
   width: 200%;
   height: 200%;
   opacity: 0;
+}
+
+.bgm-control {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #C8102E, #A00B24);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(200, 16, 46, 0.3);
+  transition: all 0.25s ease;
+  outline: none;
+}
+
+.bgm-control:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(200, 16, 46, 0.4);
+}
+
+.bgm-control--playing {
+  background: linear-gradient(135deg, #8B0000, #5C0000);
+}
+
+.bgm-control__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.bgm-control__label {
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .bgm-control {
+    bottom: 12px;
+    right: 12px;
+    padding: 6px 10px;
+    font-size: 0.72rem;
+  }
+  .bgm-control__icon {
+    font-size: 0.9rem;
+  }
 }

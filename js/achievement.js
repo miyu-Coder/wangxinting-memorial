@@ -239,7 +239,11 @@
    */
   function preparePosterData(state, grandMax) {
     var nickname = "";
-    try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+    if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+      nickname = window.WxCommon.getUserNickname();
+    } else {
+      try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+    }
 
     var userData = {
       title: state.title || "继续加油，完成全部展点问答",
@@ -329,7 +333,11 @@
     ctx.fillText("王新亭将军红色教育基地", w / 2, 100);
 
     var canvasNickname = "";
-    try { canvasNickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+    if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+      canvasNickname = window.WxCommon.getUserNickname();
+    } else {
+      try { canvasNickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+    }
     if (canvasNickname) {
       ctx.fillStyle = "#D4A843";
       ctx.font = "bold 24px 'Noto Sans SC', sans-serif";
@@ -625,7 +633,11 @@
         var nicknameEl = document.getElementById("achievement-nickname");
         if (nicknameEl) {
           var nickname = "";
-          try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+          if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+            nickname = window.WxCommon.getUserNickname();
+          } else {
+            try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+          }
           nicknameEl.textContent = nickname ? nickname + "，您好！" : "致敬人：尊敬的参观者";
         }
 

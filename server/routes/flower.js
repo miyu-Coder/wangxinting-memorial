@@ -25,6 +25,7 @@ var R = require('../res-helper');
  */
 router.post('/api/flower', async function (req, res) {
   var exhibitId = req.body.exhibitId;
+  var nickname = req.body.nickname || '';
   var userIdentifier = req.userIdentifier;
 
   if (!exhibitId || ![1, 2, 3, 4].includes(Number(exhibitId))) {
@@ -33,8 +34,8 @@ router.post('/api/flower', async function (req, res) {
 
   try {
     await db.runAsync(
-      'INSERT INTO flowers (user_identifier, exhibit_id) VALUES (?, ?)',
-      [userIdentifier, exhibitId]
+      'INSERT INTO flowers (user_identifier, exhibit_id, nickname) VALUES (?, ?, ?)',
+      [userIdentifier, exhibitId, nickname.trim() || null]
     );
     return res.json({ success: true, message: '献花成功' });
   } catch (err) {

@@ -1,16 +1,11 @@
-/**
- * 留言板前端（基于后端 API）
- * - GET  /api/messages  获取已审核留言（按时间倒序，支持分页）
- * - POST /api/messages  提交一条留言（需审核后才公开）
- */
 (function (global) {
   'use strict';
 
   var PAGE_SIZE = 20;
   var currentPage = 1;
+  var totalPages = 1;
+  var totalItems = 0;
   var isLoading = false;
-  var hasMore = true;
-  var allMessages = [];
 
   function countChars(s) {
     return Array.from(String(s || '')).length;
@@ -55,7 +50,11 @@
   }
 
   function getInitial(nick) {
-    var str = (nick || '游客').trim();
+    var displayNick = nick || '参观者';
+    if (window.WxCommon && typeof window.WxCommon.displayNickname === 'function') {
+      displayNick = window.WxCommon.displayNickname(nick);
+    }
+    var str = displayNick.trim();
     if (!str) return '游';
     var chars = Array.from(str);
     return chars[0];
@@ -108,7 +107,8 @@
   var nickEl = null;
   var contentEl = null;
   var submitBtn = null;
-  var loadMoreEl = null;
+  var pagerEl = null;
+  var statsEl = null;
 
   function renderMessageItem(item) {
     var li = document.createElement('li');
@@ -130,7 +130,11 @@
 
     var nick = document.createElement('span');
     nick.className = 'message-item__nick';
-    nick.innerHTML = escapeHtml(item.nickname || '游客');
+    var displayNick = item.nickname || '参观者';
+    if (window.WxCommon && typeof window.WxCommon.displayNickname === 'function') {
+      displayNick = window.WxCommon.displayNickname(item.nickname);
+    }
+    nick.innerHTML = escapeHtml(displayNick);
 
     nickWrap.appendChild(avatar);
     nickWrap.appendChild(nick);
@@ -168,80 +172,113 @@
     return li;
   }
 
-  function createLoadMoreElement() {
-    var el = document.createElement('div');
-    el.className = 'load-more-btn';
-    el.id = 'loadMoreBtn';
-    el.innerHTML = '<span class="load-more-text">加载更多</span><span class="load-more-loading" style="display:none;">加载中...</span>';
-    el.style.cssText = 'text-align:center;padding:16px;cursor:pointer;color:#C8102E;font-size:0.95rem;';
-    return el;
+  function updateStats() {
+    if (!statsEl) return;
+    if (totalItems === 0) {
+      statsEl.textContent = '';
+      return;
+    }
+    statsEl.textContent = '\u5171 ' + totalItems + ' \u6761\u7559\u8A00';
   }
 
-  function updateLoadMoreState() {
-    if (!loadMoreEl) return;
-    var textEl = loadMoreEl.querySelector('.load-more-text');
-    var loadingEl = loadMoreEl.querySelector('.load-more-loading');
-
-    if (isLoading) {
-      if (textEl) textEl.style.display = 'none';
-      if (loadingEl) loadingEl.style.display = 'inline';
-      loadMoreEl.style.cursor = 'wait';
-    } else if (!hasMore) {
-      if (textEl) {
-        textEl.style.display = 'inline';
-        textEl.textContent = '没有更多留言了';
-      }
-      if (loadingEl) loadingEl.style.display = 'none';
-      loadMoreEl.style.cursor = 'default';
-      loadMoreEl.style.color = '#999';
-    } else {
-      if (textEl) {
-        textEl.style.display = 'inline';
-        textEl.textContent = '加载更多';
-      }
-      if (loadingEl) loadingEl.style.display = 'none';
-      loadMoreEl.style.cursor = 'pointer';
-      loadMoreEl.style.color = '#C8102E';
+  function getVisiblePages(current, total) {
+    if (total <= 7) {
+      var pages = [];
+      for (var i = 1; i <= total; i++) pages.push(i);
+      return pages;
     }
+    var result = [1];
+    var left = Math.max(2, current - 1);
+    var right = Math.min(total - 1, current + 1);
+    if (left > 2) result.push('...');
+    for (var j = left; j <= right; j++) result.push(j);
+    if (right < total - 1) result.push('...');
+    result.push(total);
+    return result;
+  }
+
+  function renderPager() {
+    if (!pagerEl) return;
+    pagerEl.innerHTML = '';
+
+    if (totalPages <= 1) {
+      pagerEl.style.display = 'none';
+      return;
+    }
+    pagerEl.style.display = 'flex';
+
+    var prevBtn = document.createElement('button');
+    prevBtn.className = 'msg-pager__btn msg-pager__btn--nav';
+    prevBtn.textContent = '\u25C0';
+    prevBtn.disabled = currentPage <= 1;
+    prevBtn.addEventListener('click', function () {
+      if (currentPage > 1) goToPage(currentPage - 1);
+    });
+    pagerEl.appendChild(prevBtn);
+
+    var visible = getVisiblePages(currentPage, totalPages);
+    for (var i = 0; i < visible.length; i++) {
+      var item = visible[i];
+      if (item === '...') {
+        var dots = document.createElement('span');
+        dots.className = 'msg-pager__dots';
+        dots.textContent = '...';
+        pagerEl.appendChild(dots);
+      } else {
+        var pageBtn = document.createElement('button');
+        pageBtn.className = 'msg-pager__btn';
+        if (item === currentPage) pageBtn.className += ' msg-pager__btn--active';
+        pageBtn.textContent = item;
+        (function (p) {
+          pageBtn.addEventListener('click', function () {
+            goToPage(p);
+          });
+        })(item);
+        pagerEl.appendChild(pageBtn);
+      }
+    }
+
+    var nextBtn = document.createElement('button');
+    nextBtn.className = 'msg-pager__btn msg-pager__btn--nav';
+    nextBtn.textContent = '\u25B6';
+    nextBtn.disabled = currentPage >= totalPages;
+    nextBtn.addEventListener('click', function () {
+      if (currentPage < totalPages) goToPage(currentPage + 1);
+    });
+    pagerEl.appendChild(nextBtn);
+  }
+
+  function goToPage(page) {
+    if (page < 1 || page > totalPages || page === currentPage || isLoading) return;
+    loadMessages(page).then(function () {
+      var moduleEl = document.querySelector('.message-module');
+      if (moduleEl) {
+        moduleEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
   }
 
   function appendMessages(list) {
     if (!listEl) return;
 
-    if (loadMoreEl && loadMoreEl.parentNode) {
-      loadMoreEl.parentNode.removeChild(loadMoreEl);
-    }
+    listEl.innerHTML = '';
 
     if (!Array.isArray(list) || !list.length) {
-      if (currentPage === 1) {
-        listEl.innerHTML = '';
-        var empty = document.createElement('p');
-        empty.className = 'messages-empty';
-        empty.textContent = '暂无留言，留下第一句敬意';
-        listEl.appendChild(empty);
-      }
+      var empty = document.createElement('p');
+      empty.className = 'messages-empty';
+      empty.textContent = '暂无留言，留下第一句敬意';
+      listEl.appendChild(empty);
       updateEndingText();
       return;
     }
 
-    if (currentPage === 1) {
-      listEl.innerHTML = '';
-      allMessages = [];
-    }
-
     for (var i = 0; i < list.length; i++) {
       try {
-        var it = list[i];
-        allMessages.push(it);
-        var node = renderMessageItem(it);
+        var node = renderMessageItem(list[i]);
         listEl.appendChild(node);
       } catch (e) {}
     }
 
-    loadMoreEl = createLoadMoreElement();
-    loadMoreEl.addEventListener('click', loadMoreMessages);
-    listEl.appendChild(loadMoreEl);
-    updateLoadMoreState();
     updateEndingText();
   }
 
@@ -256,37 +293,33 @@
     if (isLoading) return Promise.resolve([]);
 
     isLoading = true;
-    updateLoadMoreState();
 
     return fetch('/api/messages?page=' + page + '&limit=' + PAGE_SIZE, { cache: 'no-store' })
       .then(function (res) {
-        if (!res.ok) return Promise.resolve({ list: [], pagination: { hasMore: false } });
+        if (!res.ok) return Promise.resolve({ list: [], pagination: { total: 0, totalPages: 1 } });
         return res.json().then(function (body) {
           return {
             list: (body && Array.isArray(body.list)) ? body.list : [],
-            pagination: (body && body.pagination) || { hasMore: false }
+            pagination: (body && body.pagination) || { total: 0, totalPages: 1 }
           };
-        }).catch(function () { return { list: [], pagination: { hasMore: false } }; });
+        }).catch(function () { return { list: [], pagination: { total: 0, totalPages: 1 } }; });
       })
-      .catch(function () { return { list: [], pagination: { hasMore: false } }; })
+      .catch(function () { return { list: [], pagination: { total: 0, totalPages: 1 } }; })
       .then(function (result) {
         isLoading = false;
-        hasMore = result.pagination.hasMore;
+        var pg = result.pagination;
         currentPage = page;
+        totalPages = pg.totalPages || Math.max(1, Math.ceil((pg.total || 0) / PAGE_SIZE));
+        totalItems = pg.total || 0;
         appendMessages(result.list);
+        renderPager();
+        updateStats();
         return result.list;
       });
   }
 
-  function loadMoreMessages() {
-    if (isLoading || !hasMore) return;
-    loadMessages(currentPage + 1);
-  }
-
   function refreshMessages() {
     currentPage = 1;
-    hasMore = true;
-    allMessages = [];
     return loadMessages(1);
   }
 
@@ -329,9 +362,13 @@
     var content = contentEl ? contentEl.value : '';
 
     if (nick && nick.trim()) {
-      try {
-        localStorage.setItem('userNickname', nick.trim());
-      } catch (e) {}
+      if (window.WxCommon && typeof window.WxCommon.updateUserNickname === 'function') {
+        window.WxCommon.updateUserNickname(nick.trim());
+      } else {
+        try {
+          localStorage.setItem('userNickname', nick.trim());
+        } catch (e) {}
+      }
     }
 
     if (submitBtn) submitBtn.disabled = true;
@@ -340,35 +377,33 @@
     });
   }
 
-  function handleScroll() {
-    if (isLoading || !hasMore) return;
-
-    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    var scrollHeight = document.documentElement.scrollHeight;
-    var clientHeight = window.innerHeight;
-
-    if (scrollTop + clientHeight >= scrollHeight - 200) {
-      loadMoreMessages();
-    }
-  }
-
   function init() {
     listEl = queryFirst(LIST_SELECTORS);
     nickEl = queryFirst(NICK_SELECTORS);
     contentEl = queryFirst(CONTENT_SELECTORS);
     submitBtn = document.getElementById('submitBtn');
 
+    pagerEl = document.getElementById('msgPager');
+    statsEl = document.getElementById('msgStats');
+
     if (contentEl) {
       contentEl.placeholder = '\uD83D\uDCAC 写下您想对将军说的话...';
     }
 
     if (nickEl) {
-      try {
-        var savedNickname = localStorage.getItem('userNickname') || '';
+      if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+        var savedNickname = window.WxCommon.getUserNickname();
         if (savedNickname && !nickEl.value) {
           nickEl.value = savedNickname;
         }
-      } catch (e) {}
+      } else {
+        try {
+          var savedNickname = localStorage.getItem('userNickname') || '';
+          if (savedNickname && !nickEl.value) {
+            nickEl.value = savedNickname;
+          }
+        } catch (e) {}
+      }
     }
 
     if (submitBtn) {
@@ -378,15 +413,12 @@
       });
     }
 
-    window.addEventListener('scroll', handleScroll);
-
     loadMessages(1);
   }
 
   global.wxMessages = {
     init: init,
     loadMessages: loadMessages,
-    loadMoreMessages: loadMoreMessages,
     refreshMessages: refreshMessages,
     submitMessage: submitMessage
   };

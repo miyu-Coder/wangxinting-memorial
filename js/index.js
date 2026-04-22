@@ -233,6 +233,10 @@
   }
 
   function init() {
+    if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+      window.WxCommon.getUserNickname();
+    }
+
     var ul = document.getElementById("location-list-root");
     var hint = document.getElementById("list-load-hint");
 
@@ -294,6 +298,72 @@
         window.MapNavigation.openMapChooser();
       });
     }
+
+    loadActivityTicker();
+  }
+
+  function loadActivityTicker() {
+    var ticker = document.getElementById("activityTickerInner");
+    if (!ticker) return;
+
+    var fallbackItems = [
+      { type: "checkin", nickname: window.WxCommon ? window.WxCommon.getUserNickname() : "参观者", exhibit: "陈列馆" },
+      { type: "flower", nickname: window.WxCommon ? window.WxCommon.getUserNickname() : "游客", exhibit: "故居" },
+      { type: "quiz", nickname: window.WxCommon ? window.WxCommon.getUserNickname() : "学习者", exhibit: "广场" },
+      { type: "checkin", nickname: "访客", exhibit: "装备展区" },
+      { type: "flower", nickname: "致敬者", exhibit: "陈列馆" }
+    ];
+
+    function truncateNick(nick) {
+      var str = String(nick || '');
+      var chars = Array.from(str);
+      if (chars.length > 6) {
+        return chars.slice(0, 6).join('') + '...';
+      }
+      return str;
+    }
+
+    function renderTicker(items) {
+      var html = '';
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        var icon = '\uD83C\uDF89';
+        var text = '';
+        var nick = truncateNick(window.WxCommon && typeof window.WxCommon.displayNickname === 'function' ? window.WxCommon.displayNickname(it.nickname) : (it.nickname || '参观者'));
+        if (it.type === 'checkin') {
+          icon = '\uD83C\uDF89';
+          text = icon + ' <strong>' + escapeTickerHtml(nick) + '</strong> \u521A\u521A\u5728' + escapeTickerHtml(it.exhibit || '展点') + '\u5B8C\u6210\u6253\u5361';
+        } else if (it.type === 'flower') {
+          icon = '\uD83C\uDF38';
+          text = icon + ' <strong>' + escapeTickerHtml(nick) + '</strong> \u5411\u5C06\u519B\u732E\u82B1\u81F4\u656C';
+        } else if (it.type === 'quiz') {
+          icon = '\uD83D\uDCDD';
+          text = icon + ' <strong>' + escapeTickerHtml(nick) + '</strong> \u5B8C\u6210\u4E86\u77E5\u8BC6\u95EE\u7B54';
+        }
+        html += '<span class="activity-ticker__item">' + text + '</span>';
+        if (i < items.length - 1) {
+          html += '<span class="activity-ticker__sep">\u2022</span>';
+        }
+      }
+      ticker.innerHTML = html + html;
+    }
+
+    function escapeTickerHtml(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    fetch('/api/activity/recent?limit=10', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && data.success && Array.isArray(data.list) && data.list.length > 0) {
+          renderTicker(data.list);
+        } else {
+          renderTicker(fallbackItems);
+        }
+      })
+      .catch(function () {
+        renderTicker(fallbackItems);
+      });
   }
 
   if (document.readyState === "loading") {

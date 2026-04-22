@@ -66,10 +66,16 @@
   function offerFlower(exhibitId) {
     var id = normExhibitId(exhibitId);
     if (!id) return Promise.resolve({ ok: false });
+    var nickname = '';
+    if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+      nickname = window.WxCommon.getUserNickname();
+    } else {
+      try { nickname = localStorage.getItem('userNickname') || ''; } catch (e) {}
+    }
     return fetch('/api/flower', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ exhibitId: Number(id) })
+      body: JSON.stringify({ exhibitId: Number(id), nickname: nickname.trim() })
     }).then(function (res) {
       if (res.ok) {
         return getExhibitTotal(id).then(function (total) {
@@ -426,6 +432,11 @@
               }
               updateExhibitCount(id, res.displayTotal);
               showToast('献花成功，感谢您的敬意');
+
+              if (window.WxCommon && typeof window.WxCommon.showCelebration === 'function') {
+                window.WxCommon.showCelebration('flower');
+              }
+
               showThankDialog();
             } else if (res.already) {
               showAlreadyDialog();
