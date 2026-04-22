@@ -1423,6 +1423,137 @@
         });
     }
 
+  var SOUVENIR_MAP = {
+    1: '🏅 将军纪念徽章',
+    2: '📿 红色传承手环',
+    3: '📜 荣誉纪念证书',
+    4: '🔖 军工主题书签',
+    0: '🎁 将军纪念礼盒'
+  };
+
+  function renderSouvenirForm(container, exhibitId) {
+    var nickname = '';
+    if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+      nickname = window.WxCommon.getUserNickname();
+    }
+
+    var allPerfect = false;
+    if (st && typeof st.isHeritageUnlocked === 'function') {
+      allPerfect = st.isHeritageUnlocked(LOCATIONS);
+    }
+
+    var effectiveExhibitId = allPerfect ? 0 : exhibitId;
+    var souvenirName = SOUVENIR_MAP[effectiveExhibitId] || SOUVENIR_MAP[exhibitId] || '纪念品';
+
+    var titleEl = document.createElement('h4');
+    titleEl.className = 'souvenir-form__title';
+    titleEl.textContent = '🎁 预约纪念品';
+    container.appendChild(titleEl);
+
+    var prizeEl = document.createElement('p');
+    prizeEl.className = 'souvenir-form__prize';
+    if (allPerfect) {
+      prizeEl.textContent = '🏆 四展点全部满分！您可获得：' + souvenirName;
+    } else {
+      prizeEl.textContent = '本展点满分奖品：' + souvenirName;
+    }
+    container.appendChild(prizeEl);
+
+    var nameWrap = document.createElement('div');
+    nameWrap.className = 'souvenir-form__field';
+    var nameLabel = document.createElement('label');
+    nameLabel.textContent = '姓名';
+    nameLabel.setAttribute('for', 'souvenir-name');
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.id = 'souvenir-name';
+    nameInput.className = 'souvenir-form__input';
+    nameInput.placeholder = '请输入真实姓名';
+    nameInput.maxLength = 20;
+    nameWrap.appendChild(nameLabel);
+    nameWrap.appendChild(nameInput);
+    container.appendChild(nameWrap);
+
+    var phoneWrap = document.createElement('div');
+    phoneWrap.className = 'souvenir-form__field';
+    var phoneLabel = document.createElement('label');
+    phoneLabel.textContent = '手机号';
+    phoneLabel.setAttribute('for', 'souvenir-phone');
+    var phoneInput = document.createElement('input');
+    phoneInput.type = 'tel';
+    phoneInput.id = 'souvenir-phone';
+    phoneInput.className = 'souvenir-form__input';
+    phoneInput.placeholder = '请输入手机号（领取凭证）';
+    phoneInput.maxLength = 11;
+    phoneWrap.appendChild(phoneLabel);
+    phoneWrap.appendChild(phoneInput);
+    container.appendChild(phoneWrap);
+
+    var submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    submitBtn.className = 'btn btn-primary souvenir-form__btn';
+    submitBtn.textContent = '提交预约';
+    container.appendChild(submitBtn);
+
+    var msgEl = document.createElement('p');
+    msgEl.className = 'souvenir-form__msg';
+    container.appendChild(msgEl);
+
+    submitBtn.addEventListener('click', function () {
+      var name = nameInput.value.trim();
+      var phone = phoneInput.value.trim();
+      if (!name) {
+        msgEl.textContent = '请输入姓名';
+        msgEl.className = 'souvenir-form__msg souvenir-form__msg--error';
+        return;
+      }
+      if (!/^1\d{10}$/.test(phone)) {
+        msgEl.textContent = '请输入正确的11位手机号';
+        msgEl.className = 'souvenir-form__msg souvenir-form__msg--error';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = '提交中...';
+
+      fetch('/api/souvenir/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname: nickname,
+          exhibitId: effectiveExhibitId,
+          name: name,
+          phone: phone
+        })
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.success) {
+            msgEl.textContent = '✅ 预约成功！凭手机号至服务台领取【' + souvenirName + '】';
+            msgEl.className = 'souvenir-form__msg souvenir-form__msg--success';
+            submitBtn.textContent = '已预约';
+            submitBtn.disabled = true;
+          } else {
+            msgEl.textContent = data.message || '预约失败';
+            msgEl.className = 'souvenir-form__msg souvenir-form__msg--error';
+            if (data.already) {
+              submitBtn.textContent = '已预约';
+              submitBtn.disabled = true;
+            } else {
+              submitBtn.disabled = false;
+              submitBtn.textContent = '提交预约';
+            }
+          }
+        })
+        .catch(function () {
+          msgEl.textContent = '网络错误，请稍后重试';
+          msgEl.className = 'souvenir-form__msg souvenir-form__msg--error';
+          submitBtn.disabled = false;
+          submitBtn.textContent = '提交预约';
+        });
+    });
+  }
+
     function showFinalResultPanel() {
       var comment = quizCommentForScore(state.correct, total);
       root.innerHTML = "";
@@ -1445,6 +1576,12 @@
         giftHint.className = "quiz-result__gift";
         giftHint.textContent = "🎉 恭喜！您已完成本展点答题，可前往服务台领取纪念品";
         wrap.appendChild(giftHint);
+
+        var souvenirDiv = document.createElement("div");
+        souvenirDiv.className = "souvenir-form";
+        souvenirDiv.id = "souvenir-form";
+        renderSouvenirForm(souvenirDiv, exhibitId);
+        wrap.appendChild(souvenirDiv);
       }
 
       if (st && st.isHeritageUnlocked(LOCATIONS)) {

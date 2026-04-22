@@ -300,6 +300,7 @@
     }
 
     loadActivityTicker();
+    initFootprintMap();
   }
 
   function loadActivityTicker() {
@@ -364,6 +365,138 @@
       .catch(function () {
         renderTicker(fallbackItems);
       });
+  }
+
+  function initFootprintMap() {
+    var container = document.getElementById('footprint-map');
+    if (!container || typeof echarts === 'undefined') return;
+
+    var chinaGeoUrl = 'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json';
+
+    fetch(chinaGeoUrl)
+      .then(function (res) { return res.json(); })
+      .then(function (geoJson) {
+        echarts.registerMap('china', geoJson);
+        renderFootprintMap(container);
+      })
+      .catch(function () {
+        container.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">地图加载失败，请刷新重试</p>';
+      });
+  }
+
+  function renderFootprintMap(container) {
+    var chart = echarts.init(container);
+
+    var points = [
+      { name: '孝感', desc: '1908年出生地', coord: [113.95, 30.92] },
+      { name: '神头岭', desc: '1938年神头岭战斗', coord: [113.27, 36.47] },
+      { name: '响堂铺', desc: '1938年响堂铺战斗', coord: [113.58, 36.41] },
+      { name: '香城固', desc: '1939年香城固战斗', coord: [115.27, 36.85] },
+      { name: '太原', desc: '1949年解放太原', coord: [112.55, 37.87] }
+    ];
+
+    var linesData = [];
+    for (var i = 0; i < points.length - 1; i++) {
+      linesData.push({
+        coords: [points[i].coord, points[i + 1].coord]
+      });
+    }
+
+    var scatterData = points.map(function (p) {
+      return {
+        name: p.name + '\n' + p.desc,
+        value: p.coord.concat(1)
+      };
+    });
+
+    var option = {
+      backgroundColor: '#0a1a2e',
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: 'rgba(10,26,46,0.9)',
+        borderColor: '#D4AF37',
+        borderWidth: 1,
+        textStyle: { color: '#fff', fontSize: 13 },
+        formatter: function (params) {
+          if (params.seriesType === 'effectScatter') {
+            return params.name.replace('\n', '<br/>');
+          }
+          return '';
+        }
+      },
+      geo: {
+        map: 'china',
+        roam: true,
+        zoom: 1.2,
+        center: [113, 34],
+        label: { show: false },
+        itemStyle: {
+          areaColor: '#12263a',
+          borderColor: '#1a3a5c',
+          borderWidth: 1
+        },
+        emphasis: {
+          itemStyle: {
+            areaColor: '#1a3a5c'
+          }
+        }
+      },
+      series: [
+        {
+          type: 'lines',
+          coordinateSystem: 'geo',
+          zlevel: 2,
+          effect: {
+            show: true,
+            period: 4,
+            trailLength: 0.6,
+            color: '#D4AF37',
+            symbolSize: 5
+          },
+          lineStyle: {
+            color: '#C8102E',
+            width: 2,
+            curveness: 0.2,
+            opacity: 0.8
+          },
+          data: linesData
+        },
+        {
+          type: 'effectScatter',
+          coordinateSystem: 'geo',
+          zlevel: 3,
+          rippleEffect: {
+            brushType: 'stroke',
+            scale: 4,
+            period: 3
+          },
+          symbol: 'path://M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+          symbolSize: 18,
+          itemStyle: {
+            color: '#D4AF37'
+          },
+          label: {
+            show: true,
+            position: 'right',
+            formatter: '{b}',
+            fontSize: 11,
+            color: '#fff',
+            distance: 8
+          },
+          data: scatterData
+        }
+      ]
+    };
+
+    chart.setOption(option);
+
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        chart.resize();
+      }, 200);
+    });
   }
 
   if (document.readyState === "loading") {

@@ -2671,6 +2671,105 @@ body {
   justify-content: center;
 }
 
+.souvenir-form {
+  margin-top: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(196, 30, 58, 0.04), rgba(212, 168, 67, 0.08));
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(196, 30, 58, 0.12);
+}
+
+.souvenir-form__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-red);
+  margin: 0 0 8px;
+}
+
+.souvenir-form__prize {
+  font-size: 0.9rem;
+  color: var(--color-gold-muted);
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+.souvenir-form__field {
+  margin-bottom: 12px;
+}
+
+.souvenir-form__field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.souvenir-form__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+  background: #fff;
+}
+
+.souvenir-form__input:focus {
+  outline: none;
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+}
+
+.souvenir-form__btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.souvenir-form__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.souvenir-form__msg {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  min-height: 1.2em;
+}
+
+.souvenir-form__msg--success {
+  color: #2E7D32;
+  font-weight: 600;
+}
+
+.souvenir-form__msg--error {
+  color: #C62828;
+  font-weight: 500;
+}
+
+.footprint-map-section {
+  margin-top: 0;
+  padding: 24px 0;
+}
+
+.footprint-map-section__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-red);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.footprint-map-container {
+  width: 100%;
+  height: 300px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border);
+  background: #0a1a2e;
+}
+
 .quiz-restart-btn {
   min-width: 160px;
   min-height: 48px;

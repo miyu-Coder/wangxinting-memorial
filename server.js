@@ -157,6 +157,24 @@ function initDatabase() {
       console.log('Table admin_logs ready');
     }
   });
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS souvenir_orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nickname TEXT NOT NULL,
+      exhibit_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      status INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) {
+      console.error('Failed to create souvenir_orders table:', err.message);
+    } else {
+      console.log('Table souvenir_orders ready');
+    }
+  });
 }
 
 // ===== 打卡 (checkin) 接口 =====
@@ -1153,8 +1171,338 @@ app.get('/admin', (req, res) => {
 // 管理后台资源
 app.use('/admin', express.static(__dirname + '/server/admin'));
 
+// ===== 纪念品预约接口 =====
+const SOUVENIR_MAP = {
+  1: '🏅 将军纪念徽章',
+  2: '📿 红色传承手环',
+  3: '📜 荣誉纪念证书',
+  4: '🔖 军工主题书签',
+  0: '🎁 将军纪念礼盒'
+};
+
+app.post('/api/souvenir/order', async (req, res) => {
+  const { nickname, exhibitId, name, phone } = req.body;
+  if (!nickname || exhibitId === undefined || exhibitId === null || !name || !phone) {
+    return res.status(400).json({ success: false, message: '请填写完整信息' });
+  }
+  if (![0, 1, 2, 3, 4].includes(Number(exhibitId))) {
+    return res.status(400).json({ success: false, message: '展点 ID 无效' });
+  }
+  if (!/^1\d{10}$/.test(phone)) {
+    return res.status(400).json({ success: false, message: '手机号格式不正确' });
+  }
+  try {
+    const existing = await db.allAsync(
+      'SELECT id FROM souvenir_orders WHERE nickname = ? AND exhibit_id = ?',
+      [nickname.trim(), exhibitId]
+    );
+    if (existing.length > 0) {
+      return res.json({ success: false, message: '您已预约过该奖品', already: true });
+    }
+    await db.runAsync(
+      "INSERT INTO souvenir_orders (nickname, exhibit_id, name, phone, status, created_at) VALUES (?, ?, ?, ?, 0, datetime('now'))",
+      [nickname.trim(), exhibitId, name.trim(), phone.trim()]
+    );
+    return res.json({ success: true, message: '预约成功' });
+  } catch (err) {
+    console.error('Souvenir order error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+app.get('/api/admin/souvenir/list', async (req, res) => {
+  const status = req.query.status;
+  try {
+    let sql = 'SELECT * FROM souvenir_orders ORDER BY created_at DESC';
+    let params = [];
+    if (status === '0' || status === '1') {
+      sql = 'SELECT * FROM souvenir_orders WHERE status = ? ORDER BY created_at DESC';
+      params = [Number(status)];
+    }
+    const rows = await db.allAsync(sql, params);
+    rows.forEach(r => {
+      r.souvenir_name = SOUVENIR_MAP[r.exhibit_id] || '未知奖品';
+    });
+    return res.json({ success: true, list: rows });
+  } catch (err) {
+    console.error('Souvenir list error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+app.post('/api/admin/souvenir/:id/deliver', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ success: false, message: 'ID 无效' });
+  try {
+    await db.runAsync('UPDATE souvenir_orders SET status = 1 WHERE id = ?', [id]);
+    addAdminLog('标记领取', '纪念品', '纪念品预约 ID=' + id + ' 已领取');
+    return res.json({ success: true, message: '已标记为领取' });
+  } catch (err) {
+    console.error('Souvenir deliver error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
 // 静态文件服务
 app.use(express.static(__dirname));
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randomPick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomDate(daysBack) {
+  var now = Date.now();
+  var past = now - daysBack * 24 * 60 * 60 * 1000;
+  var ts = past + Math.random() * (now - past);
+  var d = new Date(ts);
+  var yyyy = d.getFullYear();
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  var hh = String(d.getHours()).padStart(2, '0');
+  var mi = String(d.getMinutes()).padStart(2, '0');
+  var ss = String(d.getSeconds()).padStart(2, '0');
+  return yyyy + '-' + mm + '-' + dd + ' ' + hh + ':' + mi + ':' + ss;
+}
+
+function isWeekend(dateStr) {
+  var d = new Date(dateStr);
+  var day = d.getDay();
+  return day === 0 || day === 6;
+}
+
+app.post('/api/admin/generate-demo-data', async (req, res) => {
+  var nicknames = [
+    "小红的爷爷","老兵张建国","团委李老师","孝感小陈","二班王同学",
+    "退役军人老刘","党史爱好者","默默的花","向阳花开","赤子之心",
+    "将军故里人","红色种子","北庙村村民","朋兴乡小李","孝南一中团委",
+    "湖北大学实践队","山河已无恙","这盛世如您所愿","95后新党员","10后红领巾",
+    "带着孩子来学习","老区人民","退役军人服务站","红色讲解员小周","参观者"
+  ];
+
+  var messagePool = [
+    "带爷爷来看他年轻时最敬仰的将军，爷爷红了眼眶。",
+    "展馆做得很好，孩子听得很认真，一直问将军的故事。",
+    "从武汉特意过来的，不虚此行，深受教育。",
+    "学校组织的社会实践，对那段历史有了更直观的认识。",
+    "向王新亭将军致敬！今天的和平来之不易。",
+    "馆内实物很多，照片珍贵，值得细细参观。",
+    "志愿者讲解得很详细，了解了很多将军的细节故事。",
+    "生在和平年代，更应铭记历史，砥砺前行。",
+    "爷爷是老党员，在这里找到了很多共鸣。",
+    "香城固战斗那段看得热血沸腾，将军有勇有谋。",
+    "故居很简朴，更能体会将军从贫苦农家走出的不易。",
+    "广场很庄重，献花表达了我们的敬意。",
+    "看到59式坦克实物很震撼，国防教育的好地方。",
+    "感谢有这样的红色基地，让后辈了解先辈的付出。",
+    "周末带孩子来熏陶，比书本上的历史更生动。",
+    "展陈设计很用心，四个单元脉络清晰。",
+    "老一辈革命家的精神值得我们永远学习。",
+    "孝感的骄傲，中国人民的骄傲。",
+    "从学徒到将军，将军的一生是奋斗的一生。",
+    "三战三捷，打得漂亮！",
+    "向386旅的英烈们致敬！",
+    "传承红色基因，担当强军重任。",
+    "有空还会再来，每次都有新的感悟。",
+    "推荐给身边的朋友了，很不错的红色教育基地。",
+    "希望这样的基地越来越多，让红色精神代代传。"
+  ];
+
+  var exhibitWeights = [
+    { id: 1, weight: 30 },
+    { id: 2, weight: 25 },
+    { id: 3, weight: 25 },
+    { id: 4, weight: 20 }
+  ];
+
+  function weightedExhibit() {
+    var r = Math.random() * 100;
+    var acc = 0;
+    for (var i = 0; i < exhibitWeights.length; i++) {
+      acc += exhibitWeights[i].weight;
+      if (r < acc) return exhibitWeights[i].id;
+    }
+    return 1;
+  }
+
+  var scoreWeights = [
+    { score: 4, weight: 30 },
+    { score: 3, weight: 35 },
+    { score: 2, weight: 25 },
+    { score: 1, weight: 10 }
+  ];
+
+  function weightedScore() {
+    var r = Math.random() * 100;
+    var acc = 0;
+    for (var i = 0; i < scoreWeights.length; i++) {
+      acc += scoreWeights[i].weight;
+      if (r < acc) return scoreWeights[i].score;
+    }
+    return 3;
+  }
+
+  try {
+    await db.runAsync('BEGIN TRANSACTION');
+    var visitCount = randomInt(60, 100);
+    for (var i = 0; i < visitCount; i++) {
+      var dt = randomDate(30);
+      var eid = weightedExhibit();
+      var nn = randomPick(nicknames);
+      var uid = 'demo_' + nn + '_' + randomInt(1000, 9999);
+      await db.runAsync(
+        "INSERT OR IGNORE INTO visits (user_identifier, exhibit_id, nickname, visited_at) VALUES (?, ?, ?, ?)",
+        [uid, eid, nn, dt]
+      );
+    }
+
+    var flowerCount = randomInt(50, 80);
+    for (var i = 0; i < flowerCount; i++) {
+      var dt = randomDate(30);
+      var eid = weightedExhibit();
+      var nn = randomPick(nicknames);
+      var uid = 'demo_' + nn + '_' + randomInt(1000, 9999);
+      await db.runAsync(
+        "INSERT OR IGNORE INTO flowers (user_identifier, exhibit_id, nickname, created_at) VALUES (?, ?, ?, ?)",
+        [uid, eid, nn, dt]
+      );
+    }
+
+    var quizCount = randomInt(40, 70);
+    for (var i = 0; i < quizCount; i++) {
+      var dt = randomDate(30);
+      var eid = randomInt(1, 4);
+      var sc = weightedScore();
+      var nn = randomPick(nicknames);
+      await db.runAsync(
+        "INSERT INTO quiz_records (nickname, exhibit_id, score, created_at) VALUES (?, ?, ?, ?)",
+        [nn, eid, sc, dt]
+      );
+    }
+
+    var msgCount = randomInt(25, 45);
+    for (var i = 0; i < msgCount; i++) {
+      var dt = randomDate(30);
+      var nn = randomPick(nicknames);
+      var content = randomPick(messagePool);
+      var r = Math.random() * 100;
+      var status = r < 20 ? 0 : (r < 80 ? 1 : 2);
+      await db.runAsync(
+        "INSERT INTO messages (nickname, content, status, created_at) VALUES (?, ?, ?, ?)",
+        [nn, content, status, dt]
+      );
+    }
+
+    var souvenirCount = randomInt(10, 25);
+    var perfectQuizzes = await db.allAsync(
+      "SELECT nickname, exhibit_id, created_at FROM quiz_records WHERE score = 4 ORDER BY RANDOM() LIMIT ?",
+      [souvenirCount * 2]
+    );
+    var souvenirNames = ["张明","李华","王芳","赵强","刘洋","陈静","杨磊","黄丽","周伟","吴敏","孙涛","马秀英","朱建国","胡志远","林小红"];
+    for (var i = 0; i < Math.min(souvenirCount, perfectQuizzes.length); i++) {
+      var pq = perfectQuizzes[i];
+      var sName = randomPick(souvenirNames);
+      var sPhone = '1' + randomInt(30, 89) + randomInt(1000, 9999) + randomInt(100, 999);
+      var sStatus = Math.random() < 0.7 ? 0 : 1;
+      var sCreatedAt = pq.created_at;
+      await db.runAsync(
+        "INSERT INTO souvenir_orders (nickname, exhibit_id, name, phone, status, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [pq.nickname, pq.exhibit_id, sName, sPhone, sStatus, sCreatedAt]
+      );
+    }
+
+    var pageDist = [
+      { page: 'index', weight: 30 },
+      { page: 'detail_1', weight: 20 },
+      { page: 'detail_2', weight: 18 },
+      { page: 'detail_3', weight: 17 },
+      { page: 'detail_4', weight: 15 }
+    ];
+
+    function weightedPage() {
+      var r = Math.random() * 100;
+      var acc = 0;
+      for (var i = 0; i < pageDist.length; i++) {
+        acc += pageDist[i].weight;
+        if (r < acc) return pageDist[i].page;
+      }
+      return 'index';
+    }
+
+    for (var d = 29; d >= 0; d--) {
+      var dateObj = new Date(Date.now() - d * 24 * 60 * 60 * 1000);
+      var isWe = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+      var basePV = randomInt(25, 55);
+      if (isWe) basePV = Math.round(basePV * (1 + (Math.random() * 0.2 + 0.3)));
+
+      for (var v = 0; v < basePV; v++) {
+        var pg = weightedPage();
+        var sid = 'demo_sid_' + randomInt(10000, 99999);
+        var hh = String(randomInt(8, 21)).padStart(2, '0');
+        var mi = String(randomInt(0, 59)).padStart(2, '0');
+        var ss = String(randomInt(0, 59)).padStart(2, '0');
+        var visitTime = dateObj.getFullYear() + '-' +
+          String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
+          String(dateObj.getDate()).padStart(2, '0') + ' ' + hh + ':' + mi + ':' + ss;
+        await db.runAsync(
+          "INSERT INTO page_views (page, session_id, visit_time) VALUES (?, ?, ?)",
+          [pg, sid, visitTime]
+        );
+      }
+    }
+
+    await db.runAsync(
+      "INSERT INTO admin_logs (action, target, detail, created_at) VALUES (?, ?, ?, datetime('now'))",
+      ['生成数据', '系统', '生成了演示数据：' + visitCount + '条打卡, ' + flowerCount + '条献花, ' + quizCount + '条答题, ' + msgCount + '条留言, ' + souvenirCount + '条预约, 30天页面访问']
+    );
+
+    await db.runAsync('COMMIT');
+    return res.json({
+      success: true,
+      message: '演示数据生成成功',
+      stats: {
+        visits: visitCount,
+        flowers: flowerCount,
+        quizzes: quizCount,
+        messages: msgCount,
+        souvenirs: souvenirCount,
+        pageViews: '30天'
+      }
+    });
+  } catch (err) {
+    await db.runAsync('ROLLBACK').catch(function() {});
+    console.error('Generate demo data error:', err);
+    return res.status(500).json({ success: false, message: '生成失败：' + err.message });
+  }
+});
+
+app.post('/api/admin/clear-test-data', async (req, res) => {
+  try {
+    await db.runAsync('BEGIN TRANSACTION');
+    await db.runAsync('DELETE FROM visits');
+    await db.runAsync('DELETE FROM flowers');
+    await db.runAsync('DELETE FROM quiz_records');
+    await db.runAsync('DELETE FROM messages');
+    await db.runAsync('DELETE FROM souvenir_orders');
+    await db.runAsync('DELETE FROM page_views');
+
+    await db.runAsync(
+      "INSERT INTO admin_logs (action, target, detail, created_at) VALUES (?, ?, ?, datetime('now'))",
+      ['清空数据', '系统', '清空了所有测试数据']
+    );
+
+    await db.runAsync('COMMIT');
+    return res.json({ success: true, message: '测试数据已全部清空' });
+  } catch (err) {
+    await db.runAsync('ROLLBACK').catch(function() {});
+    console.error('Clear test data error:', err);
+    return res.status(500).json({ success: false, message: '清空失败：' + err.message });
+  }
+});
 
 // 全局 404 处理
 app.get('/api/activity/recent', async (req, res) => {

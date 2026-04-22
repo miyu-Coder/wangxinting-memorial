@@ -313,6 +313,151 @@
     .empty-hint { text-align: center; color: #9CA3AF; padding: 60px 20px; background: var(--color-surface); border-radius: var(--radius); border: 1px dashed var(--color-border); }
     .footer-slogan { text-align: center; color: var(--color-red); font-size: 0.9rem; padding: 24px 0; font-weight: 500; letter-spacing: 2px; }
     @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: repeat(2, 1fr); } .exhibit-layout { grid-template-columns: 1fr; } .exhibit-side-col { position: static; } }
+    .admin-tools-divider {
+      flex: 1;
+      min-width: 0;
+    }
+    .admin-tools-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px;
+    }
+    .admin-tools-title {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      padding: 0 8px 0 0;
+      white-space: nowrap;
+    }
+    .admin-tool-btn {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      background: white;
+    }
+    .admin-tool-btn--green {
+      border: 1px solid #2E7D32;
+      color: #2E7D32;
+    }
+    .admin-tool-btn--green:hover {
+      border-color: #1B5E20;
+      color: #1B5E20;
+      background: #E8F5E9;
+    }
+    .admin-tool-btn--red {
+      border: 1px solid #C62828;
+      color: #C62828;
+    }
+    .admin-tool-btn--red:hover {
+      border-color: #B71C1C;
+      color: #B71C1C;
+      background: #FFEBEE;
+    }
+    .admin-tool-btn--orange {
+      border: 1px solid #E65100;
+      color: #E65100;
+    }
+    .admin-tool-btn--orange:hover {
+      border-color: #BF360C;
+      color: #BF360C;
+      background: #FFF3E0;
+    }
+    .admin-tool-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .admin-toast {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 9999;
+      animation: toastIn 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .admin-toast--success {
+      background: #E8F5E9;
+      color: #2E7D32;
+      border: 1px solid #A5D6A7;
+    }
+    .admin-toast--error {
+      background: #FFEBEE;
+      color: #C62828;
+      border: 1px solid #EF9A9A;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .confirm-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+    .confirm-modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 32px 28px 24px;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .confirm-modal__icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+    .confirm-modal__msg {
+      font-size: 15px;
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .confirm-modal__actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .confirm-modal__btn {
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+    .confirm-modal__btn--cancel {
+      background: #F5F5F5;
+      color: #666;
+      border-color: #E0E0E0;
+    }
+    .confirm-modal__btn--cancel:hover {
+      background: #EEEEEE;
+    }
+    .confirm-modal__btn--danger {
+      background: #C62828;
+      color: #fff;
+      border-color: #C62828;
+    }
+    .confirm-modal__btn--danger:hover {
+      background: #B71C1C;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
     @media (max-width: 768px) {
       .admin-header { padding: 12px 16px; }
       .admin-title { font-size: 1.25rem; }
@@ -413,10 +558,27 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
           展点管理
         </button>
+        <button class="tab-btn" data-tab="souvenir">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v10H4V12"></path><path d="M2 7h20v5H2z"></path><path d="M12 22V7"></path><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+          纪念品预约
+        </button>
         <button class="tab-btn" data-tab="logs">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
           操作日志
         </button>
+        <div class="admin-tools-divider"></div>
+        <div class="admin-tools-section">
+          <div class="admin-tools-title">🛠️ 系统工具</div>
+          <button class="admin-tool-btn admin-tool-btn--green" id="btnGenerateDemo">
+            📊 生成演示数据
+          </button>
+          <button class="admin-tool-btn admin-tool-btn--red" id="btnClearData">
+            🧹 清空测试数据
+          </button>
+          <button class="admin-tool-btn admin-tool-btn--orange" id="btnClearCache">
+            🗑️ 清除本地缓存
+          </button>
+        </div>
       </nav>
 
       <section id="dashboardTab" class="tab-content is-active">
@@ -711,9 +873,50 @@
         </div>
       </section>
 
+      <section id="souvenirTab" class="tab-content">
+        <h2 class="page-title">纪念品预约</h2>
+        <p class="page-summary">查看和管理纪念品预约记录</p>
+        <div class="message-filter" id="souvenirFilter">
+          <button class="filter-btn is-active" data-status="">全部</button>
+          <button class="filter-btn" data-status="0">待领取</button>
+          <button class="filter-btn" data-status="1">已领取</button>
+        </div>
+        <div class="chart-section" style="padding:0;overflow-x:auto;">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>昵称</th>
+                <th>展点</th>
+                <th>奖品名称</th>
+                <th>姓名</th>
+                <th>手机号</th>
+                <th>状态</th>
+                <th>预约时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="souvenirTableBody">
+              <tr><td colspan="9" style="text-align:center;color:#999;padding:40px;">加载中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <div class="admin-footer">
         <span class="admin-footer__star">★</span>
         <span class="admin-footer__text">王新亭将军红色教育基地 · 管理后台</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-modal-overlay" id="confirmModal" style="display:none;">
+    <div class="confirm-modal">
+      <div class="confirm-modal__icon">⚠️</div>
+      <div class="confirm-modal__msg" id="confirmModalMsg"></div>
+      <div class="confirm-modal__actions">
+        <button class="confirm-modal__btn confirm-modal__btn--cancel" id="confirmModalCancel">取消</button>
+        <button class="confirm-modal__btn confirm-modal__btn--danger" id="confirmModalOk">确定清空</button>
       </div>
     </div>
   </div>
@@ -790,6 +993,7 @@
       document.getElementById('adminBox').style.display = 'flex';
       loadDashboard();
       loadMessages();
+      loadSouvenirOrders();
     }
 
     document.getElementById('loginForm').addEventListener('submit', function (e) {
@@ -822,6 +1026,111 @@
       showLoginBox();
     });
 
+    function showAdminToast(msg, type) {
+      var existing = document.querySelector('.admin-toast');
+      if (existing) existing.remove();
+      var toast = document.createElement('div');
+      toast.className = 'admin-toast admin-toast--' + (type || 'success');
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(function () {
+        if (toast.parentNode) toast.remove();
+      }, 3000);
+    }
+
+    function clearQuizCache() {
+      try {
+        localStorage.removeItem('wx_full_achievements');
+        var keysToRemove = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf('wx_guide_quiz_') === 0) keysToRemove.push(k);
+        }
+        for (var j = 0; j < keysToRemove.length; j++) {
+          localStorage.removeItem(keysToRemove[j]);
+        }
+      } catch (e) {}
+    }
+
+    document.getElementById('btnGenerateDemo').addEventListener('click', function () {
+      var btn = this;
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = '⏳ 生成中...';
+      fetch('/api/admin/generate-demo-data', { method: 'POST' })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          btn.disabled = false;
+          btn.textContent = '📊 生成演示数据';
+          if (data.success) {
+            var s = data.stats;
+            showAdminToast('✅ 生成成功：' + s.visits + '条打卡, ' + s.flowers + '条献花, ' + s.quizzes + '条答题, ' + s.messages + '条留言, ' + s.souvenirs + '条预约', 'success');
+            loadDashboard();
+          } else {
+            showAdminToast('❌ ' + (data.message || '生成失败'), 'error');
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          btn.textContent = '📊 生成演示数据';
+          showAdminToast('❌ 网络错误', 'error');
+        });
+    });
+
+    var confirmModalResolve = null;
+
+    function showConfirmModal(msg, okText) {
+      return new Promise(function (resolve) {
+        confirmModalResolve = resolve;
+        document.getElementById('confirmModalMsg').textContent = msg;
+        document.getElementById('confirmModalOk').textContent = okText || '确定';
+        document.getElementById('confirmModal').style.display = 'flex';
+      });
+    }
+
+    document.getElementById('confirmModalCancel').addEventListener('click', function () {
+      document.getElementById('confirmModal').style.display = 'none';
+      if (confirmModalResolve) { confirmModalResolve(false); confirmModalResolve = null; }
+    });
+
+    document.getElementById('confirmModalOk').addEventListener('click', function () {
+      document.getElementById('confirmModal').style.display = 'none';
+      if (confirmModalResolve) { confirmModalResolve(true); confirmModalResolve = null; }
+    });
+
+    document.getElementById('btnClearData').addEventListener('click', function () {
+      var btn = this;
+      if (btn.disabled) return;
+      showConfirmModal('⚠️ 确定要清空所有测试数据吗？此操作不可恢复！', '确定清空').then(function (ok) {
+        if (!ok) return;
+        btn.disabled = true;
+        btn.textContent = '⏳ 清空中...';
+        fetch('/api/admin/clear-test-data', { method: 'POST' })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            btn.disabled = false;
+            btn.textContent = '🧹 清空测试数据';
+            if (data.success) {
+              clearQuizCache();
+              showAdminToast('✅ 测试数据已全部清空，本地答题缓存已清除', 'success');
+              loadDashboard();
+            } else {
+              showAdminToast('❌ ' + (data.message || '清空失败'), 'error');
+            }
+          })
+          .catch(function () {
+            btn.disabled = false;
+            btn.textContent = '🧹 清空测试数据';
+            showAdminToast('❌ 网络错误', 'error');
+          });
+      });
+    });
+
+    document.getElementById('btnClearCache').addEventListener('click', function () {
+      clearQuizCache();
+      showAdminToast('✅ 本地答题缓存已清除，可重新答题', 'success');
+    });
+
     document.querySelectorAll('.tab-btn').forEach((btn) => {
       btn.addEventListener('click', function () {
         const tab = this.getAttribute('data-tab');
@@ -837,6 +1146,8 @@
           // 展点管理不需要额外加载
         } else if (tab === 'logs') {
           loadAdminLogs();
+        } else if (tab === 'souvenir') {
+          loadSouvenirOrders();
         } else {
           loadDashboard();
         }
@@ -1356,6 +1667,83 @@
       renderMessages();
       renderHotTags();
     }
+
+    var currentSouvenirFilter = '';
+    var allSouvenirData = [];
+
+    function loadSouvenirOrders() {
+      var url = '/api/admin/souvenir/list';
+      if (currentSouvenirFilter !== '') {
+        url += '?status=' + currentSouvenirFilter;
+      }
+      fetch(url)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.success) {
+            allSouvenirData = data.list || [];
+            renderSouvenirOrders();
+          }
+        })
+        .catch(function(err) {
+          console.error('Load souvenir error:', err);
+        });
+    }
+
+    function renderSouvenirOrders() {
+      var tbody = document.getElementById('souvenirTableBody');
+      if (!tbody) return;
+      var exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备展区', 0: '全部展点' };
+      if (!allSouvenirData.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px;">暂无预约记录</td></tr>';
+        return;
+      }
+      var html = '';
+      allSouvenirData.forEach(function(r) {
+        var statusHtml = r.status === 1
+          ? '<span class="msg-tag msg-tag--green">已领取</span>'
+          : '<span class="msg-tag msg-tag--orange">待领取</span>';
+        var actionHtml = r.status === 0
+          ? '<button class="batch-bar__btn" onclick="deliverSouvenir(' + r.id + ')">标记已领取</button>'
+          : '<span style="color:#999;font-size:12px;">—</span>';
+        html += '<tr>'
+          + '<td>' + r.id + '</td>'
+          + '<td>' + escapeHtml(r.nickname || '') + '</td>'
+          + '<td>' + (exhibitNames[r.exhibit_id] || '展点' + r.exhibit_id) + '</td>'
+          + '<td>' + escapeHtml(r.souvenir_name || '') + '</td>'
+          + '<td>' + escapeHtml(r.name || '') + '</td>'
+          + '<td>' + escapeHtml(r.phone || '') + '</td>'
+          + '<td>' + statusHtml + '</td>'
+          + '<td>' + (r.created_at || '') + '</td>'
+          + '<td>' + actionHtml + '</td>'
+          + '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function deliverSouvenir(id) {
+      fetch('/api/admin/souvenir/' + id + '/deliver', { method: 'POST' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.success) {
+            loadSouvenirOrders();
+          } else {
+            alert(data.message || '操作失败');
+          }
+        })
+        .catch(function(err) {
+          console.error('Deliver error:', err);
+          alert('操作失败');
+        });
+    }
+
+    document.getElementById('souvenirFilter').addEventListener('click', function(e) {
+      var btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+      document.querySelectorAll('#souvenirFilter .filter-btn').forEach(function(b) { b.classList.remove('is-active'); });
+      btn.classList.add('is-active');
+      currentSouvenirFilter = btn.getAttribute('data-status');
+      loadSouvenirOrders();
+    });
 
     function loadAdminLogs() {
       var action = currentLogFilter || '';
