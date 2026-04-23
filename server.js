@@ -1432,28 +1432,72 @@ app.post('/api/admin/generate-demo-data', async (req, res) => {
       return 'index';
     }
 
+    var totalSessions = randomInt(30, 50);
+    var allSessionIds = [];
+    for (var si = 0; si < totalSessions; si++) {
+      allSessionIds.push('demo_sid_' + si + '_' + randomInt(1000, 9999));
+    }
+
+    var pvRows = [];
     for (var d = 29; d >= 0; d--) {
       var dateObj = new Date(Date.now() - d * 24 * 60 * 60 * 1000);
       var isWe = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+      var dateStr = dateObj.getFullYear() + '-' +
+        String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
+        String(dateObj.getDate()).padStart(2, '0');
 
-      var basePV = randomInt(25, 55);
-      if (isWe) basePV = Math.round(basePV * (1 + (Math.random() * 0.2 + 0.3)));
+      var dayUV = randomInt(12, 22);
+      if (isWe) dayUV = Math.round(dayUV * (1 + (Math.random() * 0.2 + 0.3)));
 
-      for (var v = 0; v < basePV; v++) {
-        var pg = weightedPage();
-        var sid = 'demo_sid_' + randomInt(10000, 99999);
-        var hh = String(randomInt(8, 21)).padStart(2, '0');
-        var mi = String(randomInt(0, 59)).padStart(2, '0');
-        var ss = String(randomInt(0, 59)).padStart(2, '0');
-        var visitTime = dateObj.getFullYear() + '-' +
-          String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
-          String(dateObj.getDate()).padStart(2, '0') + ' ' + hh + ':' + mi + ':' + ss;
-        await db.runAsync(
-          "INSERT INTO page_views (page, session_id, visit_time) VALUES (?, ?, ?)",
-          [pg, sid, visitTime]
-        );
+      var shuffled = allSessionIds.slice().sort(function() { return Math.random() - 0.5; });
+      var daySessions = shuffled.slice(0, Math.min(dayUV, shuffled.length));
+
+      for (var sIdx = 0; sIdx < daySessions.length; sIdx++) {
+        var sid = daySessions[sIdx];
+        var pagesPerSession = randomInt(2, 4);
+        for (var p = 0; p < pagesPerSession; p++) {
+          var pg = weightedPage();
+          var hh = String(randomInt(8, 21)).padStart(2, '0');
+          var mi = String(randomInt(0, 59)).padStart(2, '0');
+          var ss = String(randomInt(0, 59)).padStart(2, '0');
+          pvRows.push([pg, sid, dateStr + ' ' + hh + ':' + mi + ':' + ss]);
+        }
+      }
+
+      var revisitCount = randomInt(1, 3);
+      for (var ri = 0; ri < revisitCount; ri++) {
+        var rsid = daySessions[randomInt(0, daySessions.length - 1)];
+        var rPages = randomInt(1, 3);
+        for (var rp = 0; rp < rPages; rp++) {
+          var rpg = weightedPage();
+          var rhh = String(randomInt(8, 21)).padStart(2, '0');
+          var rmi = String(randomInt(0, 59)).padStart(2, '0');
+          var rss = String(randomInt(0, 59)).padStart(2, '0');
+          pvRows.push([rpg, rsid, dateStr + ' ' + rhh + ':' + rmi + ':' + rss]);
+        }
       }
     }
+
+    var stmt = await new Promise(function(resolve, reject) {
+      db.prepare('INSERT INTO page_views (page, session_id, visit_time) VALUES (?, ?, ?)', function(err) {
+        if (err) reject(err);
+        else resolve(this);
+      });
+    });
+    for (var ri = 0; ri < pvRows.length; ri++) {
+      await new Promise(function(resolve, reject) {
+        stmt.run(pvRows[ri][0], pvRows[ri][1], pvRows[ri][2], function(err) {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    }
+    await new Promise(function(resolve, reject) {
+      stmt.finalize(function(err) {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
 
     await db.runAsync(
       "INSERT INTO admin_logs (action, target, detail, created_at) VALUES (?, ?, ?, datetime('now'))",
