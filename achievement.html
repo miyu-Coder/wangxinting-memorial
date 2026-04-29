@@ -41,24 +41,25 @@
     <main class="achievement-main" id="achievement-main" hidden>
       <section class="achievement-stats" aria-labelledby="stats-heading">
         <h2 id="stats-heading" class="achievement-section-title">成就统计</h2>
-        <div class="achievement-stats__grid">
+        <div class="achievement-title-badge" id="achievement-title-badge"></div>
+        <div class="achievement-stats__grid achievement-stats__grid--three">
           <div class="achievement-stat-card">
-            <p class="achievement-stat-card__label">已完成展点</p>
+            <p class="achievement-stat-card__label">打卡进度</p>
             <p class="achievement-stat-card__value" id="stat-completed">—</p>
           </div>
           <div class="achievement-stat-card">
-            <p class="achievement-stat-card__label">答题总得分</p>
+            <p class="achievement-stat-card__label">答题得分</p>
             <p class="achievement-stat-card__value achievement-stat-card__value--gold" id="stat-score">—</p>
           </div>
-          <div class="achievement-stat-card achievement-stat-card--wide">
-            <p class="achievement-stat-card__label">获得称号</p>
-            <p class="achievement-stat-card__title" id="stat-title">—</p>
+          <div class="achievement-stat-card">
+            <p class="achievement-stat-card__label">总用时</p>
+            <p class="achievement-stat-card__value achievement-stat-card__value--time" id="stat-time">⏱️ --</p>
           </div>
         </div>
       </section>
 
       <section class="achievement-list-section" aria-labelledby="list-heading">
-        <h2 id="list-heading" class="achievement-section-title">各展点得分</h2>
+        <h2 id="list-heading" class="achievement-section-title">各展点详情</h2>
         <div class="achievement-encouragement" id="achievement-encouragement"></div>
         <div class="achievement-progress-container">
           <div class="achievement-progress-bar">
@@ -71,14 +72,21 @@
 
       <section class="achievement-actions" aria-label="操作">
         <button type="button" class="btn btn-primary btn-ripple achievement-btn-share" id="btn-share-poster">
-          分享我的成就
+          📤 分享我的成就
         </button>
+        <a class="btn btn-gold achievement-btn-rankings" href="rankings.html">🏆 查看答题排行榜</a>
+        <a class="btn btn-secondary achievement-btn-home" href="index.html">🏛️ 再访教育基地</a>
         <p class="achievement-share-hint" id="share-hint" hidden>
           若浏览器拦截下载，请长按海报图片另存。
         </p>
-        <a class="btn btn-secondary achievement-btn-home" href="index.html">再访教育基地</a>
       </section>
     </main>
+
+    <div class="achievement-empty" id="achievement-empty" hidden>
+      <p class="achievement-empty__icon">🌱</p>
+      <p class="achievement-empty__text">尚未开始红色传承之旅，前往展点完成打卡和答题吧！</p>
+      <a class="btn btn-primary achievement-empty__btn" href="index.html">🏛️ 前往参观</a>
+    </div>
 
     <div class="achievement-error" id="achievement-error" hidden role="alert"></div>
 
@@ -107,7 +115,7 @@
       }
     })();
   </script>
-  <script src="js/common.js?v=1"></script>
+  <script src="js/common.js?v=2"></script>
   <script src="js/config.js"></script>
   <script src="js/storage.js?v=2"></script>
   <script src="js/poster-generator.js"></script>

@@ -727,8 +727,16 @@
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", run);
+    document.addEventListener("DOMContentLoaded", function() {
+      run();
+      if (window.WxCommon && typeof window.WxCommon.initMessageWall === 'function') {
+        window.WxCommon.initMessageWall('msg-wall-certificate');
+      }
+    });
   } else {
     run();
+    if (window.WxCommon && typeof window.WxCommon.initMessageWall === 'function') {
+      window.WxCommon.initMessageWall('msg-wall-certificate');
+    }
   }
 })();

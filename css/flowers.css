@@ -403,6 +403,7 @@
 
 .message-item {
   background: #ffffff;
+  border: none;
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;

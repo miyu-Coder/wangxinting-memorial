@@ -643,12 +643,12 @@
     var h = document.createElement("h3");
     h.id = "wx-modal-title";
     h.className = "quiz-celebration-modal__title";
-    h.textContent = "🎊 恭喜完成全部展点问答！";
+    h.textContent = "🏆 全部完成！查看成就排行";
 
     var p = document.createElement("p");
     p.className = "quiz-celebration-modal__text";
     p.textContent =
-      "您已走完四站知识问答，前往「红色传承之旅」查看总成就、生成分享海报。";
+      "您已走完四站知识问答，前往「红色传承之旅」查看总成就和排行榜。";
 
     var row = document.createElement("div");
     row.className = "quiz-celebration-modal__actions";
@@ -656,7 +656,7 @@
     var go = document.createElement("a");
     go.className = "btn btn-primary";
     go.href = "achievement.html";
-    go.textContent = "前往终章页";
+    go.textContent = "查看我的成就";
 
     var later = document.createElement("button");
     later.type = "button";
@@ -822,8 +822,8 @@
           if (host) {
             var a = document.createElement('a');
             a.className = 'btn btn-primary btn-sm checkin-certificate-btn';
-            a.href = 'certificate.html';
-            a.textContent = '查看我的纪念证书 ❯';
+            a.href = 'achievement.html';
+            a.textContent = '查看我的成就 ❯';
             host.appendChild(a);
           }
         }
@@ -930,8 +930,22 @@
    * 显示集齐四个展点的解锁提示 - 模态弹窗
    */
   function showCheckinCompletionModal() {
-    // 如果已经存在弹窗，不再创建
     if (document.getElementById("checkin-completion-modal")) return;
+
+    var checkinCount = 0;
+    try {
+      var data = localStorage.getItem('wx_checkin_data');
+      if (data) {
+        var parsed = JSON.parse(data);
+        if (parsed && parsed.exhibits) {
+          for (var k in parsed.exhibits) {
+            if (parsed.exhibits[k] && parsed.exhibits[k].checked) checkinCount++;
+          }
+        }
+      }
+    } catch (e) {}
+
+    if (checkinCount < 4) return;
 
     var mask = document.createElement("div");
     mask.id = "checkin-completion-modal";
@@ -946,19 +960,19 @@
     var h = document.createElement("h3");
     h.id = "checkin-completion-title";
     h.className = "checkin-completion-title";
-    h.textContent = "🎉 恭喜！您已完成全部展点打卡！";
+    h.textContent = "🎉 恭喜！查看您的红色传承之旅";
 
     var p = document.createElement("p");
     p.className = "checkin-completion-text";
-    p.textContent = "纪念证书已解锁，是否立即查看？";
+    p.textContent = "您已完成全部展点打卡，前往「红色传承之旅」查看成就总结！";
 
     var row = document.createElement("div");
     row.className = "checkin-completion-actions";
 
     var go = document.createElement("a");
     go.className = "btn btn-primary";
-    go.href = "certificate.html";
-    go.textContent = "查看纪念证书";
+    go.href = "achievement.html";
+    go.textContent = "查看我的成就";
 
     var later = document.createElement("button");
     later.type = "button";
@@ -976,7 +990,6 @@
     mask.appendChild(panel);
     document.body.appendChild(mask);
 
-    // 点击遮罩关闭弹窗
     mask.addEventListener("click", function (e) {
       if (e.target === mask) {
         mask.remove();
@@ -1379,6 +1392,8 @@
     var state = { idx: 0, correct: 0, picked: false };
     var lastLockResult = { ok: false, allExhibitsComplete: false };
     var quizRecordSubmitted = false;
+    var quizStartTime = new Date().toISOString();
+    var quizStartTimestamp = Date.now();
 
     function submitQuizRecord() {
       if (quizRecordSubmitted) return;
@@ -1402,13 +1417,18 @@
         }
       }
 
+      var endTime = Date.now();
+      var timeCost = Math.floor((endTime - quizStartTimestamp) / 1000);
+
       fetch('/api/quiz/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nickname: submitNickname,
           exhibitId: exhibitId,
-          score: record.score
+          score: record.score,
+          completedAt: quizStartTime,
+          timeCost: timeCost
         })
       })
         .then(function (res) { return res.json(); })
@@ -1985,5 +2005,8 @@
     var btn = document.getElementById("btn-retry-load");
     if (btn) btn.addEventListener("click", run);
     run();
+    if (window.WxCommon && typeof window.WxCommon.initMessageWall === 'function') {
+      window.WxCommon.initMessageWall('msg-wall-detail');
+    }
   });
 })();

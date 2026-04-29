@@ -54,7 +54,14 @@ db.allAsync = (sql, params = []) => {
   });
 };
 
-// 初始化数据库表
+const SOUVENIR_MAP = {
+  1: '🏅 将军纪念徽章',
+  2: '📿 红色传承手环',
+  3: '📜 荣誉纪念证书',
+  4: '🔖 军工主题书签',
+  0: '🎁 将军纪念礼盒'
+};
+
 function initDatabase() {
   db.run(`
     CREATE TABLE IF NOT EXISTS visits (
@@ -158,6 +165,30 @@ function initDatabase() {
     }
   });
 
+  db.run(`ALTER TABLE quiz_records ADD COLUMN completed_at DATETIME`, function(err) {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Failed to add completed_at column:', err.message);
+    }
+  });
+
+  db.run(`ALTER TABLE quiz_records ADD COLUMN time_cost INTEGER DEFAULT 0`, function(err) {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Failed to add time_cost column:', err.message);
+    }
+  });
+
+  db.run(`ALTER TABLE souvenir_orders ADD COLUMN order_type TEXT DEFAULT 'exhibit'`, function(err) {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Failed to add order_type column:', err.message);
+    }
+  });
+
+  db.run(`ALTER TABLE souvenir_orders ADD COLUMN prize_name TEXT`, function(err) {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Failed to add prize_name column:', err.message);
+    }
+  });
+
   db.run(`
     CREATE TABLE IF NOT EXISTS souvenir_orders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -241,7 +272,7 @@ app.get('/api/checkin/:exhibitId', async (req, res) => {
 // ===== 答题记录接口 =====
 // POST /api/quiz/submit - 提交答题记录
 app.post('/api/quiz/submit', async (req, res) => {
-  const { nickname, exhibitId, score } = req.body;
+  const { nickname, exhibitId, score, completedAt, timeCost } = req.body;
 
   if (!nickname || !nickname.trim()) {
     return res.status(400).json({ success: false, message: '昵称不能为空' });
@@ -265,9 +296,11 @@ app.post('/api/quiz/submit', async (req, res) => {
       return res.status(409).json({ success: false, message: '您已完成过答题' });
     }
 
+    var tc = (typeof timeCost === 'number' && timeCost >= 0) ? Math.floor(timeCost) : 0;
+
     await db.runAsync(
-      "INSERT INTO quiz_records (nickname, exhibit_id, score, created_at) VALUES (?, ?, ?, datetime('now'))",
-      [nickname.trim(), exhibitId, score]
+      "INSERT INTO quiz_records (nickname, exhibit_id, score, completed_at, time_cost, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))",
+      [nickname.trim(), exhibitId, score, completedAt || null, tc]
     );
     return res.json({ success: true, message: '答题记录已保存' });
   } catch (err) {
@@ -327,6 +360,161 @@ app.get('/api/quiz/stats', async (req, res) => {
     return res.json({ success: true, stats });
   } catch (err) {
     console.error('Quiz stats error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// GET /api/rankings/quiz - 答题排行榜
+app.get('/api/rankings/quiz', async (req, res) => {
+  const nickname = req.query.nickname || '';
+
+  try {
+    const rows = await db.allAsync(`
+      SELECT nickname,
+             SUM(score) as total_score,
+             COUNT(*) as completed_exhibits,
+             SUM(COALESCE(time_cost, 0)) as total_time_cost
+      FROM quiz_records
+      GROUP BY nickname
+      HAVING completed_exhibits > 0
+    `);
+
+    var fastestTime = Infinity;
+    rows.forEach(function(r) {
+      r.total_time_cost = r.total_time_cost || 0;
+      if (r.total_time_cost > 0 && r.total_time_cost < fastestTime) {
+        fastestTime = r.total_time_cost;
+      }
+    });
+
+    if (fastestTime === Infinity) fastestTime = 1;
+
+    rows.forEach(function(r) {
+      var scorePart = (r.total_score / 16) * 60;
+      var timePart = r.total_time_cost > 0 ? (fastestTime / r.total_time_cost) * 40 : 0;
+      r.ranking_score = Math.round((scorePart + timePart) * 10) / 10;
+    });
+
+    rows.sort(function(a, b) { return b.ranking_score - a.ranking_score; });
+
+    var rankings = rows.slice(0, 50).map(function(r, idx) {
+      return {
+        rank: idx + 1,
+        nickname: r.nickname,
+        total_score: r.total_score,
+        completed_exhibits: r.completed_exhibits,
+        total_time_cost: r.total_time_cost,
+        ranking_score: r.ranking_score
+      };
+    });
+
+    var myRank = null;
+    if (nickname) {
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].nickname === nickname.trim()) {
+          myRank = {
+            rank: i + 1,
+            nickname: rows[i].nickname,
+            total_score: rows[i].total_score,
+            completed_exhibits: rows[i].completed_exhibits,
+            total_time_cost: rows[i].total_time_cost,
+            ranking_score: rows[i].ranking_score
+          };
+          break;
+        }
+      }
+    }
+
+    return res.json({ success: true, rankings: rankings, myRank: myRank });
+  } catch (err) {
+    console.error('Rankings error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// GET /api/admin/quiz/time-stats - 答题时长统计
+app.get('/api/admin/quiz/time-stats', async (req, res) => {
+  try {
+    const avgRow = await db.getAsync(
+      "SELECT AVG(CAST(time_cost AS REAL)) as avg_time FROM quiz_records WHERE time_cost > 0"
+    );
+    const fastestRow = await db.getAsync(
+      "SELECT time_cost, nickname FROM quiz_records WHERE time_cost > 0 ORDER BY time_cost ASC LIMIT 1"
+    );
+    const exhibitTimes = await db.allAsync(
+      "SELECT exhibit_id, AVG(CAST(time_cost AS REAL)) as avg_time FROM quiz_records WHERE time_cost > 0 GROUP BY exhibit_id ORDER BY exhibit_id"
+    );
+    const exhibitCounts = await db.allAsync(
+      "SELECT exhibit_id, COUNT(*) as cnt FROM quiz_records GROUP BY exhibit_id ORDER BY exhibit_id"
+    );
+
+    var avgTime = avgRow && avgRow.avg_time ? Math.round(avgRow.avg_time) : 0;
+    var fastestTime = fastestRow ? fastestRow.time_cost : 0;
+    var fastestUser = fastestRow ? fastestRow.nickname : '--';
+
+    return res.json({
+      success: true,
+      avgTime: avgTime,
+      fastestTime: fastestTime,
+      fastestUser: fastestUser,
+      exhibitTimes: exhibitTimes.map(function(r) { return { exhibit_id: r.exhibit_id, avg_time: Math.round(r.avg_time) }; }),
+      exhibitCounts: exhibitCounts.map(function(r) { return { exhibit_id: r.exhibit_id, count: r.cnt }; })
+    });
+  } catch (err) {
+    console.error('Quiz time stats error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// GET /api/quiz/time-by-user - 获取当前用户各展点答题用时
+app.get('/api/quiz/time-by-user', async (req, res) => {
+  const nickname = req.query.nickname || '';
+  if (!nickname) {
+    return res.json({ success: true, times: {} });
+  }
+  try {
+    const rows = await db.allAsync(
+      'SELECT exhibit_id, time_cost FROM quiz_records WHERE nickname = ?',
+      [nickname.trim()]
+    );
+    var times = {};
+    rows.forEach(function(r) {
+      times[r.exhibit_id] = r.time_cost || 0;
+    });
+    return res.json({ success: true, times: times });
+  } catch (err) {
+    console.error('Quiz time by user error:', err);
+    return res.status(500).json({ success: false, message: '服务器错误' });
+  }
+});
+
+// GET /api/admin/quiz/advanced-stats - 管理端答题高级统计
+app.get('/api/admin/quiz/advanced-stats', async (req, res) => {
+  try {
+    const avgTimeRow = await db.getAsync(
+      "SELECT AVG(CAST((julianday(created_at) - julianday(completed_at)) * 86400000 AS REAL)) as avg_ms FROM quiz_records WHERE completed_at IS NOT NULL"
+    );
+    const fastestRow = await db.getAsync(
+      "SELECT MIN(CAST((julianday(created_at) - julianday(completed_at)) * 86400000 AS REAL)) as min_ms FROM quiz_records WHERE completed_at IS NOT NULL"
+    );
+    const totalRow = await db.getAsync('SELECT COUNT(*) as total FROM quiz_records');
+    const uniqueRow = await db.getAsync('SELECT COUNT(DISTINCT nickname) as unique_users FROM quiz_records');
+    const fullScoreRow = await db.getAsync('SELECT COUNT(*) as cnt FROM quiz_records WHERE score = 4');
+
+    var avgMs = avgTimeRow && avgTimeRow.avg_ms ? Math.round(avgTimeRow.avg_ms) : 0;
+    var minMs = fastestRow && fastestRow.min_ms ? Math.round(fastestRow.min_ms) : 0;
+
+    return res.json({
+      success: true,
+      avgCompletionTime: avgMs,
+      fastestCompletionTime: minMs,
+      totalRecords: totalRow ? totalRow.total : 0,
+      uniqueUsers: uniqueRow ? uniqueRow.unique_users : 0,
+      completionRate: totalRow && totalRow.total > 0 ? Math.round((uniqueRow.unique_users / totalRow.total) * 100) : 0,
+      fullScoreCount: fullScoreRow ? fullScoreRow.cnt : 0
+    });
+  } catch (err) {
+    console.error('Advanced quiz stats error:', err);
     return res.status(500).json({ success: false, message: '服务器错误' });
   }
 });
@@ -1012,6 +1200,32 @@ app.get('/api/admin/export/quiz', async (req, res) => {
   }
 });
 
+// GET /api/admin/export/souvenir - 导出纪念品预约数据
+app.get('/api/admin/export/souvenir', async (req, res) => {
+  const status = req.query.status || 'all';
+  try {
+    let sql = 'SELECT * FROM souvenir_orders ORDER BY created_at DESC';
+    let params = [];
+    if (status === '0' || status === '1') {
+      sql = 'SELECT * FROM souvenir_orders WHERE status = ? ORDER BY created_at DESC';
+      params = [Number(status)];
+    }
+    const rows = await db.allAsync(sql, params);
+    const statusNames = { 0: '待领取', 1: '已领取' };
+    let csv = '昵称,展点,奖品名称,姓名,手机号,状态,预约时间\n';
+    rows.forEach(r => {
+      csv += `${r.nickname},${r.exhibit_id || ''},${SOUVENIR_MAP[r.exhibit_id] || '未知奖品'},${r.name},${r.phone},${statusNames[r.status] || '未知'},${r.created_at}\n`;
+    });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=' + encodeURIComponent('纪念品预约数据.csv'));
+    res.send('\uFEFF' + csv);
+    addAdminLog('导出数据', '纪念品预约', '导出 ' + rows.length + ' 条预约记录');
+  } catch (err) {
+    console.error('Export souvenir error:', err);
+    res.status(500).json({ success: false, message: '导出失败' });
+  }
+});
+
 // GET /api/admin/export/all - 导出所有数据（合并CSV）
 app.get('/api/admin/export/all', async (req, res) => {
   try {
@@ -1172,16 +1386,9 @@ app.get('/admin', (req, res) => {
 app.use('/admin', express.static(__dirname + '/server/admin'));
 
 // ===== 纪念品预约接口 =====
-const SOUVENIR_MAP = {
-  1: '🏅 将军纪念徽章',
-  2: '📿 红色传承手环',
-  3: '📜 荣誉纪念证书',
-  4: '🔖 军工主题书签',
-  0: '🎁 将军纪念礼盒'
-};
 
 app.post('/api/souvenir/order', async (req, res) => {
-  const { nickname, exhibitId, name, phone } = req.body;
+  const { nickname, exhibitId, name, phone, orderType, prizeName } = req.body;
   if (!nickname || exhibitId === undefined || exhibitId === null || !name || !phone) {
     return res.status(400).json({ success: false, message: '请填写完整信息' });
   }
@@ -1192,16 +1399,21 @@ app.post('/api/souvenir/order', async (req, res) => {
     return res.status(400).json({ success: false, message: '手机号格式不正确' });
   }
   try {
-    const existing = await db.allAsync(
-      'SELECT id FROM souvenir_orders WHERE nickname = ? AND exhibit_id = ?',
-      [nickname.trim(), exhibitId]
-    );
+    var ot = orderType || 'exhibit';
+    var pn = prizeName || SOUVENIR_MAP[exhibitId] || '纪念品';
+    var existingCond = ot === 'ranking'
+      ? 'SELECT id FROM souvenir_orders WHERE nickname = ? AND order_type = ?'
+      : 'SELECT id FROM souvenir_orders WHERE nickname = ? AND exhibit_id = ? AND order_type = ?';
+    var existingParams = ot === 'ranking'
+      ? [nickname.trim(), 'ranking']
+      : [nickname.trim(), exhibitId, 'exhibit'];
+    const existing = await db.allAsync(existingCond, existingParams);
     if (existing.length > 0) {
       return res.json({ success: false, message: '您已预约过该奖品', already: true });
     }
     await db.runAsync(
-      "INSERT INTO souvenir_orders (nickname, exhibit_id, name, phone, status, created_at) VALUES (?, ?, ?, ?, 0, datetime('now'))",
-      [nickname.trim(), exhibitId, name.trim(), phone.trim()]
+      "INSERT INTO souvenir_orders (nickname, exhibit_id, name, phone, status, order_type, prize_name, created_at) VALUES (?, ?, ?, ?, 0, ?, ?, datetime('now'))",
+      [nickname.trim(), exhibitId, name.trim(), phone.trim(), ot, pn]
     );
     return res.json({ success: true, message: '预约成功' });
   } catch (err) {
@@ -1377,9 +1589,17 @@ app.post('/api/admin/generate-demo-data', async (req, res) => {
       var eid = randomInt(1, 4);
       var sc = weightedScore();
       var nn = randomPick(nicknames);
+      var tc;
+      if (Math.random() < 0.7) {
+        tc = randomInt(30, 120);
+      } else {
+        tc = randomInt(121, 180);
+      }
+      console.log('Generated time_cost:', tc, 'seconds for exhibit', eid, 'score', sc);
+      var completedAt = new Date(new Date(dt).getTime() - tc * 1000).toISOString().replace('T', ' ').substring(0, 19);
       await db.runAsync(
-        "INSERT INTO quiz_records (nickname, exhibit_id, score, created_at) VALUES (?, ?, ?, ?)",
-        [nn, eid, sc, dt]
+        "INSERT INTO quiz_records (nickname, exhibit_id, score, completed_at, time_cost, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [nn, eid, sc, completedAt, tc, dt]
       );
     }
 
@@ -1402,15 +1622,17 @@ app.post('/api/admin/generate-demo-data', async (req, res) => {
       [souvenirCount * 2]
     );
     var souvenirNames = ["张明","李华","王芳","赵强","刘洋","陈静","杨磊","黄丽","周伟","吴敏","孙涛","马秀英","朱建国","胡志远","林小红"];
+    var SOUVENIR_MAP = { 1: '🏅 将军纪念徽章', 2: '📿 红色传承手环', 3: '📜 荣誉纪念证书', 4: '🔖 军工主题书签' };
     for (var i = 0; i < Math.min(souvenirCount, perfectQuizzes.length); i++) {
       var pq = perfectQuizzes[i];
       var sName = randomPick(souvenirNames);
       var sPhone = '1' + randomInt(30, 89) + randomInt(1000, 9999) + randomInt(100, 999);
       var sStatus = Math.random() < 0.7 ? 0 : 1;
       var sCreatedAt = pq.created_at;
+      var sPrizeName = SOUVENIR_MAP[pq.exhibit_id] || '纪念品';
       await db.runAsync(
-        "INSERT INTO souvenir_orders (nickname, exhibit_id, name, phone, status, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-        [pq.nickname, pq.exhibit_id, sName, sPhone, sStatus, sCreatedAt]
+        "INSERT INTO souvenir_orders (nickname, exhibit_id, name, phone, status, order_type, prize_name, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [pq.nickname, pq.exhibit_id, sName, sPhone, sStatus, 'exhibit', sPrizeName, sCreatedAt]
       );
     }
 

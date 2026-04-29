@@ -157,8 +157,94 @@
     document.body.appendChild(overlay);
   }
 
-  function renderExhibitList(container, state) {
+  function updateTimeDisplay(container, timeData) {
+    var timeEls = container.querySelectorAll('.achievement-exhibit-item__time');
+    for (var i = 0; i < timeEls.length; i++) {
+      var el = timeEls[i];
+      var eid = el.getAttribute('data-exhibit-id');
+      if (eid && timeData[eid] && timeData[eid] > 0) {
+        var secs = timeData[eid];
+        var mins = Math.floor(secs / 60);
+        var remainSecs = secs % 60;
+        el.textContent = '⏱️ ' + mins + '分' + remainSecs + '秒';
+      } else {
+        el.textContent = '';
+      }
+    }
+  }
+
+  function getCheckinCount() {
+    var count = 0;
+    try {
+      var data = localStorage.getItem('wx_checkin_data');
+      if (data) {
+        var parsed = JSON.parse(data);
+        if (parsed && parsed.exhibits) {
+          for (var k in parsed.exhibits) {
+            if (parsed.exhibits[k] && parsed.exhibits[k].checked) count++;
+          }
+        }
+      }
+    } catch (e) {}
+    return count;
+  }
+
+  function getCheckinCountFromServer() {
+    return new Promise(function(resolve) {
+      var localCount = getCheckinCount();
+      var nickname = '';
+      if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+        nickname = window.WxCommon.getUserNickname();
+      }
+      if (!nickname) {
+        resolve(localCount);
+        return;
+      }
+      var serverCount = 0;
+      var pending = 4;
+      for (var eid = 1; eid <= 4; eid++) {
+        (function(exhibitId) {
+          fetch('/api/checkin/' + exhibitId, { cache: 'no-store' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+              if (data.success && data.hasCheckedIn) serverCount++;
+            })
+            .catch(function() {})
+            .finally(function() {
+              pending--;
+              if (pending === 0) {
+                resolve(Math.max(localCount, serverCount));
+              }
+            });
+        })(eid);
+      }
+    });
+  }
+
+  function getTitle(checkinCount, totalScore) {
+    if (checkinCount >= 4 && totalScore >= 13) return '\uD83C\uDFC6 红色传承人';
+    if (checkinCount >= 4 && totalScore >= 8) return '\u2B50 红色知识达人';
+    if (checkinCount >= 4) return '\uD83D\uDCDA 好学奋进者';
+    if (checkinCount >= 2) return '\uD83D\uDCAA 笃行求知者';
+    return '\uD83C\uDF31 初心寻路人';
+  }
+
+  function renderExhibitList(container, state, currentNickname) {
     container.innerHTML = "";
+
+    var timeData = null;
+    if (currentNickname) {
+      fetch('/api/quiz/time-by-user?nickname=' + encodeURIComponent(currentNickname), { cache: 'no-store' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.success && data.times) {
+            timeData = data.times;
+            updateTimeDisplay(container, timeData);
+          }
+        })
+        .catch(function() {});
+    }
+
     for (var i = 0; i < LOCATIONS.length; i++) {
       var loc = LOCATIONS[i];
       var nq = nQuestions(loc);
@@ -187,12 +273,25 @@
       }
 
       var content = document.createElement("div");
+      var checkinStatus = '\u2B1C';
+      try {
+        var checkinData = localStorage.getItem('wx_checkin_data');
+        if (checkinData) {
+          var cParsed = JSON.parse(checkinData);
+          if (cParsed && cParsed.exhibits && cParsed.exhibits[key] && cParsed.exhibits[key].checked) {
+            checkinStatus = '\u2705';
+          }
+        }
+      } catch (e) {}
+
       content.innerHTML =
         '<span class="achievement-exhibit-item__icon">' + icon + '</span>' +
         '<h3 class="achievement-exhibit-item__name">' + (loc.routeShort || loc.title || "展点 " + key) + '</h3>' +
+        '<p class="achievement-exhibit-item__checkin">' + checkinStatus + ' 打卡</p>' +
         '<p class="achievement-exhibit-item__score">' +
-        (isCompleted ? score + "/" + nq + "分" : "未完成") +
-        '</p>';
+        (isCompleted ? score + "/" + nq + "分" : "未答题") +
+        '</p>' +
+        '<p class="achievement-exhibit-item__time" data-exhibit-id="' + lid + '">⏱️ --</p>';
 
       var actionBtn = document.createElement("button");
       actionBtn.type = "button";
@@ -237,7 +336,7 @@
   /**
    * 准备海报数据
    */
-  function preparePosterData(state, grandMax) {
+  function preparePosterData(state, grandMax, checkinCount, totalTimeStr) {
     var nickname = "";
     if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
       nickname = window.WxCommon.getUserNickname();
@@ -245,12 +344,18 @@
       try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
     }
 
+    var titleName = getTitle(checkinCount, state.totalScore);
+
     var userData = {
-      title: state.title || "继续加油，完成全部展点问答",
+      title: titleName,
       nickname: nickname,
+      checkinCount: checkinCount,
+      totalTime: totalTimeStr || "--",
       stats: [
-        { label: "答题总得分", value: state.totalScore + " / " + grandMax },
-        { label: "已完成展点", value: window.wxQuizStorage.countCompletedWithQuiz(LOCATIONS).done + " / 4" }
+        { label: "打卡进度", value: checkinCount + " / 4" },
+        { label: "答题得分", value: state.totalScore + " / " + grandMax },
+        { label: "总用时", value: totalTimeStr || "--" },
+        { label: "专属称号", value: titleName }
       ]
     };
 
@@ -262,9 +367,8 @@
 
       var lid = normId(loc.id);
       var row = lid != null && state.exhibits ? state.exhibits[String(lid)] : null;
-      var icon = row && row.completed ? getStatusIcon(row.score, nq) : "🌱";
-      var line = icon + " " + (loc.routeShort || loc.title) + "  " +
-                 (row && row.completed ? row.score + "/" + nq + "分" : "未完成");
+      var score = row && row.completed ? row.score : 0;
+      var line = (loc.routeShort || loc.title) + "  " + score + "/" + nq;
       detailItems.push(line);
     }
 
@@ -284,9 +388,11 @@
     var grandMax = window.wxQuizStorage.grandMaxScore(LOCATIONS);
     if (grandMax < 1) grandMax = 16;
 
-    var posterData = preparePosterData(st, grandMax);
+    var checkinCount = getCheckinCount();
+    var totalTimeStr = document.getElementById("stat-time") ? document.getElementById("stat-time").textContent.replace('⏱️ ', '') : "--";
 
-    // 显示加载提示
+    var posterData = preparePosterData(st, grandMax, checkinCount, totalTimeStr);
+
     showLoadingToast();
 
     window.PosterGenerator.generateAchievementPoster(posterData.userData, posterData.detailItems)
@@ -309,6 +415,10 @@
       showPosterError("无法生成海报，请重试");
       return;
     }
+
+    var checkinCount = getCheckinCount();
+    var totalTimeStr = document.getElementById("stat-time") ? document.getElementById("stat-time").textContent.replace('⏱️ ', '') : "--";
+    var titleName = getTitle(checkinCount, state.totalScore);
 
     var w = 750;
     var h = 1200;
@@ -344,51 +454,44 @@
       ctx.fillText(canvasNickname + " 的红色传承", w / 2, 148);
     }
 
-    ctx.fillStyle = "#555555";
-    ctx.font = "28px 'Noto Sans SC', sans-serif";
-    ctx.fillText("知识问答成就证书", w / 2, 190);
+    var leftX = 80;
+    var rightX = 400;
+    var statY = 220;
 
-    ctx.fillStyle = "#b8923a";
-    ctx.font = "bold 56px 'Noto Sans SC', sans-serif";
-    var titleLine = state.title || "继续学习，砥砺初心";
-    ctx.fillText(titleLine, w / 2, 360);
-
-    ctx.fillStyle = "#333333";
-    ctx.font = "36px 'Noto Sans SC', sans-serif";
-    ctx.fillText(
-      "答题总得分  " + state.totalScore + " / " + grandMax,
-      w / 2,
-      460
-    );
-
-    ctx.font = "28px 'Noto Sans SC', sans-serif";
-    ctx.fillStyle = "#666666";
-    var c = window.wxQuizStorage
-      ? window.wxQuizStorage.countCompletedWithQuiz(LOCATIONS)
-      : { done: 0, withQuiz: 4 };
-    ctx.fillText("已完成展点  " + c.done + " / " + c.withQuiz, w / 2, 520);
-
-    var y = 620;
     ctx.textAlign = "left";
-    ctx.font = "26px 'Noto Sans SC', sans-serif";
-    ctx.fillStyle = "#444444";
-    ctx.fillText("各展点得分摘要", 60, y);
-    y += 50;
+    ctx.font = "18px 'Noto Sans SC', sans-serif";
+    ctx.fillStyle = "#7A1528";
+    ctx.fillText("打卡进度", leftX, statY);
+    ctx.fillText("答题得分", leftX, statY + 60);
+    ctx.fillText("总用时", rightX, statY);
+    ctx.fillText("专属称号", rightX, statY + 60);
+
+    ctx.font = "bold 28px 'Noto Sans SC', sans-serif";
+    ctx.fillStyle = "#D4A843";
+    ctx.fillText(checkinCount + " / 4", leftX, statY + 32);
+    ctx.fillText(state.totalScore + " / " + grandMax, leftX, statY + 92);
+    ctx.fillText(totalTimeStr, rightX, statY + 32);
+    ctx.fillText(titleName, rightX, statY + 92);
+
+    var y = 380;
+    ctx.textAlign = "left";
+    ctx.font = "bold 22px 'Noto Sans SC', sans-serif";
+    ctx.fillStyle = "#7A1528";
+    ctx.fillText("各展点得分", 60, y);
+    y += 40;
+
+    ctx.font = "22px 'Noto Sans SC', sans-serif";
     for (var i = 0; i < LOCATIONS.length && i < 4; i++) {
       var loc = LOCATIONS[i];
       var nq = nQuestions(loc);
       if (nq < 1) continue;
       var lid = normId(loc.id);
       var row = lid != null && state.exhibits ? state.exhibits[String(lid)] : null;
-      var line =
-        (loc.routeShort || loc.title || "展点") +
-        "  " +
-        (row && row.completed
-          ? row.score + "/" + nq + " 分"
-          : "未完成");
+      var score = row && row.completed ? row.score : 0;
+      var line = (loc.routeShort || loc.title || "展点") + "  " + score + "/" + nq;
       ctx.fillStyle = row && row.completed ? "#2e7d32" : "#999999";
       ctx.fillText(line, 60, y);
-      y += 44;
+      y += 38;
     }
 
     var now = new Date();
@@ -407,7 +510,6 @@
     );
     ctx.fillText("扫码或搜索访问官方导览", w / 2, h - 82);
 
-    // 转换为图片并显示预览
     try {
       var dataUrl = canvas.toDataURL("image/png");
       showPosterPreview(dataUrl);
@@ -617,10 +719,12 @@
   function run() {
     var main = document.getElementById("achievement-main");
     var errEl = document.getElementById("achievement-error");
+    var emptyEl = document.getElementById("achievement-empty");
     var listEl = document.getElementById("achievement-exhibit-list");
     var encouragementEl = document.getElementById("achievement-encouragement");
     var progressFillEl = document.getElementById("achievement-progress-fill");
     var progressTextEl = document.getElementById("achievement-progress-text");
+    var titleBadgeEl = document.getElementById("achievement-title-badge");
 
     loadLocations()
       .then(function () {
@@ -642,26 +746,72 @@
         }
 
         var c = window.wxQuizStorage.countCompletedWithQuiz(LOCATIONS);
+        var checkinCount = getCheckinCount();
+        var hasAnyAchievement = c.done > 0 || checkinCount > 0;
+
+        getCheckinCountFromServer().then(function(serverCheckinCount) {
+          checkinCount = serverCheckinCount;
+
+        if (!hasAnyAchievement) {
+          if (main) main.hidden = true;
+          if (emptyEl) emptyEl.hidden = false;
+          if (errEl) errEl.hidden = true;
+          return;
+        }
+
+        if (titleBadgeEl) {
+          var titleText = getTitle(checkinCount, state.totalScore);
+          titleBadgeEl.innerHTML = '<span class="achievement-title-badge__inner">' + titleText + '</span>';
+        }
 
         document.getElementById("stat-completed").textContent =
-          c.done + "/" + c.withQuiz;
+          checkinCount + "/4";
         document.getElementById("stat-score").textContent =
           state.totalScore + "/" + grandMax;
-        document.getElementById("stat-title").textContent =
-          state.title || "继续加油，完成全部展点问答";
 
-        // 为称号添加勋章图标
-        var titleEl = document.getElementById("stat-title");
-        var titleText = state.title || "继续加油，完成全部展点问答";
-        titleEl.className = "achievement-stat-card__title achievement-stat-card__title--badge";
-        titleEl.textContent = titleText;
+        var nickname = "";
+        if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+          nickname = window.WxCommon.getUserNickname();
+        } else {
+          try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+        }
 
-        // 设置鼓励文案
+        var timeEl = document.getElementById("stat-time");
+        if (timeEl && nickname) {
+          fetch('/api/quiz/time-by-user?nickname=' + encodeURIComponent(nickname), { cache: 'no-store' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+              if (data.success && data.times) {
+                var totalSeconds = 0;
+                var hasAny = false;
+                for (var k in data.times) {
+                  if (data.times[k] > 0) {
+                    totalSeconds += data.times[k];
+                    hasAny = true;
+                  }
+                }
+                if (hasAny) {
+                  var mins = Math.floor(totalSeconds / 60);
+                  var secs = totalSeconds % 60;
+                  timeEl.textContent = '\u23F1\uFE0F ' + mins + '分' + secs + '秒';
+                } else {
+                  timeEl.textContent = '\u23F1\uFE0F --';
+                }
+              } else {
+                timeEl.textContent = '\u23F1\uFE0F --';
+              }
+            })
+            .catch(function() {
+              timeEl.textContent = '\u23F1\uFE0F --';
+            });
+        } else if (timeEl) {
+          timeEl.textContent = '\u23F1\uFE0F --';
+        }
+
         if (encouragementEl) {
           encouragementEl.textContent = getEncouragementText(state.totalScore, grandMax);
         }
 
-        // 设置进度条
         if (progressFillEl && progressTextEl) {
           var percentage = Math.round((state.totalScore / grandMax) * 100);
           setTimeout(function() {
@@ -670,16 +820,18 @@
           }, 300);
         }
 
-        renderExhibitList(listEl, state);
+        renderExhibitList(listEl, state, nickname);
 
         if (main) main.hidden = false;
+        if (emptyEl) emptyEl.hidden = true;
         if (errEl) errEl.hidden = true;
 
-        // 绑定分享按钮事件
         var btn = document.getElementById("btn-share-poster");
         if (btn) {
           btn.addEventListener("click", generatePosterWithQR);
         }
+
+        }); // end getCheckinCountFromServer().then
       })
       .catch(function (e) {
         if (errEl) {
@@ -689,6 +841,7 @@
           errEl.hidden = false;
         }
         if (main) main.hidden = true;
+        if (emptyEl) emptyEl.hidden = true;
       });
   }
 

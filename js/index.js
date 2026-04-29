@@ -74,11 +74,10 @@
         '  <div class="checkin-progress-fill" id="checkin-progress-home" style="width: ' + percent + '%;"></div>' +
         '</div>' +
         '<div class="checkin-progress-actions" id="checkin-actions">' +
-        '  <p class="checkin-progress-msg">集齐四个展点解锁纪念证书</p>';
+        '  <p class="checkin-progress-msg">集齐四个展点解锁红色传承之旅</p>';
 
-      // 如果集齐四个展点，添加查看证书按钮
       if (total === 4 && window.wxCheckin.isCertificateUnlocked()) {
-        html += '  <a class="checkin-view-certificate-btn" href="certificate.html">🎉 查看证书</a>';
+        html += '  <a class="checkin-view-certificate-btn" href="achievement.html">🎉 查看成就</a>';
       }
 
       html += '</div></div>';
@@ -232,6 +231,12 @@
     renderRouteTimeline(fake, preferredUrlId);
   }
 
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
   function init() {
     if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
       window.WxCommon.getUserNickname();
@@ -301,6 +306,9 @@
 
     loadActivityTicker();
     initFootprintMap();
+    if (window.WxCommon && typeof window.WxCommon.initMessageWall === 'function') {
+      window.WxCommon.initMessageWall('msg-wall-home');
+    }
   }
 
   function loadActivityTicker() {

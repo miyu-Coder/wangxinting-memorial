@@ -11,66 +11,6 @@
     return Array.from(String(s || '')).length;
   }
 
-  function escapeHtml(s) {
-    return String(s || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  function formatTime(iso) {
-    if (!iso) return '';
-    try {
-      var norm = String(iso).trim().replace(' ', 'T');
-      var d = new Date(norm);
-      if (isNaN(d.getTime())) return iso;
-      var Y = d.getFullYear();
-      var M = String(d.getMonth() + 1).padStart(2, '0');
-      var D = String(d.getDate()).padStart(2, '0');
-      var h = String(d.getHours()).padStart(2, '0');
-      var m = String(d.getMinutes()).padStart(2, '0');
-      return Y + '-' + M + '-' + D + ' ' + h + ':' + m;
-    } catch (e) {
-      return iso;
-    }
-  }
-
-  function hashNicknameToColor(nick) {
-    var str = nick || '游客';
-    var hash = 0;
-    for (var i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    var r = 255;
-    var g = 192 + Math.abs(hash) % 48;
-    var b = 192 + Math.abs(hash >> 8) % 48;
-    return 'rgb(' + r + ',' + g + ',' + b + ')';
-  }
-
-  function getInitial(nick) {
-    var displayNick = nick || '参观者';
-    if (window.WxCommon && typeof window.WxCommon.displayNickname === 'function') {
-      displayNick = window.WxCommon.displayNickname(nick);
-    }
-    var str = displayNick.trim();
-    if (!str) return '游';
-    var chars = Array.from(str);
-    return chars[0];
-  }
-
-  function queryFirst(arr, root) {
-    root = root || document;
-    for (var i = 0; i < arr.length; i++) {
-      try {
-        var el = root.querySelector(arr[i]);
-        if (el) return el;
-      } catch (e) {}
-    }
-    return null;
-  }
-
   function showMessageDialog(title, btnText) {
     var mask = document.createElement('div');
     mask.className = 'flower-tribute-modal-mask';
@@ -99,28 +39,57 @@
     document.body.appendChild(mask);
   }
 
-  var LIST_SELECTORS = ['#messageList', '#messages-list', '.messages-list', '#message-list', '.message-list'];
-  var NICK_SELECTORS = ['#nicknameInput', '#nickname', '#msg-nickname', 'input[name="nickname"]'];
-  var CONTENT_SELECTORS = ['#messageInput', '#content', '#msg-content', 'textarea[name="content"]'];
-
-  var listEl = null;
-  var nickEl = null;
-  var contentEl = null;
-  var submitBtn = null;
-  var pagerEl = null;
-  var statsEl = null;
-
   function renderMessageItem(item) {
     var li = document.createElement('li');
     li.className = 'message-item';
 
+    // === 内联 escapeHtml ===
+    var nickname = (item.nickname || '参观者');
+    nickname = String(nickname).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    var content = (item.content || '');
+    content = String(content).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    // === 内联 getInitial ===
+    var initial = '游';
+    try {
+      if (window.WxCommon && typeof window.WxCommon.displayNickname === 'function') {
+        var dn = window.WxCommon.displayNickname(item.nickname);
+        if (dn) { var chars = Array.from(dn.trim()); if (chars.length > 0) initial = chars[0]; }
+      } else {
+        var str2 = (item.nickname || '参观者').trim();
+        if (str2) { var chars2 = Array.from(str2); if (chars2.length > 0) initial = chars2[0]; }
+      }
+    } catch(e) { initial = '游'; }
+
+    // === 内联 hashNicknameToColor ===
+    var bgColor = 'rgb(255,200,200)';
+    try {
+      var hashStr = item.nickname || '游客';
+      var hash = 0;
+      for (var hi = 0; hi < hashStr.length; hi++) { hash = hashStr.charCodeAt(hi) + ((hash << 5) - hash); }
+      bgColor = 'rgb(255,' + (192 + Math.abs(hash) % 48) + ',' + (192 + Math.abs(hash >> 8) % 48) + ')';
+    } catch(e) {}
+
+    // === 内联 formatTime ===
+    var timeStr = '';
+    try {
+      if (item.created_at) {
+        var iso = String(item.created_at).trim().replace(' ', 'T');
+        var d = new Date(iso);
+        if (!isNaN(d.getTime())) {
+          timeStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        }
+      }
+    } catch(e) {}
+
+    // === 构建 DOM ===
     var metaRow = document.createElement('div');
     metaRow.className = 'message-item__meta';
 
     var avatar = document.createElement('span');
     avatar.className = 'message-item__avatar';
-    avatar.style.background = hashNicknameToColor(item.nickname);
-    avatar.textContent = getInitial(item.nickname);
+    avatar.style.background = bgColor;
+    avatar.textContent = initial;
 
     var nickWrap = document.createElement('span');
     nickWrap.style.display = 'flex';
@@ -130,25 +99,21 @@
 
     var nick = document.createElement('span');
     nick.className = 'message-item__nick';
-    var displayNick = item.nickname || '参观者';
-    if (window.WxCommon && typeof window.WxCommon.displayNickname === 'function') {
-      displayNick = window.WxCommon.displayNickname(item.nickname);
-    }
-    nick.innerHTML = escapeHtml(displayNick);
+    nick.innerHTML = nickname;
 
     nickWrap.appendChild(avatar);
     nickWrap.appendChild(nick);
 
     var time = document.createElement('span');
     time.className = 'message-item__time';
-    time.textContent = formatTime(item.created_at || item.createdAt || '');
+    time.textContent = timeStr;
 
     metaRow.appendChild(nickWrap);
     metaRow.appendChild(time);
 
     var p = document.createElement('p');
     p.className = 'message-item__content';
-    p.innerHTML = escapeHtml(item.content || '').replace(/\n/g, '<br>');
+    p.innerHTML = content.replace(/\n/g, '<br>');
 
     var reply = document.createElement('div');
     reply.className = 'message-item__reply';
@@ -159,8 +124,7 @@
     replyBtn.addEventListener('click', function () {
       var textarea = document.getElementById('messageInput');
       if (textarea) {
-        var prefix = '@' + (item.nickname || '游客') + ' ';
-        textarea.value = prefix;
+        textarea.value = '@' + (item.nickname || '游客') + ' ';
         textarea.focus();
       }
     });
@@ -173,12 +137,13 @@
   }
 
   function updateStats() {
-    if (!statsEl) return;
+    var el = document.getElementById('msgStats');
+    if (!el) return;
     if (totalItems === 0) {
-      statsEl.textContent = '';
+      el.textContent = '';
       return;
     }
-    statsEl.textContent = '\u5171 ' + totalItems + ' \u6761\u7559\u8A00';
+    el.textContent = '\u5171 ' + totalItems + ' \u6761\u7559\u8A00';
   }
 
   function getVisiblePages(current, total) {
@@ -198,14 +163,15 @@
   }
 
   function renderPager() {
-    if (!pagerEl) return;
-    pagerEl.innerHTML = '';
+    var el = document.getElementById('msgPager');
+    if (!el) return;
+    el.innerHTML = '';
 
     if (totalPages <= 1) {
-      pagerEl.style.display = 'none';
+      el.style.display = 'none';
       return;
     }
-    pagerEl.style.display = 'flex';
+    el.style.display = 'flex';
 
     var prevBtn = document.createElement('button');
     prevBtn.className = 'msg-pager__btn msg-pager__btn--nav';
@@ -214,7 +180,7 @@
     prevBtn.addEventListener('click', function () {
       if (currentPage > 1) goToPage(currentPage - 1);
     });
-    pagerEl.appendChild(prevBtn);
+    el.appendChild(prevBtn);
 
     var visible = getVisiblePages(currentPage, totalPages);
     for (var i = 0; i < visible.length; i++) {
@@ -223,7 +189,7 @@
         var dots = document.createElement('span');
         dots.className = 'msg-pager__dots';
         dots.textContent = '...';
-        pagerEl.appendChild(dots);
+        el.appendChild(dots);
       } else {
         var pageBtn = document.createElement('button');
         pageBtn.className = 'msg-pager__btn';
@@ -234,7 +200,7 @@
             goToPage(p);
           });
         })(item);
-        pagerEl.appendChild(pageBtn);
+        el.appendChild(pageBtn);
       }
     }
 
@@ -245,7 +211,7 @@
     nextBtn.addEventListener('click', function () {
       if (currentPage < totalPages) goToPage(currentPage + 1);
     });
-    pagerEl.appendChild(nextBtn);
+    el.appendChild(nextBtn);
   }
 
   function goToPage(page) {
@@ -259,39 +225,36 @@
   }
 
   function appendMessages(list) {
-    if (!listEl) return;
+    var el = document.getElementById('messageList');
+    if (!el) return;
 
-    listEl.innerHTML = '';
+    el.innerHTML = '';
 
     if (!Array.isArray(list) || !list.length) {
       var empty = document.createElement('p');
       empty.className = 'messages-empty';
       empty.textContent = '暂无留言，留下第一句敬意';
-      listEl.appendChild(empty);
-      updateEndingText();
+      el.appendChild(empty);
       return;
     }
 
     for (var i = 0; i < list.length; i++) {
       try {
         var node = renderMessageItem(list[i]);
-        listEl.appendChild(node);
-      } catch (e) {}
+        el.appendChild(node);
+      } catch (e) {
+        console.error('renderMessageItem error at index', i, e);
+      }
     }
 
-    updateEndingText();
-  }
-
-  function updateEndingText() {
-    if (typeof global.wxFlowers !== 'undefined' && typeof global.wxFlowers.updateEndingText === 'function') {
-      global.wxFlowers.updateEndingText();
-    }
+    // 删除 flowers.js 可能插入的重复"暂无留言"
+    var dupEnding = document.querySelector('.flower-wall-ending');
+    if (dupEnding) dupEnding.remove();
   }
 
   function loadMessages(page) {
     page = page || 1;
     if (isLoading) return Promise.resolve([]);
-
     isLoading = true;
 
     return fetch('/api/messages?page=' + page + '&limit=' + PAGE_SIZE, { cache: 'no-store' })
@@ -307,10 +270,9 @@
       .catch(function () { return { list: [], pagination: { total: 0, totalPages: 1 } }; })
       .then(function (result) {
         isLoading = false;
-        var pg = result.pagination;
         currentPage = page;
-        totalPages = pg.totalPages || Math.max(1, Math.ceil((pg.total || 0) / PAGE_SIZE));
-        totalItems = pg.total || 0;
+        totalPages = result.pagination.totalPages || Math.max(1, Math.ceil((result.pagination.total || 0) / PAGE_SIZE));
+        totalItems = result.pagination.total || 0;
         appendMessages(result.list);
         renderPager();
         updateStats();
@@ -326,107 +288,77 @@
   function submitMessage(nickname, content) {
     nickname = (nickname || '').trim() || '游客';
     content = (content || '').trim();
-    if (!content) {
-      showMessageDialog('留言内容不能为空', '知道了');
-      return Promise.resolve({ success: false, message: '留言内容不能为空' });
-    }
-    if (countChars(content) > 200) {
-      showMessageDialog('留言不能超过 200 字', '知道了');
-      return Promise.resolve({ success: false, message: '超过长度限制' });
-    }
+    if (!content) { showMessageDialog('留言内容不能为空', '知道了'); return Promise.resolve({ success: false }); }
+    if (countChars(content) > 200) { showMessageDialog('留言不能超过 200 字', '知道了'); return Promise.resolve({ success: false }); }
 
     return fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ nickname: nickname, content: content })
-    }).then(function (res) {
-      return res.json().catch(function () { return { success: false }; });
-    }).then(function (body) {
-      if (body && body.success) {
-        if (contentEl) contentEl.value = '';
-        showMessageDialog('留言提交成功，等待审核', '好的');
-        return { success: true };
-      }
-      var msg = (body && body.message) || '提交失败，请稍后重试';
-      showMessageDialog(msg, '知道了');
-      return { success: false, message: msg };
-    }).catch(function () {
-      showMessageDialog('提交失败，请稍后重试', '知道了');
-      return { success: false, message: '网络错误' };
-    });
+    }).then(function (res) { return res.json().catch(function () { return { success: false }; }); })
+      .then(function (body) {
+        if (body && body.success) {
+          var contentEl = document.getElementById('messageInput');
+          if (contentEl) contentEl.value = '';
+          showMessageDialog('留言提交成功，等待审核', '好的');
+          return { success: true };
+        }
+        showMessageDialog((body && body.message) || '提交失败，请稍后重试', '知道了');
+        return { success: false };
+      }).catch(function () {
+        showMessageDialog('提交失败，请稍后重试', '知道了');
+        return { success: false };
+      });
   }
 
   function handleSubmit(e) {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
-    var nick = nickEl ? nickEl.value : '';
-    var content = contentEl ? contentEl.value : '';
+    var nick = document.getElementById('nicknameInput');
+    var content = document.getElementById('messageInput');
+    var btn = document.getElementById('submitBtn');
+    var nickVal = nick ? nick.value : '';
+    var contentVal = content ? content.value : '';
 
-    if (nick && nick.trim()) {
+    if (nickVal && nickVal.trim()) {
       if (window.WxCommon && typeof window.WxCommon.updateUserNickname === 'function') {
-        window.WxCommon.updateUserNickname(nick.trim());
+        window.WxCommon.updateUserNickname(nickVal.trim());
       } else {
-        try {
-          localStorage.setItem('userNickname', nick.trim());
-        } catch (e) {}
+        try { localStorage.setItem('userNickname', nickVal.trim()); } catch (e) {}
       }
     }
-
-    if (submitBtn) submitBtn.disabled = true;
-    submitMessage(nick, content).then(function (result) {
-      if (submitBtn) submitBtn.disabled = false;
+    if (btn) btn.disabled = true;
+    submitMessage(nickVal, contentVal).then(function (result) {
+      if (btn) btn.disabled = false;
+      if (result && result.success) refreshMessages();
     });
   }
 
   function init() {
-    listEl = queryFirst(LIST_SELECTORS);
-    nickEl = queryFirst(NICK_SELECTORS);
-    contentEl = queryFirst(CONTENT_SELECTORS);
-    submitBtn = document.getElementById('submitBtn');
+    var nickEl = document.getElementById('nicknameInput');
+    var contentEl = document.getElementById('messageInput');
+    var submitBtn = document.getElementById('submitBtn');
 
-    pagerEl = document.getElementById('msgPager');
-    statsEl = document.getElementById('msgStats');
-
-    if (contentEl) {
-      contentEl.placeholder = '\uD83D\uDCAC 写下您想对将军说的话...';
-    }
+    if (contentEl) contentEl.placeholder = '\uD83D\uDCAC 写下您想对将军说的话...';
 
     if (nickEl) {
+      var saved = '';
       if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
-        var savedNickname = window.WxCommon.getUserNickname();
-        if (savedNickname && !nickEl.value) {
-          nickEl.value = savedNickname;
-        }
+        saved = window.WxCommon.getUserNickname();
       } else {
-        try {
-          var savedNickname = localStorage.getItem('userNickname') || '';
-          if (savedNickname && !nickEl.value) {
-            nickEl.value = savedNickname;
-          }
-        } catch (e) {}
+        try { saved = localStorage.getItem('userNickname') || ''; } catch (e) {}
       }
+      if (saved && !nickEl.value) nickEl.value = saved;
     }
 
     if (submitBtn) {
-      submitBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        handleSubmit(e);
-      });
+      submitBtn.addEventListener('click', function (e) { e.preventDefault(); handleSubmit(e); });
     }
 
     loadMessages(1);
   }
 
-  global.wxMessages = {
-    init: init,
-    loadMessages: loadMessages,
-    refreshMessages: refreshMessages,
-    submitMessage: submitMessage
-  };
+  global.wxMessages = { init: init, loadMessages: loadMessages, refreshMessages: refreshMessages, submitMessage: submitMessage };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  setTimeout(function () { init(); }, 500);
 
 })(window);

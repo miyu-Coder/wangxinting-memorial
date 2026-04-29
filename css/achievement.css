@@ -129,6 +129,10 @@ html.achievement-doc {
   margin-bottom: 28px;
 }
 
+.achievement-stats__grid--three {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
 .achievement-stat-card {
   background: var(--color-surface);
   border-radius: var(--radius);
@@ -166,6 +170,12 @@ html.achievement-doc {
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+}
+
+.achievement-stat-card__value--time {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #b8923a;
 }
 
 .achievement-stat-card__title {
@@ -236,6 +246,45 @@ html.achievement-doc {
   font-weight: 500;
   border-left: 4px solid var(--color-gold);
   animation: fadeInUp 0.6s ease-out;
+}
+
+.achievement-title-badge {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.achievement-title-badge__inner {
+  display: inline-block;
+  background: linear-gradient(135deg, #F5E6C8, #E8D5A8);
+  padding: 8px 24px;
+  border-radius: 24px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #8B6914;
+  animation: fadeInScale 0.8s ease-out;
+  box-shadow: 0 2px 8px rgba(139, 105, 20, 0.15);
+}
+
+.achievement-empty {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.achievement-empty__icon {
+  font-size: 3rem;
+  margin: 0 0 16px;
+}
+
+.achievement-empty__text {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.achievement-empty__btn {
+  display: inline-block;
+  min-width: 160px;
 }
 
 @keyframes fadeInUp {
@@ -386,6 +435,20 @@ html.achievement-doc {
   font-weight: 500;
 }
 
+.achievement-exhibit-item__checkin {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.achievement-exhibit-item__time {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: #b8923a;
+  font-weight: 500;
+}
+
 .achievement-exhibit-item--done {
   border-left: 3px solid #D4AF37;
 }
@@ -436,6 +499,25 @@ html.achievement-doc {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.achievement-btn-rankings {
+  min-height: 48px;
+  text-align: center;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #D4AF37;
+  color: #fff;
+  font-weight: 700;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.achievement-btn-rankings:hover {
+  background: #c49b2e;
+  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
 }
 
 .achievement-share-hint {

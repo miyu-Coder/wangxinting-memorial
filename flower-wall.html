@@ -8,7 +8,6 @@
   <meta name="description" content="向王新亭将军献花致敬，铭记革命先辈，传承红色精神。" />
   <title>致敬将军 · 献花墙 · 王新亭将军红色教育基地</title>
 
-  <!-- Open Graph 标签（微信/QQ分享用） -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="致敬将军 · 献花墙" />
   <meta property="og:description" content="向王新亭将军献花致敬，铭记革命先辈，传承红色精神。" />
@@ -58,9 +57,8 @@
         <a class="btn btn-secondary flower-wall-btn-back" href="index.html">← 返回首页</a>
       </div>
       
-      <!-- 留言板模块（插入：在 id="btn-offer-flower" 按钮下方） -->
       <div class="divider"><span>表达您的敬意</span></div>
-      <h3 class="section-title">💬 留言致敬</h3>
+      <h3 class="section-title" id="messages">💬 留言致敬</h3>
 
       <div class="message-module">
         <div class="message-inputs">
@@ -87,7 +85,6 @@
   </div>
 
   <script>
-    // 动态更新 Open Graph URL
     (function() {
       var ogUrl = document.getElementById("og-url");
       if (ogUrl) {
@@ -95,9 +92,21 @@
       }
     })();
   </script>
-  <script src="js/common.js?v=1"></script>
+  <script src="js/common.js?v=2"></script>
   <script src="js/flowers.js?v=3"></script>
-  <script src="js/messages.js?v=3"></script>
+  <script src="js/messages.js?v=4"></script>
+
+  <script>
+    if (window.location.hash === '#messages') {
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          var el = document.getElementById('messages');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 800);
+      });
+    }
+  </script>
+
   <script src="js/lazy-load.js?v=1" defer></script>
   <script>
     (function() {

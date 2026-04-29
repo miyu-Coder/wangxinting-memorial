@@ -276,72 +276,42 @@
 
       body.appendChild(detailList);
     } else {
-      if (options.userData && options.userData.title) {
-        var titleBlock = document.createElement('div');
-        titleBlock.style.cssText = [
-          'text-align: center',
-          'padding: 18px 20px',
-          'background: linear-gradient(135deg, rgba(212, 168, 67, 0.15), rgba(196, 30, 58, 0.08))',
-          'border-radius: 20px',
-          'box-shadow: inset 0 0 0 1px rgba(212, 168, 67, 0.18)'
-        ].join(';');
-
-        var titleLabel = document.createElement('div');
-        titleLabel.style.cssText = [
-          'font-size: 18px',
-          'color: #7A1528',
-          'margin-bottom: 10px'
-        ].join(';');
-        titleLabel.textContent = '我的专属称号';
-        titleBlock.appendChild(titleLabel);
-
-        var titleText = document.createElement('div');
-        titleText.style.cssText = [
-          'font-size: 44px',
-          'font-weight: 900',
-          'color: #D4A843',
-          'line-height: 1.1',
-          'letter-spacing: 0.03em'
-        ].join(';');
-        titleText.textContent = '🏅 ' + options.userData.title;
-        titleBlock.appendChild(titleText);
-        body.appendChild(titleBlock);
-      }
-
       if (options.userData && options.userData.stats) {
         var statBlock = document.createElement('div');
         statBlock.style.cssText = [
           'display: grid',
           'grid-template-columns: repeat(2, minmax(0, 1fr))',
-          'gap: 12px'
+          'gap: 14px',
+          'margin-bottom: 20px'
         ].join(';');
 
         options.userData.stats.forEach(function (stat, index) {
           var statCard = document.createElement('div');
           statCard.style.cssText = [
-            'padding: 18px',
-            'border-radius: 18px',
-            'background: rgba(196, 30, 58, 0.08)',
-            'min-height: 110px',
+            'padding: 16px 14px',
+            'border-radius: 14px',
+            'background: rgba(196, 30, 58, 0.07)',
             'display: flex',
             'flex-direction: column',
             'justify-content: center',
-            'gap: 6px'
+            'gap: 4px'
           ].join(';');
 
           var statLabel = document.createElement('div');
           statLabel.style.cssText = [
             'color: #7A1528',
-            'font-size: 16px'
+            'font-size: 14px',
+            'font-weight: 500'
           ].join(';');
           statLabel.textContent = stat.label;
           statCard.appendChild(statLabel);
 
           var statValue = document.createElement('div');
           statValue.style.cssText = [
-            'font-size: 32px',
+            'font-size: 24px',
             'font-weight: 800',
-            'color: #D4A843'
+            'color: #D4A843',
+            'line-height: 1.2'
           ].join(';');
           statValue.textContent = stat.value;
           statCard.appendChild(statValue);
@@ -353,29 +323,40 @@
       }
 
       if (options.detailItems && options.detailItems.length > 0) {
-        var detailGrid = document.createElement('div');
-        detailGrid.style.cssText = [
+        var detailTitle = document.createElement('div');
+        detailTitle.style.cssText = [
+          'font-size: 16px',
+          'font-weight: 700',
+          'color: #7A1528',
+          'margin-bottom: 10px',
+          'padding-left: 4px'
+        ].join(';');
+        detailTitle.textContent = '各展点得分';
+        body.appendChild(detailTitle);
+
+        var detailList = document.createElement('div');
+        detailList.style.cssText = [
           'display: grid',
           'grid-template-columns: repeat(2, minmax(0, 1fr))',
-          'gap: 12px'
+          'gap: 10px'
         ].join(';');
 
         options.detailItems.forEach(function (item) {
           var detailItem = document.createElement('div');
           detailItem.style.cssText = [
-            'padding: 14px',
-            'background: rgba(196, 30, 58, 0.08)',
-            'border-radius: 16px',
-            'min-height: 90px',
-            'font-size: 18px',
+            'padding: 12px 14px',
+            'background: rgba(196, 30, 58, 0.06)',
+            'border-radius: 10px',
+            'font-size: 16px',
             'color: #5E2A2A',
-            'line-height: 1.4'
+            'line-height: 1.3',
+            'font-weight: 500'
           ].join(';');
           detailItem.textContent = item;
-          detailGrid.appendChild(detailItem);
+          detailList.appendChild(detailItem);
         });
 
-        body.appendChild(detailGrid);
+        body.appendChild(detailList);
       }
     }
 
@@ -434,11 +415,10 @@
       'display: inline-flex',
       'justify-content: center',
       'align-items: center',
-      'width: 220px',
-      'height: 220px',
+      'width: 180px',
+      'height: 180px',
       'background: #FFFFFF',
-      'border-radius: 16px',
-      'box-shadow: inset 0 0 0 1px rgba(196, 30, 58, 0.1)'
+      'border-radius: 12px'
     ].join(';');
     qrWrapper.appendChild(qrPlaceholder);
     qrSection.appendChild(qrWrapper);
@@ -534,8 +514,8 @@
           qrPlaceholder.innerHTML = '';
           qrCanvas.style.cssText = [
             'display: block',
-            'width: 200px',
-            'height: 200px'
+            'width: 180px',
+            'height: 180px'
           ].join(';');
           qrPlaceholder.appendChild(qrCanvas);
           console.log('🎨 7. 二维码 Canvas 已插入到海报 DOM');
@@ -609,10 +589,16 @@
                   String(now.getMonth() + 1).padStart(2, '0') + '月' +
                   String(now.getDate()).padStart(2, '0') + '日';
 
+    var checkinLabel = '';
+    if (userData && userData.checkinLabel) {
+      checkinLabel = userData.checkinLabel;
+    }
+
     return generatePoster({
       width: 750,
       height: 1100,
       type: '知识问答成就证书',
+      subtitle: checkinLabel,
       userData: userData,
       detailItems: detailItems,
       detailTitle: '各展点得分',

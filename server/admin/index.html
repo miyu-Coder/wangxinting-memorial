@@ -510,6 +510,12 @@
     ::-webkit-scrollbar-thumb { background: #C8102E; border-radius: 2px; }
     ::-webkit-scrollbar-thumb:hover { background: #A00B24; }
     * { scrollbar-width: thin; scrollbar-color: #C8102E #F5F5F5; }
+
+    .quiz-advanced-stats { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .adv-stat-card { flex: 1; min-width: 140px; background: #FFF8EF; border: 1px solid rgba(212,168,67,0.25); border-radius: 8px; padding: 12px 16px; text-align: center; }
+    .adv-stat-label { display: block; font-size: 12px; color: #999; margin-bottom: 4px; }
+    .adv-stat-value { display: block; font-size: 18px; font-weight: 700; color: #C8102E; }
+    .adv-stat-sub { display: block; font-size: 11px; color: #999; margin-top: 2px; }
   </style>
 </head>
 <body class="admin-page">
@@ -659,6 +665,12 @@
         </div>
 
         <div class="chart-section">
+          <h3>⏱️ 各展点平均答题时长</h3>
+          <div id="quizTimeChart" style="width: 100%; height: 280px;"></div>
+          <p class="chart-hint">展示各展点的平均答题用时（秒），帮助评估题目难度和用户体验</p>
+        </div>
+
+        <div class="chart-section">
           <h3>📊 今日访问时段分布</h3>
           <div id="hourlyChart" style="width: 100%; height: 280px;"></div>
           <p class="chart-hint">展示今日各时段访问量分布，高峰时段以金色高亮标识</p>
@@ -728,6 +740,21 @@
         </div>
         <div id="quizRecordsView">
           <p class="page-summary" id="quizSummary">共 0 条答题记录 · 平均分 0 分 · 满分率 0%</p>
+          <div class="quiz-advanced-stats" id="quizAdvancedStats">
+            <div class="adv-stat-card">
+              <span class="adv-stat-label">⏱️ 平均用时</span>
+              <span class="adv-stat-value" id="advAvgTime">--</span>
+            </div>
+            <div class="adv-stat-card">
+              <span class="adv-stat-label">🏃 最快用时</span>
+              <span class="adv-stat-value" id="advFastestTime">--</span>
+              <span class="adv-stat-sub" id="advFastestUser"></span>
+            </div>
+            <div class="adv-stat-card">
+              <span class="adv-stat-label">📊 总答题人次</span>
+              <span class="adv-stat-value" id="advTotalCount">--</span>
+            </div>
+          </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
             <div class="message-filter" style="margin-bottom: 0; overflow-x: auto; -webkit-overflow-scrolling: touch;">
               <button class="filter-btn quiz-filter-btn is-active" data-exhibit="all">全部展点</button>
@@ -865,10 +892,13 @@
       <section id="souvenirTab" class="tab-content">
         <h2 class="page-title">纪念品预约</h2>
         <p class="page-summary">查看和管理纪念品预约记录</p>
-        <div class="message-filter" id="souvenirFilter">
-          <button class="filter-btn is-active" data-status="">全部</button>
-          <button class="filter-btn" data-status="0">待领取</button>
-          <button class="filter-btn" data-status="1">已领取</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+          <div class="message-filter" id="souvenirFilter" style="margin-bottom: 0; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <button class="filter-btn is-active" data-status="">全部</button>
+            <button class="filter-btn" data-status="0">待领取</button>
+            <button class="filter-btn" data-status="1">已领取</button>
+          </div>
+          <button class="quiz-export-btn" onclick="exportSouvenir()">📥 导出预约数据</button>
         </div>
         <div class="chart-section" style="padding:0;overflow-x:auto;">
           <table class="log-table">
@@ -919,6 +949,7 @@
     let checkinChart = null;
     let trendChart = null;
     let quizStatsChart = null;
+    let quizTimeChart = null;
 
     function showToast(message, isError = false) {
       const container = document.getElementById('toastContainer');
@@ -1164,6 +1195,9 @@
       }
       if (!quizStatsChart) {
         quizStatsChart = echarts.init(document.getElementById('quizStatsChart'));
+      }
+      if (!quizTimeChart) {
+        quizTimeChart = echarts.init(document.getElementById('quizTimeChart'));
       }
     }
 
@@ -1533,11 +1567,128 @@
       quizStatsChart.setOption(option);
     }
 
+    function renderQuizTimeChart(data) {
+      if (!quizTimeChart) return;
+
+      const exhibitNames = ['陈列馆', '故居', '纪念广场', '装备展区'];
+      const times = [];
+      const counts = [];
+      let hasData = false;
+
+      for (let i = 1; i <= 4; i++) {
+        const t = (data.exhibitTimes || []).find(function(r) { return r.exhibit_id === i; });
+        const c = (data.exhibitCounts || []).find(function(r) { return r.exhibit_id === i; });
+        const avgTime = t ? t.avg_time : 0;
+        const count = c ? c.count : 0;
+        times.push(avgTime);
+        counts.push(count);
+        if (avgTime > 0) hasData = true;
+      }
+
+      const option = {
+        backgroundColor: 'transparent',
+        grid: { left: '12%', right: '8%', top: '18%', bottom: '12%' },
+        legend: {
+          data: ['平均时长(秒)', '答题人次'],
+          top: 0,
+          textStyle: { color: '#6B7280', fontSize: 12 }
+        },
+        xAxis: {
+          type: 'category',
+          data: exhibitNames,
+          axisLine: { lineStyle: { color: '#E5E7EB' } },
+          axisLabel: { color: '#6B7280', fontSize: 12 }
+        },
+        yAxis: [
+          {
+            type: 'value',
+            name: '秒',
+            minInterval: 1,
+            axisLine: { show: false },
+            splitLine: { lineStyle: { color: '#F0F0F0' } },
+            axisLabel: { color: '#6B7280' }
+          },
+          {
+            type: 'value',
+            name: '人次',
+            minInterval: 1,
+            axisLine: { show: false },
+            splitLine: { show: false },
+            axisLabel: { color: '#6B7280' }
+          }
+        ],
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#E5E7EB',
+          textStyle: { color: '#333333' },
+          formatter: function(params) {
+            var html = params[0].axisValue + '<br/>';
+            params.forEach(function(p) {
+              var unit = p.seriesName.indexOf('时长') >= 0 ? '秒' : '人次';
+              html += p.marker + ' ' + p.seriesName + '：' + p.value + ' ' + unit + '<br/>';
+            });
+            return html;
+          }
+        },
+        series: [
+          {
+            name: '平均时长(秒)',
+            type: 'bar',
+            data: times,
+            barWidth: 28,
+            itemStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#D4AF37' },
+                { offset: 1, color: '#B8922E' }
+              ]),
+              borderRadius: [4, 4, 0, 0]
+            },
+            label: {
+              show: true,
+              position: 'top',
+              color: '#D4AF37',
+              fontSize: 11,
+              formatter: function(p) { return p.value > 0 ? p.value + 's' : ''; }
+            }
+          },
+          {
+            name: '答题人次',
+            type: 'line',
+            yAxisIndex: 1,
+            data: counts,
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 8,
+            lineStyle: { color: '#C8102E', width: 3 },
+            itemStyle: { color: '#C8102E' },
+            label: { show: true, position: 'top', color: '#C8102E', fontSize: 11, fontWeight: 600 }
+          }
+        ]
+      };
+
+      if (!hasData) {
+        option.graphic = {
+          type: 'text',
+          left: 'center',
+          top: 'middle',
+          style: {
+            text: '暂无答题时长数据',
+            fontSize: 16,
+            fill: '#999999'
+          }
+        };
+      }
+
+      quizTimeChart.setOption(option);
+    }
+
     window.addEventListener('resize', function () {
       if (flowerChart) flowerChart.resize();
       if (checkinChart) checkinChart.resize();
       if (trendChart) trendChart.resize();
       if (quizStatsChart) quizStatsChart.resize();
+      if (quizTimeChart) quizTimeChart.resize();
     });
 
     function renderCompare(elementId, current, previous, label) {
@@ -1859,6 +2010,12 @@
           renderQuizStatsChart(quizStatsData.stats || {});
         }
 
+        const quizTimeRes = await fetch('/api/admin/quiz/time-stats');
+        const quizTimeData = await quizTimeRes.json();
+        if (quizTimeData.success) {
+          renderQuizTimeChart(quizTimeData);
+        }
+
         const hourlyRes = await fetch('/api/stats/hourly-today');
         const hourlyData = await hourlyRes.json();
         if (hourlyData.success) {
@@ -2154,8 +2311,48 @@
         const data = await res.json();
         allQuizData = data.data || [];
         renderQuizRecords();
+        loadAdvancedQuizStats();
       } catch (err) {
         console.error('Error loading quiz records:', err);
+      }
+    }
+
+    async function loadAdvancedQuizStats() {
+      try {
+        const res = await fetch('/api/admin/quiz/time-stats');
+        const data = await res.json();
+        if (data.success) {
+          var avgEl = document.getElementById('advAvgTime');
+          var fastEl = document.getElementById('advFastestTime');
+          var fastUserEl = document.getElementById('advFastestUser');
+          var totalEl = document.getElementById('advTotalCount');
+          if (avgEl) {
+            if (data.avgTime > 0) {
+              var avgSec = data.avgTime;
+              avgEl.textContent = avgSec >= 60 ? Math.floor(avgSec/60) + '分' + (avgSec%60) + '秒' : avgSec + '秒';
+            } else {
+              avgEl.textContent = '暂无数据';
+            }
+          }
+          if (fastEl) {
+            if (data.fastestTime > 0) {
+              var fastSec = data.fastestTime;
+              fastEl.textContent = fastSec >= 60 ? Math.floor(fastSec/60) + '分' + (fastSec%60) + '秒' : fastSec + '秒';
+            } else {
+              fastEl.textContent = '暂无数据';
+            }
+          }
+          if (fastUserEl) {
+            fastUserEl.textContent = data.fastestUser && data.fastestUser !== '--' ? 'by ' + data.fastestUser : '';
+          }
+          if (totalEl) {
+            var totalCount = 0;
+            (data.exhibitCounts || []).forEach(function(r) { totalCount += r.count; });
+            totalEl.textContent = totalCount > 0 ? totalCount : '暂无数据';
+          }
+        }
+      } catch (err) {
+        console.error('Error loading advanced quiz stats:', err);
       }
     }
 
@@ -2826,6 +3023,13 @@
       if (!url || !filename) return;
       
       downloadCSV(url, filename);
+    }
+
+    function exportSouvenir() {
+      var activeBtn = document.querySelector('#souvenirFilter .filter-btn.is-active');
+      var status = activeBtn ? (activeBtn.getAttribute('data-status') || 'all') : 'all';
+      var url = '/api/admin/export/souvenir?status=' + encodeURIComponent(status);
+      downloadCSV(url, '纪念品预约数据.csv');
     }
 
     document.getElementById('selectAllMsg').addEventListener('change', function() {

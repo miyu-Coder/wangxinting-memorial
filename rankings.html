@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="王新亭将军红色教育基地答题排行榜，看看谁是最强红色知识达人！" />
+  <title>答题排行榜 · 王新亭将军红色教育基地</title>
+
+  <link rel="stylesheet" href="css/loading-progress.css" />
+  <script src="js/loading-progress.js"></script>
+  <script src="js/font-size.js?v=1"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/rankings.css" />
+</head>
+<body class="rankings-page">
+  <button type="button" class="wx-font-toggle" id="wx-font-toggle">Aa</button>
+  <div class="page-shell page-shell--official">
+    <header class="rankings-hero">
+      <div class="rankings-hero__overlay"></div>
+      <div class="rankings-hero__content">
+        <p class="rankings-hero__kicker">王新亭将军红色教育基地</p>
+        <h1 class="rankings-hero__title">🏆 答题排行榜</h1>
+        <p class="rankings-hero__sub">红色知识达人 · 谁与争锋</p>
+      </div>
+    </header>
+
+    <main class="rankings-main">
+      <section class="rankings-prizes" aria-labelledby="prizes-heading">
+        <h2 id="prizes-heading" class="rankings-section-title">🏆 答题赢好礼</h2>
+        <div class="rankings-prizes__list">
+          <div class="rankings-prize-item rankings-prize-item--gold">
+            <span class="rankings-prize-item__medal">🥇</span>
+            <span class="rankings-prize-item__rank">第1名</span>
+            <span class="rankings-prize-item__name">将军纪念礼盒（四件套精装版）</span>
+          </div>
+          <div class="rankings-prize-item rankings-prize-item--silver">
+            <span class="rankings-prize-item__medal">🥈</span>
+            <span class="rankings-prize-item__rank">第2-3名</span>
+            <span class="rankings-prize-item__name">任选两件纪念品</span>
+          </div>
+          <div class="rankings-prize-item rankings-prize-item--bronze">
+            <span class="rankings-prize-item__medal">🥉</span>
+            <span class="rankings-prize-item__rank">第4-10名</span>
+            <span class="rankings-prize-item__name">任选一件纪念品</span>
+          </div>
+          <div class="rankings-prize-item rankings-prize-item--note">
+            <span class="rankings-prize-item__medal">📝</span>
+            <span class="rankings-prize-item__rank">满分奖</span>
+            <span class="rankings-prize-item__name">对应展点纪念品（单展点满分即可在详情页预约）</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="rankings-my-rank" id="my-rank-section" hidden>
+        <div class="my-rank-card">
+          <span class="my-rank-label">我的排名</span>
+          <span class="my-rank-value" id="my-rank-value">--</span>
+          <span class="my-rank-score" id="my-rank-score"></span>
+        </div>
+        <button type="button" class="btn btn-gold rankings-claim-btn" id="claim-prize-btn" hidden>🎁 预约领奖</button>
+      </section>
+
+      <section class="rankings-podium" id="rankings-podium" hidden>
+        <div class="podium-item podium-item--2" id="podium-2">
+          <div class="podium-avatar podium-avatar--silver">🥈</div>
+          <div class="podium-name" id="podium-name-2">--</div>
+          <div class="podium-score" id="podium-score-2">--</div>
+          <div class="podium-bar podium-bar--2"></div>
+        </div>
+        <div class="podium-item podium-item--1" id="podium-1">
+          <div class="podium-avatar podium-avatar--gold">🥇</div>
+          <div class="podium-name" id="podium-name-1">--</div>
+          <div class="podium-score" id="podium-score-1">--</div>
+          <div class="podium-bar podium-bar--1"></div>
+        </div>
+        <div class="podium-item podium-item--3" id="podium-3">
+          <div class="podium-avatar podium-avatar--bronze">🥉</div>
+          <div class="podium-name" id="podium-name-3">--</div>
+          <div class="podium-score" id="podium-score-3">--</div>
+          <div class="podium-bar podium-bar--3"></div>
+        </div>
+      </section>
+
+      <section class="rankings-list-section">
+        <div class="rankings-list-header">
+          <span class="rankings-col rankings-col--rank">排名</span>
+          <span class="rankings-col rankings-col--name">昵称</span>
+          <span class="rankings-col rankings-col--score">总分</span>
+          <span class="rankings-col rankings-col--time">用时</span>
+          <span class="rankings-col rankings-col--rankingscore">排名分</span>
+        </div>
+        <div class="rankings-list" id="rankings-list">
+          <div class="rankings-empty">加载中...</div>
+        </div>
+      </section>
+
+      <div class="rankings-actions">
+        <a class="btn btn-secondary" href="achievement.html">返回成就页</a>
+        <a class="btn btn-primary btn-ripple" href="index.html">再访教育基地</a>
+      </div>
+    </main>
+
+    <footer class="site-footer site-footer--military" role="contentinfo">
+      <div class="site-footer__bar">
+        <span class="site-footer__star" aria-hidden="true">★</span>
+        <span class="site-footer__slogan">传承红色基因，担当强军重任</span>
+      </div>
+      <p class="site-footer__disclaimer">本页面为导览辅助，展陈内容以馆内说明为准</p>
+    </footer>
+  </div>
+
+  <div class="claim-modal" id="claim-modal" hidden>
+    <div class="claim-modal__overlay" onclick="document.getElementById('claim-modal').hidden=true"></div>
+    <div class="claim-modal__box">
+      <button type="button" class="claim-modal__close" id="claim-close" aria-label="关闭" onclick="document.getElementById('claim-modal').hidden=true">&times;</button>
+      <div class="claim-modal__title">🎁 预约领奖</div>
+      <div class="claim-modal__field">
+        <label>姓名</label>
+        <input type="text" id="claim-name" maxlength="20" placeholder="请输入真实姓名" />
+      </div>
+      <div class="claim-modal__field">
+        <label>手机号</label>
+        <input type="tel" id="claim-phone" maxlength="11" placeholder="请输入手机号" />
+      </div>
+      <div class="claim-modal__field">
+        <label>备注</label>
+        <input type="text" id="claim-note" maxlength="50" placeholder="选填" />
+      </div>
+      <div class="claim-modal__actions">
+        <button type="button" class="claim-modal__cancel" id="claim-cancel" onclick="document.getElementById('claim-modal').hidden=true">取消</button>
+        <button type="button" class="claim-modal__submit" id="claim-submit">提交预约</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js?v=2"></script>
+  <script>
+  (function() {
+    "use strict";
+
+    var myRankData = null;
+    var hasClaimed = false;
+
+    function formatTimeCost(seconds) {
+      if (!seconds || seconds <= 0) return '--';
+      var minutes = Math.floor(seconds / 60);
+      var secs = seconds % 60;
+      if (minutes > 0) {
+        return minutes + '分' + secs + '秒';
+      }
+      return secs + '秒';
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function showToast(message, duration) {
+      var existing = document.querySelector('.rankings-toast');
+      if (existing) existing.remove();
+      var toast = document.createElement('div');
+      toast.className = 'rankings-toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(function() {
+        toast.classList.add('rankings-toast--fade');
+      }, (duration || 2500) - 500);
+      setTimeout(function() {
+        if (toast.parentNode) toast.remove();
+      }, duration || 2500);
+    }
+
+    function renderRankings(data) {
+      var rankings = data.rankings || [];
+      var myRank = data.myRank;
+      var listEl = document.getElementById('rankings-list');
+      var podiumEl = document.getElementById('rankings-podium');
+      var myRankSection = document.getElementById('my-rank-section');
+      var claimBtn = document.getElementById('claim-prize-btn');
+
+      if (rankings.length === 0) {
+        listEl.innerHTML = '<div class="rankings-empty">暂无排行数据，快去答题吧！</div>';
+        return;
+      }
+
+      if (rankings.length >= 3) {
+        podiumEl.hidden = false;
+        for (var i = 1; i <= 3; i++) {
+          var r = rankings[i - 1];
+          document.getElementById('podium-name-' + i).textContent = r.nickname;
+          document.getElementById('podium-score-' + i).textContent = r.ranking_score + '分';
+        }
+      }
+
+      if (myRank) {
+        myRankData = myRank;
+        myRankSection.hidden = false;
+        document.getElementById('my-rank-value').textContent = '第 ' + myRank.rank + ' 名';
+        document.getElementById('my-rank-score').textContent =
+          '总分 ' + myRank.total_score + ' · 用时 ' + formatTimeCost(myRank.total_time_cost);
+
+        if (myRank.rank <= 10) {
+          claimBtn.hidden = false;
+          checkClaimStatus();
+        }
+      }
+
+      var html = '';
+      for (var i = 0; i < rankings.length; i++) {
+        var r = rankings[i];
+        var rankClass = '';
+        if (r.rank === 1) rankClass = 'rankings-row--gold';
+        else if (r.rank === 2) rankClass = 'rankings-row--silver';
+        else if (r.rank === 3) rankClass = 'rankings-row--bronze';
+
+        var isMe = myRank && myRank.nickname === r.nickname;
+        var meClass = isMe ? ' rankings-row--me' : '';
+
+        html += '<div class="rankings-row ' + rankClass + meClass + '">';
+        html += '<span class="rankings-col rankings-col--rank">';
+        if (r.rank === 1) html += '🥇';
+        else if (r.rank === 2) html += '🥈';
+        else if (r.rank === 3) html += '🥉';
+        else html += r.rank;
+        html += '</span>';
+        html += '<span class="rankings-col rankings-col--name">' + escapeHtml(r.nickname) + '</span>';
+        html += '<span class="rankings-col rankings-col--score">' + r.total_score + '/' + (r.completed_exhibits * 4) + '</span>';
+        html += '<span class="rankings-col rankings-col--time">' + formatTimeCost(r.total_time_cost) + '</span>';
+        html += '<span class="rankings-col rankings-col--rankingscore">' + r.ranking_score + '</span>';
+        html += '</div>';
+      }
+      listEl.innerHTML = html;
+    }
+
+    function checkClaimStatus() {
+      var nickname = '';
+      if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+        nickname = window.WxCommon.getUserNickname();
+      }
+      if (!nickname) return;
+
+      fetch('/api/souvenir/order?nickname=' + encodeURIComponent(nickname) + '&orderType=ranking', { cache: 'no-store' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data && data.success && data.order) {
+            hasClaimed = true;
+            var claimBtn = document.getElementById('claim-prize-btn');
+            claimBtn.textContent = '✅ 已预约';
+            claimBtn.disabled = true;
+            claimBtn.classList.add('rankings-claim-btn--claimed');
+          }
+        })
+        .catch(function() {});
+    }
+
+    function showClaimModal() {
+      if (hasClaimed) return;
+      var modal = document.getElementById('claim-modal');
+      modal.hidden = false;
+    }
+
+    function hideClaimModal() {
+      var modal = document.getElementById('claim-modal');
+      modal.hidden = true;
+      var submitBtn = document.getElementById('claim-submit');
+      submitBtn.disabled = false;
+      submitBtn.textContent = '提交预约';
+    }
+
+    function submitClaim() {
+      var name = document.getElementById('claim-name').value.trim();
+      var phone = document.getElementById('claim-phone').value.trim();
+      var note = document.getElementById('claim-note').value.trim();
+
+      if (!name) { showToast('请输入姓名'); return; }
+      if (!phone || !/^1\d{10}$/.test(phone)) { showToast('请输入正确的手机号'); return; }
+
+      var nickname = '';
+      if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+        nickname = window.WxCommon.getUserNickname();
+      }
+
+      var submitBtn = document.getElementById('claim-submit');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '提交中...';
+
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
+
+      fetch('/api/rankings/quiz?nickname=' + encodeURIComponent(nickname), { cache: 'no-store', signal: controller.signal })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (!data.success) {
+            showToast('校验失败，请重试');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '提交预约';
+            return;
+          }
+          var currentRank = null;
+          if (data.myRank) {
+            currentRank = data.myRank.rank;
+          }
+          if (!currentRank || currentRank > 10) {
+            showToast('排名已变化，当前不符合领奖条件');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '提交预约';
+            return;
+          }
+
+          var prizeName = '排行榜奖励';
+          if (currentRank === 1) prizeName = '将军纪念礼盒（四件套精装版）';
+          else if (currentRank <= 3) prizeName = '任选两件纪念品';
+          else prizeName = '任选一件纪念品';
+
+          var orderController = new AbortController();
+          var orderTimeoutId = setTimeout(function() { orderController.abort(); }, 10000);
+
+          return fetch('/api/souvenir/order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nickname: nickname,
+              exhibitId: 0,
+              name: name,
+              phone: phone,
+              orderType: 'ranking',
+              prizeName: prizeName
+            }),
+            signal: orderController.signal
+          });
+        })
+        .then(function(res) {
+          if (!res) return;
+          return res.json();
+        })
+        .then(function(data) {
+          clearTimeout(timeoutId);
+          if (data && data.success) {
+            hasClaimed = true;
+            showToast('✅ 预约成功！');
+            hideClaimModal();
+            var claimBtn = document.getElementById('claim-prize-btn');
+            claimBtn.textContent = '✅ 已预约';
+            claimBtn.disabled = true;
+            claimBtn.classList.add('rankings-claim-btn--claimed');
+          } else {
+            showToast(data ? data.message : '预约失败');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '提交预约';
+          }
+        })
+        .catch(function(err) {
+          clearTimeout(timeoutId);
+          if (err && err.name === 'AbortError') {
+            showToast('请求超时，请重试');
+          } else {
+            showToast('网络错误，请重试');
+          }
+          submitBtn.disabled = false;
+          submitBtn.textContent = '提交预约';
+        });
+    }
+
+    function loadRankings() {
+      var nickname = '';
+      if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+        nickname = window.WxCommon.getUserNickname();
+      }
+
+      fetch('/api/rankings/quiz?nickname=' + encodeURIComponent(nickname), { cache: 'no-store' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.success) {
+            renderRankings(data);
+          } else {
+            document.getElementById('rankings-list').innerHTML =
+              '<div class="rankings-empty">加载失败，请刷新重试</div>';
+          }
+        })
+        .catch(function() {
+          document.getElementById('rankings-list').innerHTML =
+            '<div class="rankings-empty">网络错误，请刷新重试</div>';
+        });
+    }
+
+    document.getElementById('claim-prize-btn').addEventListener('click', showClaimModal);
+    document.getElementById('claim-cancel').addEventListener('click', hideClaimModal);
+    document.getElementById('claim-close').addEventListener('click', hideClaimModal);
+    document.querySelector('.claim-modal__overlay').addEventListener('click', hideClaimModal);
+    document.getElementById('claim-submit').addEventListener('click', submitClaim);
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadRankings);
+    } else {
+      loadRankings();
+    }
+  })();
+  </script>
+</body>
+</html>
