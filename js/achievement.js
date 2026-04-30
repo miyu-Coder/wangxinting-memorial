@@ -388,35 +388,38 @@
     var grandMax = window.wxQuizStorage.grandMaxScore(LOCATIONS);
     if (grandMax < 1) grandMax = 16;
 
-    var checkinCount = getCheckinCount();
     var totalTimeStr = document.getElementById("stat-time") ? document.getElementById("stat-time").textContent.replace('⏱️ ', '') : "--";
-
-    var posterData = preparePosterData(st, grandMax, checkinCount, totalTimeStr);
 
     showLoadingToast();
 
-    window.PosterGenerator.generateAchievementPoster(posterData.userData, posterData.detailItems)
-      .then(function (dataUrl) {
-        hideLoadingToast();
-        showPosterPreview(dataUrl);
-      })
-      .catch(function (error) {
-        hideLoadingToast();
-        generatePosterFallback(st, grandMax);
-      });
+    getCheckinCountFromServer().then(function(checkinCount) {
+      var posterData = preparePosterData(st, grandMax, checkinCount, totalTimeStr);
+
+      window.PosterGenerator.generateAchievementPoster(posterData.userData, posterData.detailItems)
+        .then(function (dataUrl) {
+          hideLoadingToast();
+          showPosterPreview(dataUrl);
+        })
+        .catch(function (error) {
+          hideLoadingToast();
+          generatePosterFallback(st, grandMax, checkinCount);
+        });
+    });
   }
 
   /**
    * 降级方案：使用原有 Canvas 绘制
    */
-  function generatePosterFallback(state, grandMax) {
+  function generatePosterFallback(state, grandMax, checkinCount) {
     var canvas = document.getElementById("poster-canvas");
     if (!canvas || !canvas.getContext) {
       showPosterError("无法生成海报，请重试");
       return;
     }
 
-    var checkinCount = getCheckinCount();
+    if (typeof checkinCount === 'undefined' || checkinCount === null) {
+      checkinCount = getCheckinCount();
+    }
     var totalTimeStr = document.getElementById("stat-time") ? document.getElementById("stat-time").textContent.replace('⏱️ ', '') : "--";
     var titleName = getTitle(checkinCount, state.totalScore);
 

@@ -125,9 +125,10 @@
     animate();
   }
 
-  var CHALK_COLORS = ["#FFFFFF", "#FFFDE7", "#FFE4E1", "#E8F5E9", "#E3F2FD", "#FFF3E0", "#F3E5F5"];
+  var CHALK_COLORS = ["#FFFFFF", "#FFFDE7", "#FFE4E1", "#E8F5E9", "#E3F2FD", "#FFF3E0", "#F3E5F5", "#E74C3C", "#2980B9"];
   var CHALK_FONTS = ['KaiTi', 'STKaiti', 'STXingkai', 'STCaiyun', 'SimSun', 'FangSong', 'Microsoft YaHei', 'SimHei', 'STFangsong', 'STLiti', 'STHupo'];
-  var CHALK_SIZES = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28];
+  var CHALK_SIZES = [14, 15, 16, 17, 18, 19, 20, 22, 24, 26, 28, 30];
+  var CHALK_LARGE_SIZES = [24, 26, 28, 30];
   var CHALK_WEIGHTS = ['normal', 'bold'];
   var CHALK_STYLES = ['normal', 'italic'];
   var CHALK_ALIGNS = ["left", "center", "right"];
@@ -142,7 +143,7 @@
     var container = document.getElementById(containerId);
     if (!container) return;
 
-    var limit = container.getAttribute("data-limit") || "10";
+    var limit = container.getAttribute("data-limit") || "6";
 
     fetch("/api/messages?limit=" + limit, { cache: "no-store" })
       .then(function (res) { return res.json(); })
@@ -165,21 +166,35 @@
 
         if (listEl) {
           var html = "";
+          var largeCount = 1 + Math.floor(Math.random() * 2);
+          var largeIndices = [];
+          if (messages.length > 2) {
+            while (largeIndices.length < largeCount) {
+              var ri = Math.floor(Math.random() * messages.length);
+              if (largeIndices.indexOf(ri) === -1) largeIndices.push(ri);
+            }
+          }
           for (var i = 0; i < messages.length; i++) {
             var m = messages[i];
             var chalkColor = CHALK_COLORS[Math.floor(Math.random() * CHALK_COLORS.length)];
             var fontFamily = CHALK_FONTS[Math.floor(Math.random() * CHALK_FONTS.length)];
-            var fontSize = CHALK_SIZES[Math.floor(Math.random() * CHALK_SIZES.length)];
+            var fontSize;
+            if (largeIndices.indexOf(i) !== -1) {
+              fontSize = CHALK_LARGE_SIZES[Math.floor(Math.random() * CHALK_LARGE_SIZES.length)];
+            } else {
+              fontSize = CHALK_SIZES[Math.floor(Math.random() * CHALK_SIZES.length)];
+            }
             var fontWeight = CHALK_WEIGHTS[Math.floor(Math.random() * CHALK_WEIGHTS.length)];
-            var fontStyle = CHALK_STYLES[Math.floor(Math.random() * CHALK_STYLES.length)];
+            var fontStyle = Math.random() < 0.3 ? 'italic' : 'normal';
             var align = CHALK_ALIGNS[Math.floor(Math.random() * CHALK_ALIGNS.length)];
-            var rotate = (Math.random() - 0.5) * 4;
+            var rotate = (Math.random() - 0.5) * 10;
             var marginTop = 4 + Math.floor(Math.random() * 8);
             var marginBottom = 4 + Math.floor(Math.random() * 8);
             var content = m.content || "";
             var nick = m.nickname || "游客";
+            var isLong = content.length > 15;
 
-            html += '<div class="msg-chalk" style="';
+            html += '<div class="msg-chalk' + (isLong ? ' msg-chalk--full' : '') + '" style="';
             html += "color:" + chalkColor + ";";
             html += "font-family:" + fontFamily + ", serif;";
             html += "font-size:" + fontSize + "px;";
@@ -187,8 +202,7 @@
             html += "font-style:" + fontStyle + ";";
             html += "text-align:" + align + ";";
             html += "transform:rotate(" + rotate.toFixed(1) + "deg);";
-            html += "margin-top:" + marginTop + "px;";
-            html += "margin-bottom:" + marginBottom + "px;";
+            html += "margin:" + marginTop + "px 6px " + marginBottom + "px 6px;";
             html += '">';
             html +=
               '<span class="msg-chalk__text">' +

@@ -55,12 +55,19 @@ db.allAsync = (sql, params = []) => {
 };
 
 const SOUVENIR_MAP = {
-  1: '🏅 将军纪念徽章',
-  2: '📿 红色传承手环',
-  3: '📜 荣誉纪念证书',
-  4: '🔖 军工主题书签',
-  0: '🎁 将军纪念礼盒'
+  1: '将军纪念徽章',
+  2: '红色传承手环',
+  3: '荣誉纪念证书',
+  4: '军工主题书签',
+  0: '将军纪念礼盒（四件套精装版）'
 };
+
+function getRankingPrizeName(rank) {
+  if (rank === 1) return '第1名·将军纪念礼盒';
+  if (rank >= 2 && rank <= 3) return '第2-3名·任选两件纪念品';
+  if (rank >= 4 && rank <= 10) return '第4-10名·任选一件纪念品';
+  return '纪念品';
+}
 
 function initDatabase() {
   db.run(`
@@ -371,10 +378,16 @@ app.get('/api/rankings/quiz', async (req, res) => {
   try {
     const rows = await db.allAsync(`
       SELECT nickname,
-             SUM(score) as total_score,
+             SUM(max_score) as total_score,
              COUNT(*) as completed_exhibits,
-             SUM(COALESCE(time_cost, 0)) as total_time_cost
-      FROM quiz_records
+             SUM(COALESCE(max_time, 0)) as total_time_cost
+      FROM (
+        SELECT nickname, exhibit_id,
+               MAX(score) as max_score,
+               MAX(COALESCE(time_cost, 0)) as max_time
+        FROM quiz_records
+        GROUP BY nickname, exhibit_id
+      )
       GROUP BY nickname
       HAVING completed_exhibits > 0
     `);
@@ -390,12 +403,18 @@ app.get('/api/rankings/quiz', async (req, res) => {
     if (fastestTime === Infinity) fastestTime = 1;
 
     rows.forEach(function(r) {
-      var scorePart = (r.total_score / 16) * 60;
-      var timePart = r.total_time_cost > 0 ? (fastestTime / r.total_time_cost) * 40 : 0;
-      r.ranking_score = Math.round((scorePart + timePart) * 10) / 10;
+      var scoreRate = (r.total_score / 16) * 100;
+      var completionRate = (r.completed_exhibits / 4) * 100;
+      var speedScore = r.total_time_cost > 0 ? (fastestTime / r.total_time_cost) * 100 : 0;
+      r.ranking_score = Math.round((scoreRate * 0.5 + completionRate * 0.3 + speedScore * 0.2) * 10) / 10;
     });
 
-    rows.sort(function(a, b) { return b.ranking_score - a.ranking_score; });
+    rows.sort(function(a, b) {
+      if (b.completed_exhibits !== a.completed_exhibits) {
+        return b.completed_exhibits - a.completed_exhibits;
+      }
+      return b.ranking_score - a.ranking_score;
+    });
 
     var rankings = rows.slice(0, 50).map(function(r, idx) {
       return {
@@ -1214,7 +1233,7 @@ app.get('/api/admin/export/souvenir', async (req, res) => {
     const statusNames = { 0: '待领取', 1: '已领取' };
     let csv = '昵称,展点,奖品名称,姓名,手机号,状态,预约时间\n';
     rows.forEach(r => {
-      csv += `${r.nickname},${r.exhibit_id || ''},${SOUVENIR_MAP[r.exhibit_id] || '未知奖品'},${r.name},${r.phone},${statusNames[r.status] || '未知'},${r.created_at}\n`;
+      csv += `${r.nickname},${r.exhibit_id || ''},${r.prize_name || SOUVENIR_MAP[r.exhibit_id] || '纪念品'},${r.name},${r.phone},${statusNames[r.status] || '未知'},${r.created_at}\n`;
     });
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=' + encodeURIComponent('纪念品预约数据.csv'));
@@ -1400,7 +1419,13 @@ app.post('/api/souvenir/order', async (req, res) => {
   }
   try {
     var ot = orderType || 'exhibit';
-    var pn = prizeName || SOUVENIR_MAP[exhibitId] || '纪念品';
+    var pn = '';
+    if (ot === 'ranking') {
+      var rank = req.body.rank || req.body.ranking;
+      pn = getRankingPrizeName(rank ? Number(rank) : 0);
+    } else {
+      pn = prizeName || SOUVENIR_MAP[exhibitId] || '纪念品';
+    }
     var existingCond = ot === 'ranking'
       ? 'SELECT id FROM souvenir_orders WHERE nickname = ? AND order_type = ?'
       : 'SELECT id FROM souvenir_orders WHERE nickname = ? AND exhibit_id = ? AND order_type = ?';
@@ -1433,7 +1458,15 @@ app.get('/api/admin/souvenir/list', async (req, res) => {
     }
     const rows = await db.allAsync(sql, params);
     rows.forEach(r => {
-      r.souvenir_name = SOUVENIR_MAP[r.exhibit_id] || '未知奖品';
+      if (!r.prize_name) {
+        if (r.order_type === 'ranking') {
+          r.prize_name = getRankingPrizeName(0);
+        } else {
+          r.prize_name = SOUVENIR_MAP[r.exhibit_id] || '纪念品';
+        }
+        db.runAsync('UPDATE souvenir_orders SET prize_name = ? WHERE id = ?', [r.prize_name, r.id]).catch(function() {});
+      }
+      r.souvenir_name = r.prize_name;
     });
     return res.json({ success: true, list: rows });
   } catch (err) {
@@ -1492,7 +1525,15 @@ app.post('/api/admin/generate-demo-data', async (req, res) => {
     "退役军人老刘","党史爱好者","默默的花","向阳花开","赤子之心",
     "将军故里人","红色种子","北庙村村民","朋兴乡小李","孝南一中团委",
     "湖北大学实践队","山河已无恙","这盛世如您所愿","95后新党员","10后红领巾",
-    "带着孩子来学习","老区人民","退役军人服务站","红色讲解员小周","参观者"
+    "带着孩子来学习","老区人民","退役军人服务站","红色讲解员小周","参观者",
+    "武汉理工小赵","黄冈老党员","孝昌退休教师","应城小杨","安陆红色之旅",
+    "云梦小分队","大悟老战士","汉川青年团","随州老兵后代","襄阳参观团",
+    "宜昌红色传承","荆州老班长","咸宁新兵连","黄陂小老乡","麻城红军后人",
+    "红安小将军","浠水小分队","蕲春红色记忆","武穴老兵之家","孝感学院张教授",
+    "华中科大实践组","武大历史系小队","华师马院学子","理工大志愿者","地大红色研学",
+    "中南民大支教团","江大青年协会","湖工红色社团","武体军训教官","湖美设计小队",
+    "老兵后代小李","军嫂小王","消防员小张","武警退伍老兵","空军退役老赵",
+    "海军老班长","陆军退役战士","火箭军老兵","战略支援老周","预备役小刘"
   ];
 
   var messagePool = [
@@ -1520,7 +1561,32 @@ app.post('/api/admin/generate-demo-data', async (req, res) => {
     "传承红色基因，担当强军重任。",
     "有空还会再来，每次都有新的感悟。",
     "推荐给身边的朋友了，很不错的红色教育基地。",
-    "希望这样的基地越来越多，让红色精神代代传。"
+    "希望这样的基地越来越多，让红色精神代代传。",
+    "将军从孝感走出，是这片土地的骄傲。",
+    "站在广场上，心中升起无限敬意。",
+    "孩子说长大也要像将军一样保家卫国。",
+    "每一件展品背后都有一段动人的故事。",
+    "这里不仅是一个展馆，更是一堂生动的党史课。",
+    "将军的勤俭作风让我深受触动。",
+    "386旅的战绩让人肃然起敬。",
+    "太岳军区的历史在这里得到了很好的呈现。",
+    "看完展览，对解放战争有了更深的理解。",
+    "将军的军事才能令人叹服，真正的军事家。",
+    "从贫苦农家到开国上将，这就是信仰的力量。",
+    "故居的一砖一瓦都在诉说着历史。",
+    "今天幸福的生活是无数先烈用鲜血换来的。",
+    "带孩子来接受红色教育，比课堂更直观。",
+    "将军的战功赫赫，但为人谦逊，值得学习。",
+    "陈列馆的讲解很专业，工作人员辛苦了。",
+    "广场上的坦克是孩子们最喜欢的展品。",
+    "红色旅游就应该这样，有实物有故事有感动。",
+    "作为一名退伍军人，在这里找到了归属感。",
+    "将军的故事激励着我们在新时代继续奋斗。",
+    "希望更多的年轻人来这里感受红色文化。",
+    "参观完心情久久不能平静，太震撼了。",
+    "这是我来过最好的红色教育基地之一。",
+    "将军的精神永存，激励后人前行。",
+    "站在将军故居前，仿佛穿越了时空。"
   ];
 
   var exhibitWeights = [
@@ -1557,13 +1623,23 @@ app.post('/api/admin/generate-demo-data', async (req, res) => {
     return 3;
   }
 
+  function shuffleArray(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
   try {
     await db.runAsync('BEGIN TRANSACTION');
-    var visitCount = randomInt(60, 100);
+    var visitCount = randomInt(80, 140);
+    var shuffledNicks = shuffleArray(nicknames);
     for (var i = 0; i < visitCount; i++) {
       var dt = randomDate(30);
       var eid = weightedExhibit();
-      var nn = randomPick(nicknames);
+      var nn = shuffledNicks[i % shuffledNicks.length];
       var uid = 'demo_' + nn + '_' + randomInt(1000, 9999);
       await db.runAsync(
         "INSERT OR IGNORE INTO visits (user_identifier, exhibit_id, nickname, visited_at) VALUES (?, ?, ?, ?)",
@@ -1571,11 +1647,12 @@ app.post('/api/admin/generate-demo-data', async (req, res) => {
       );
     }
 
-    var flowerCount = randomInt(50, 80);
+    var flowerCount = randomInt(70, 120);
+    var shuffledNicks2 = shuffleArray(nicknames);
     for (var i = 0; i < flowerCount; i++) {
       var dt = randomDate(30);
       var eid = weightedExhibit();
-      var nn = randomPick(nicknames);
+      var nn = shuffledNicks2[i % shuffledNicks2.length];
       var uid = 'demo_' + nn + '_' + randomInt(1000, 9999);
       await db.runAsync(
         "INSERT OR IGNORE INTO flowers (user_identifier, exhibit_id, nickname, created_at) VALUES (?, ?, ?, ?)",
@@ -1583,19 +1660,18 @@ app.post('/api/admin/generate-demo-data', async (req, res) => {
       );
     }
 
-    var quizCount = randomInt(40, 70);
+    var quizCount = randomInt(60, 100);
+    var shuffledNicks3 = shuffleArray(nicknames);
+    var quizInserted = {};
     for (var i = 0; i < quizCount; i++) {
       var dt = randomDate(30);
       var eid = randomInt(1, 4);
       var sc = weightedScore();
-      var nn = randomPick(nicknames);
-      var tc;
-      if (Math.random() < 0.7) {
-        tc = randomInt(30, 120);
-      } else {
-        tc = randomInt(121, 180);
-      }
-      console.log('Generated time_cost:', tc, 'seconds for exhibit', eid, 'score', sc);
+      var nn = shuffledNicks3[i % shuffledNicks3.length];
+      var quizKey = nn + '_' + eid;
+      if (quizInserted[quizKey]) continue;
+      quizInserted[quizKey] = true;
+      var tc = randomInt(30, 180);
       var completedAt = new Date(new Date(dt).getTime() - tc * 1000).toISOString().replace('T', ' ').substring(0, 19);
       await db.runAsync(
         "INSERT INTO quiz_records (nickname, exhibit_id, score, completed_at, time_cost, created_at) VALUES (?, ?, ?, ?, ?, ?)",
@@ -1603,11 +1679,13 @@ app.post('/api/admin/generate-demo-data', async (req, res) => {
       );
     }
 
-    var msgCount = randomInt(25, 45);
+    var msgCount = randomInt(35, 60);
+    var shuffledMsgs = shuffleArray(messagePool);
+    var shuffledNicks4 = shuffleArray(nicknames);
     for (var i = 0; i < msgCount; i++) {
       var dt = randomDate(30);
-      var nn = randomPick(nicknames);
-      var content = randomPick(messagePool);
+      var nn = shuffledNicks4[i % shuffledNicks4.length];
+      var content = shuffledMsgs[i % shuffledMsgs.length];
       var r = Math.random() * 100;
       var status = r < 20 ? 0 : (r < 80 ? 1 : 2);
       await db.runAsync(
@@ -1622,7 +1700,7 @@ app.post('/api/admin/generate-demo-data', async (req, res) => {
       [souvenirCount * 2]
     );
     var souvenirNames = ["张明","李华","王芳","赵强","刘洋","陈静","杨磊","黄丽","周伟","吴敏","孙涛","马秀英","朱建国","胡志远","林小红"];
-    var SOUVENIR_MAP = { 1: '🏅 将军纪念徽章', 2: '📿 红色传承手环', 3: '📜 荣誉纪念证书', 4: '🔖 军工主题书签' };
+    var SOUVENIR_MAP = { 1: '将军纪念徽章', 2: '红色传承手环', 3: '荣誉纪念证书', 4: '军工主题书签' };
     for (var i = 0; i < Math.min(souvenirCount, perfectQuizzes.length); i++) {
       var pq = perfectQuizzes[i];
       var sName = randomPick(souvenirNames);

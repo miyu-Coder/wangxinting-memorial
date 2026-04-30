@@ -1418,14 +1418,17 @@ body {
 
 .msg-wall-notes {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 0;
   margin-bottom: 0.75rem;
   position: relative;
   min-height: 80px;
+  align-items: flex-start;
+  align-content: flex-start;
 }
 
 .msg-chalk {
+  display: inline-block;
   padding: 3px 8px;
   position: relative;
   line-height: 1.5;
@@ -1434,6 +1437,12 @@ body {
     0 0 3px rgba(255,255,255,0.25),
     1px 1px 1px rgba(0,0,0,0.15);
   opacity: 0.92;
+  vertical-align: top;
+}
+
+.msg-chalk--full {
+  display: block;
+  width: 100%;
 }
 
 .msg-chalk__text {
@@ -3988,42 +3997,41 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  min-height: 48px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 30px;
+  margin: 0 auto;
+  padding: 12px 32px;
   font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 700;
   color: #ffffff;
   cursor: pointer;
-  background: linear-gradient(135deg, var(--color-red-bright), var(--color-red));
-  box-shadow: 0 4px 16px rgba(196, 30, 58, 0.28);
-  transition:
-    transform 0.15s,
-    box-shadow 0.2s,
-    filter 0.15s;
+  background: linear-gradient(135deg, #C41E3A, #A01830);
+  border: none;
+  border-radius: 30px;
+  box-shadow: 0 4px 16px rgba(196, 30, 58, 0.3);
+  transition: all 0.3s ease;
+  text-align: center;
+  gap: 8px;
 }
 
 .flower-tribute-btn:hover {
-  filter: brightness(1.03);
-  box-shadow: 0 6px 20px rgba(196, 30, 58, 0.32);
+  background: linear-gradient(135deg, #7a1528, #c41e3a);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 32px rgba(196, 30, 58, 0.35);
 }
 
 .flower-tribute-btn:active {
-  transform: scale(0.98);
+  transform: translateY(-1px) scale(0.98);
 }
 
 .flower-tribute-btn:disabled,
 .flower-tribute-btn--done {
-  background: #E0E0E0 !important;
-  color: #999999 !important;
+  background: linear-gradient(135deg, #C8102E, #A01830) !important;
+  color: #ffffff !important;
   border: none !important;
-  border-radius: 8px;
-  box-shadow: none;
-  cursor: not-allowed;
-  pointer-events: none;
+  border-radius: 30px;
+  box-shadow: 0 4px 16px rgba(196, 30, 58, 0.3);
+  cursor: default;
+  transform: none;
 }
 
 .flower-tribute-btn--locked {
