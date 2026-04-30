@@ -246,7 +246,7 @@
       }
       if (!nickname) return;
 
-      fetch('/api/souvenir/order?nickname=' + encodeURIComponent(nickname) + '&orderType=ranking', { cache: 'no-store' })
+      fetch('/api/souvenir/check?nickname=' + encodeURIComponent(nickname) + '&orderType=ranking', { cache: 'no-store' })
         .then(function(res) { return res.json(); })
         .then(function(data) {
           if (data && data.success && data.order) {

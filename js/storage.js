@@ -349,6 +349,7 @@
       return getExhibitRecord(id, locations);
     },
     lockExhibitQuiz: lockExhibitQuiz,
+    saveState: saveState,
     questionCountForLocation: questionCountForLocation,
     grandMaxScore: grandMaxScore,
     countCompletedWithQuiz: countCompletedWithQuiz,

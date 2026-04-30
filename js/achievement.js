@@ -221,6 +221,47 @@
     });
   }
 
+  function syncQuizFromServer(nickname) {
+    return new Promise(function(resolve) {
+      if (!nickname) { resolve(); return; }
+      fetch('/api/quiz/user-records?nickname=' + encodeURIComponent(nickname), { cache: 'no-store' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (!data.success || !data.records) { resolve(); return; }
+          var state = window.wxQuizStorage.getState(LOCATIONS);
+          var changed = false;
+          for (var eid = 1; eid <= 4; eid++) {
+            var key = String(eid);
+            var serverScore = data.records[key];
+            var localRow = state.exhibits && state.exhibits[key];
+            if (serverScore !== undefined && serverScore !== null && (!localRow || !localRow.completed)) {
+              var nq = 4;
+              for (var i = 0; i < LOCATIONS.length; i++) {
+                var lid = LOCATIONS[i].id;
+                if (String(lid) === key && LOCATIONS[i].quiz && LOCATIONS[i].quiz.questions) {
+                  nq = LOCATIONS[i].quiz.questions.length;
+                  break;
+                }
+              }
+              state.exhibits[key] = {
+                completed: true,
+                score: serverScore,
+                maxScore: nq,
+                comment: '',
+                lockedAt: Date.now()
+              };
+              changed = true;
+            }
+          }
+          if (changed) {
+            window.wxQuizStorage.saveState(state, LOCATIONS);
+          }
+          resolve();
+        })
+        .catch(function() { resolve(); });
+    });
+  }
+
   function getTitle(checkinCount, totalScore) {
     if (checkinCount >= 4 && totalScore >= 13) return '\uD83C\uDFC6 红色传承人';
     if (checkinCount >= 4 && totalScore >= 8) return '\u2B50 红色知识达人';
@@ -733,18 +774,21 @@
       .then(function () {
         if (!window.wxQuizStorage) throw new Error("成就模块未加载");
 
+        var nickname = "";
+        if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
+          nickname = window.WxCommon.getUserNickname();
+        } else {
+          try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
+        }
+
+        syncQuizFromServer(nickname).then(function() {
+
         var state = window.wxQuizStorage.getState(LOCATIONS);
         var grandMax = window.wxQuizStorage.grandMaxScore(LOCATIONS);
         if (grandMax < 1) grandMax = 16;
 
         var nicknameEl = document.getElementById("achievement-nickname");
         if (nicknameEl) {
-          var nickname = "";
-          if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
-            nickname = window.WxCommon.getUserNickname();
-          } else {
-            try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
-          }
           nicknameEl.textContent = nickname ? nickname + "，您好！" : "致敬人：尊敬的参观者";
         }
 
@@ -771,13 +815,6 @@
           checkinCount + "/4";
         document.getElementById("stat-score").textContent =
           state.totalScore + "/" + grandMax;
-
-        var nickname = "";
-        if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
-          nickname = window.WxCommon.getUserNickname();
-        } else {
-          try { nickname = localStorage.getItem("userNickname") || ""; } catch (e) {}
-        }
 
         var timeEl = document.getElementById("stat-time");
         if (timeEl && nickname) {
@@ -835,6 +872,8 @@
         }
 
         }); // end getCheckinCountFromServer().then
+
+        }); // end syncQuizFromServer().then
       })
       .catch(function (e) {
         if (errEl) {
