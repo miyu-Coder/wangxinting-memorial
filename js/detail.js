@@ -1395,16 +1395,19 @@
     var quizStartTime = new Date().toISOString();
     var quizStartTimestamp = Date.now();
 
-    function submitQuizRecord() {
+    function submitQuizRecord(score) {
       if (quizRecordSubmitted) return;
 
-      var record = st && typeof st.getExhibitRecord === 'function'
-        ? st.getExhibitRecord(exhibitId, LOCATIONS)
-        : null;
-
-      if (!record || typeof record.score !== 'number') {
-        return;
+      var submitScore = (typeof score === 'number' && score >= 0) ? score : -1;
+      if (submitScore < 0) {
+        var record = st && typeof st.getExhibitRecord === 'function'
+          ? st.getExhibitRecord(exhibitId, LOCATIONS)
+          : null;
+        if (record && typeof record.score === 'number') {
+          submitScore = record.score;
+        }
       }
+      if (submitScore < 0) return;
 
       var submitNickname = '';
       if (window.WxCommon && typeof window.WxCommon.getUserNickname === 'function') {
@@ -1426,7 +1429,7 @@
         body: JSON.stringify({
           nickname: submitNickname,
           exhibitId: exhibitId,
-          score: record.score,
+          score: submitScore,
           completedAt: quizStartTime,
           timeCost: timeCost
         })
@@ -1439,7 +1442,8 @@
             showQuizToast(data.message);
           }
         })
-        .catch(function (e) {
+        .catch(function () {
+          showQuizToast('答题记录提交失败，请检查网络');
         });
     }
 
@@ -1509,6 +1513,21 @@
     phoneWrap.appendChild(phoneInput);
     container.appendChild(phoneWrap);
 
+    var remarkWrap = document.createElement('div');
+    remarkWrap.className = 'souvenir-form__field';
+    var remarkLabel = document.createElement('label');
+    remarkLabel.textContent = '备注';
+    remarkLabel.setAttribute('for', 'souvenir-remark');
+    var remarkInput = document.createElement('input');
+    remarkInput.type = 'text';
+    remarkInput.id = 'souvenir-remark';
+    remarkInput.className = 'souvenir-form__input';
+    remarkInput.placeholder = '备注（选填），如纪念品款式偏好等';
+    remarkInput.maxLength = 50;
+    remarkWrap.appendChild(remarkLabel);
+    remarkWrap.appendChild(remarkInput);
+    container.appendChild(remarkWrap);
+
     var submitBtn = document.createElement('button');
     submitBtn.type = 'button';
     submitBtn.className = 'btn btn-primary souvenir-form__btn';
@@ -1522,6 +1541,7 @@
     submitBtn.addEventListener('click', function () {
       var name = nameInput.value.trim();
       var phone = phoneInput.value.trim();
+      var remark = remarkInput.value.trim();
       if (!name) {
         msgEl.textContent = '请输入姓名';
         msgEl.className = 'souvenir-form__msg souvenir-form__msg--error';
@@ -1543,7 +1563,8 @@
           nickname: nickname,
           exhibitId: effectiveExhibitId,
           name: name,
-          phone: phone
+          phone: phone,
+          remark: remark
         })
       })
         .then(function (res) { return res.json(); })
@@ -1747,6 +1768,7 @@
             LOCATIONS
           );
           updateAchievementLines(loc);
+          submitQuizRecord(state.correct);
           if (lastLockResult.allExhibitsComplete) {
             showAchievementEntranceModal();
           }

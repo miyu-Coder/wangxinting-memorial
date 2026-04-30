@@ -223,18 +223,31 @@
 
   function syncQuizFromServer(nickname) {
     return new Promise(function(resolve) {
-      if (!nickname) { resolve(); return; }
+      if (!nickname) { resolve(null); return; }
       fetch('/api/quiz/user-records?nickname=' + encodeURIComponent(nickname), { cache: 'no-store' })
         .then(function(res) { return res.json(); })
         .then(function(data) {
-          if (!data.success || !data.records) { resolve(); return; }
+          if (!data.success || !data.records) { resolve(null); return; }
+          var hasServerData = false;
+          for (var k in data.records) {
+            if (data.records[k] !== undefined && data.records[k] !== null) {
+              hasServerData = true;
+              break;
+            }
+          }
+          if (!hasServerData) { resolve(null); return; }
+
           var state = window.wxQuizStorage.getState(LOCATIONS);
+          if (!state.exhibits) state.exhibits = {};
           var changed = false;
+
           for (var eid = 1; eid <= 4; eid++) {
             var key = String(eid);
             var serverScore = data.records[key];
-            var localRow = state.exhibits && state.exhibits[key];
-            if (serverScore !== undefined && serverScore !== null && (!localRow || !localRow.completed)) {
+            if (serverScore !== undefined && serverScore !== null) {
+              var localRow = state.exhibits[key];
+              var localScore = (localRow && localRow.completed) ? localRow.score : 0;
+              var bestScore = Math.max(localScore, serverScore);
               var nq = 4;
               for (var i = 0; i < LOCATIONS.length; i++) {
                 var lid = LOCATIONS[i].id;
@@ -243,22 +256,25 @@
                   break;
                 }
               }
-              state.exhibits[key] = {
-                completed: true,
-                score: serverScore,
-                maxScore: nq,
-                comment: '',
-                lockedAt: Date.now()
-              };
-              changed = true;
+              if (!localRow || !localRow.completed || localRow.score < bestScore) {
+                state.exhibits[key] = {
+                  completed: true,
+                  score: bestScore,
+                  maxScore: nq,
+                  comment: (localRow && localRow.comment) || '',
+                  lockedAt: (localRow && localRow.lockedAt) || Date.now()
+                };
+                changed = true;
+              }
             }
           }
+
           if (changed) {
             window.wxQuizStorage.saveState(state, LOCATIONS);
           }
-          resolve();
+          resolve(data.records);
         })
-        .catch(function() { resolve(); });
+        .catch(function() { resolve(null); });
     });
   }
 

@@ -558,6 +558,8 @@ module.exports = function(db) {
     var phone = req.body.phone;
     var orderType = req.body.orderType;
     var prizeName = req.body.prizeName;
+    var rank = req.body.rank || req.body.ranking;
+    var remark = req.body.remark || '';
 
     if (!nickname || exhibitId === undefined || exhibitId === null || !name || !phone) {
       return res.status(400).json({ success: false, message: '请填写完整信息' });
@@ -572,7 +574,6 @@ module.exports = function(db) {
       var ot = orderType || 'exhibit';
       var pn = '';
       if (ot === 'ranking') {
-        var rank = req.body.rank || req.body.ranking;
         pn = getRankingPrizeName(rank ? Number(rank) : 0);
       } else {
         pn = prizeName || SOUVENIR_MAP[exhibitId] || '纪念品';
@@ -588,8 +589,8 @@ module.exports = function(db) {
         return res.json({ success: false, message: '您已预约过该奖品', already: true });
       }
       await db.runAsync(
-        "INSERT INTO souvenir_orders (nickname, exhibit_id, name, phone, status, order_type, prize_name, created_at) VALUES (?, ?, ?, ?, 0, ?, ?, datetime('now'))",
-        [nickname.trim(), exhibitId, name.trim(), phone.trim(), ot, pn]
+        "INSERT INTO souvenir_orders (nickname, exhibit_id, name, phone, status, order_type, prize_name, remark, created_at) VALUES (?, ?, ?, ?, 0, ?, ?, ?, datetime('now'))",
+        [nickname.trim(), exhibitId, name.trim(), phone.trim(), ot, pn, remark.trim()]
       );
       return res.json({ success: true, message: '预约成功' });
     } catch (err) {

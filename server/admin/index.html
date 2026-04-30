@@ -939,10 +939,11 @@
               <tr>
                 <th>ID</th>
                 <th>昵称</th>
-                <th>展点</th>
+                <th>预约类型</th>
                 <th>奖品名称</th>
                 <th>姓名</th>
                 <th>手机号</th>
+                <th>备注</th>
                 <th>状态</th>
                 <th>预约时间</th>
                 <th>操作</th>
@@ -1866,9 +1867,9 @@
     function renderSouvenirOrders() {
       var tbody = document.getElementById('souvenirTableBody');
       if (!tbody) return;
-      var exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备展区', 0: '全部展点' };
+      var exhibitNames = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备展区' };
       if (!allSouvenirData.length) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999;padding:40px;">暂无预约记录</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#999;padding:40px;">暂无预约记录</td></tr>';
         return;
       }
       var html = '';
@@ -1879,13 +1880,22 @@
         var actionHtml = r.status === 0
           ? '<button class="batch-bar__btn" onclick="deliverSouvenir(' + r.id + ')">标记已领取</button>'
           : '<span style="color:#999;font-size:12px;">—</span>';
+
+        var typeLabel = '';
+        if (r.order_type === 'ranking') {
+          typeLabel = '🏆 排行榜';
+        } else {
+          typeLabel = '📍 ' + (exhibitNames[r.exhibit_id] || '展点' + r.exhibit_id);
+        }
+
         html += '<tr>'
           + '<td>' + r.id + '</td>'
           + '<td>' + escapeHtml(r.nickname || '') + '</td>'
-          + '<td>' + (exhibitNames[r.exhibit_id] || '展点' + r.exhibit_id) + '</td>'
-          + '<td>' + escapeHtml(r.souvenir_name || '') + '</td>'
+          + '<td>' + typeLabel + '</td>'
+          + '<td>' + escapeHtml(r.souvenir_name || r.prize_name || '') + '</td>'
           + '<td>' + escapeHtml(r.name || '') + '</td>'
           + '<td>' + escapeHtml(r.phone || '') + '</td>'
+          + '<td>' + escapeHtml(r.remark || '') + (r.remark ? '' : '—') + '</td>'
           + '<td>' + statusHtml + '</td>'
           + '<td>' + (r.created_at || '') + '</td>'
           + '<td>' + actionHtml + '</td>'

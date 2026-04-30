@@ -171,6 +171,12 @@ function initDatabase() {
       console.error('Failed to add prize_name column:', err.message);
     }
   });
+
+  db.run(`ALTER TABLE souvenir_orders ADD COLUMN remark TEXT`, function (err) {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Failed to add remark column:', err.message);
+    }
+  });
 }
 
 module.exports = db;
