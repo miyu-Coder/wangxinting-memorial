@@ -64,7 +64,7 @@ module.exports = function(db) {
         var viewStat = viewStats.find(function(v) { return v.exhibit_id === checkin.exhibit_id; });
         var viewCount = viewStat ? viewStat.view_count : 0;
         var checkinCount = checkin.checkin_count || 0;
-        var conversionRate = viewCount > 0 ? Math.round(checkinCount * 1000 / viewCount) / 10 : 0;
+        var conversionRate = viewCount > 0 ? Math.min(Math.round(checkinCount * 1000 / viewCount) / 10, 100) : 0;
 
         if (conversionRate > maxConversionRate ||
           (conversionRate === maxConversionRate && hotExhibit && checkinCount > hotExhibit.checkinCount)) {
@@ -164,6 +164,81 @@ module.exports = function(db) {
       return res.json({ success: true, data: data });
     } catch (err) {
       console.error('Hourly today error:', err);
+      return res.status(500).json({ success: false, message: '服务器错误' });
+    }
+  });
+
+  router.get('/stats/user-flow', async function(req, res) {
+    try {
+      var nodes = [
+        { name: '首页' },
+        { name: '陈列馆' },
+        { name: '故居' },
+        { name: '广场' },
+        { name: '装备展区' },
+        { name: '打卡' },
+        { name: '答题' }
+      ];
+
+      var links = [];
+      var totalFlowValue = 0;
+
+      var indexSessions = await db.allAsync(
+        "SELECT DISTINCT session_id FROM page_views WHERE page = 'index'"
+      );
+      var indexSessionIds = indexSessions.map(function(r) { return r.session_id; });
+
+      var exhibitMap = { 1: '陈列馆', 2: '故居', 3: '广场', 4: '装备展区' };
+      var exhibitIds = [1, 2, 3, 4];
+
+      for (var ei = 0; ei < exhibitIds.length; ei++) {
+        var eid = exhibitIds[ei];
+        var eName = exhibitMap[eid];
+        var pageKey = 'detail_' + eid;
+
+        var exhibitSessions = await db.allAsync(
+          "SELECT DISTINCT session_id FROM page_views WHERE page = ?",
+          [pageKey]
+        );
+        var exhibitSessionIds = exhibitSessions.map(function(r) { return r.session_id; });
+
+        var fromIndex = exhibitSessionIds.filter(function(sid) {
+          return indexSessionIds.indexOf(sid) !== -1;
+        }).length;
+
+        if (fromIndex > 0) {
+          links.push({ source: '首页', target: eName, value: fromIndex });
+          totalFlowValue += fromIndex;
+        }
+
+        var checkinCount = await db.getAsync(
+          'SELECT COUNT(DISTINCT user_identifier) as cnt FROM visits WHERE exhibit_id = ?',
+          [eid]
+        );
+        var cc = checkinCount ? checkinCount.cnt : 0;
+        if (cc > 0) {
+          links.push({ source: eName, target: '打卡', value: cc });
+          totalFlowValue += cc;
+        }
+
+        var quizCount = await db.getAsync(
+          'SELECT COUNT(DISTINCT nickname) as cnt FROM quiz_records WHERE exhibit_id = ?',
+          [eid]
+        );
+        var qc = quizCount ? quizCount.cnt : 0;
+        if (qc > 0) {
+          links.push({ source: eName, target: '答题', value: qc });
+          totalFlowValue += qc;
+        }
+      }
+
+      if (totalFlowValue < 5) {
+        return res.json({ success: true, data: { nodes: [], links: [] } });
+      }
+
+      return res.json({ success: true, data: { nodes: nodes, links: links } });
+    } catch (err) {
+      console.error('User flow error:', err);
       return res.status(500).json({ success: false, message: '服务器错误' });
     }
   });

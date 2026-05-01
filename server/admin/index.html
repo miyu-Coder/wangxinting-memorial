@@ -59,7 +59,15 @@
     .tab-content.is-active { display: block; }
     .tab-content h2 { font-size: 1.25rem; color: var(--color-text); margin-bottom: 20px; font-weight: 600; }
     .dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
-    .stat-card { background: var(--color-surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-card); display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.2s, box-shadow 0.2s; border: none; }
+    .section-group-title { font-size: 1.1rem; font-weight: 600; color: var(--color-red-deep); margin: 28px 0 16px; padding-left: 12px; border-left: 4px solid var(--color-red); line-height: 1.4; }
+    .section-group-title:first-of-type { margin-top: 0; }
+    .chart-row { display: flex; gap: 24px; margin-bottom: 24px; align-items: stretch; }
+    .chart-section--half { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .chart-sub-row { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+    .chart-section--sub { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+    .chart-section--sub h3 { font-size: 0.9rem; margin-bottom: 12px; padding-bottom: 8px; }
+    .chart-section--sub .chart-hint { margin-top: auto; }
+    .stat-card { background: var(--color-surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-card); display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.2s, box-shadow 0.2s; border: none; min-height: 160px; justify-content: center; }
     .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
     .stat-card--warning { border: 2px solid var(--color-orange); background: linear-gradient(135deg, #FFF8F0 0%, var(--color-surface) 100%); }
     .stat-card--warning .stat-value { color: var(--color-orange); }
@@ -72,7 +80,7 @@
     .stat-compare--up { color: #4CAF50; }
     .stat-compare--down { color: #F44336; }
     .stat-compare--flat { color: #999; }
-    .system-status-card { background: var(--color-surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-card); margin-top: 24px; }
+    .system-status-card { background: var(--color-surface); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-card); flex: 1; display: flex; flex-direction: column; }
     .system-status-card__title { font-size: 15px; font-weight: 600; color: var(--color-text); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
     .system-status-card__row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; color: #555; }
     .system-status-card__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -464,7 +472,9 @@
       .tab-btn { padding: 14px 16px; font-size: 0.9rem; white-space: nowrap; }
       .tab-content { padding: 16px; }
       .dashboard-grid { grid-template-columns: 1fr; gap: 16px; }
-      .stat-card { padding: 16px; }
+      .stat-card { padding: 16px; min-height: auto; }
+      .chart-row { flex-direction: column; gap: 16px; }
+      .chart-section--half { flex: none; width: 100%; }
       .stat-value { font-size: 24px; }
       .chart-section { padding: 16px; }
       .batch-bar { flex-direction: column; gap: 10px; align-items: flex-start; }
@@ -490,7 +500,7 @@
     .exhibit-actions { display: flex; align-items: center; gap: 16px; margin-top: 24px; }
     .save-hint { font-size: 0.9rem; color: var(--color-green); }
     .save-hint.error { color: var(--color-red); }
-    .export-section { text-align: center; }
+    .export-section { text-align: center; flex: 1; display: flex; flex-direction: column; }
     .export-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 20px 0; }
     .btn-export { background: var(--color-surface); border: 2px solid var(--color-border); color: var(--color-text); padding: 12px 24px; border-radius: var(--radius-sm); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
     .btn-export:hover { border-color: var(--color-red); color: var(--color-red); }
@@ -599,6 +609,8 @@
 
       <section id="dashboardTab" class="tab-content is-active">
         <h2>数据概览</h2>
+
+        <div class="section-group-title">📊 核心指标</div>
         <div class="dashboard-grid">
           <div class="stat-card">
             <div class="stat-icon">👀</div>
@@ -624,9 +636,6 @@
             <p class="stat-value" id="todayFlowers">—</p>
             <p class="stat-compare" id="todayFlowersCompare"></p>
           </div>
-        </div>
-
-        <div class="dashboard-grid">
           <div class="stat-card">
             <div class="stat-icon">🌸</div>
             <p class="stat-label">献花总数</p>
@@ -653,65 +662,84 @@
           </div>
         </div>
 
-        <div class="chart-section">
-          <h3>各展点献花数（单位：人）</h3>
-          <div id="flowerChart" style="width: 100%; height: 250px;"></div>
-        </div>
-
-        <div class="chart-section">
-          <h3>各展点打卡人数（单位：次）</h3>
-          <div id="checkinChart" style="width: 100%; height: 250px;"></div>
-        </div>
-
-        <div class="chart-section">
-          <h3>📈 近7日访问趋势</h3>
-          <div id="trendChart" style="width: 100%; height: 300px;"></div>
-          <p class="chart-hint">用于分析用户访问趋势及活跃度变化，为运营决策提供依据</p>
-        </div>
-
-        <div class="chart-section">
-          <h3>📝 各展点答题统计</h3>
-          <div id="quizStatsChart" style="width: 100%; height: 280px;"></div>
-          <p class="chart-hint">展示各展点的答题人数、平均分及满分人数，帮助评估知识问答效果</p>
-        </div>
-
-        <div class="chart-section">
-          <h3>⏱️ 各展点平均答题时长</h3>
-          <div id="quizTimeChart" style="width: 100%; height: 280px;"></div>
-          <p class="chart-hint">展示各展点的平均答题用时（秒），帮助评估题目难度和用户体验</p>
-        </div>
-
-        <div class="chart-section">
-          <h3>📊 今日访问时段分布</h3>
-          <div id="hourlyChart" style="width: 100%; height: 280px;"></div>
-          <p class="chart-hint">展示今日各时段访问量分布，高峰时段以金色高亮标识</p>
-        </div>
-
-        <div class="system-status-card">
-          <div class="system-status-card__title">🖥️ 系统状态</div>
-          <div class="system-status-card__row"><span class="system-status-card__dot system-status-card__dot--green"></span> 服务状态：<strong id="sysStatus">运行中</strong></div>
-          <div class="system-status-card__row"><span class="system-status-card__dot system-status-card__dot--green"></span> 运行时长：<span id="sysUptime">—</span></div>
-          <div class="system-status-card__row"><span class="system-status-card__dot system-status-card__dot--green"></span> 数据库大小：<span id="sysDbSize">—</span></div>
-          <div class="system-status-card__row"><span class="system-status-card__dot system-status-card__dot--gray"></span> 最后备份：<span>建议定期备份</span></div>
-        </div>
-
-        <div class="chart-section export-section">
-          <h3>📥 数据导出</h3>
-          <div class="export-buttons">
-            <button class="btn btn-export" onclick="exportData('checkins')">
-              <span>📍</span> 导出打卡数据
-            </button>
-            <button class="btn btn-export" onclick="exportData('flowers')">
-              <span>🌸</span> 导出献花数据
-            </button>
-            <button class="btn btn-export" onclick="exportData('quiz')">
-              <span>📝</span> 导出答题数据
-            </button>
-            <button class="btn btn-export btn-export-all" onclick="exportData('all')">
-              <span>📊</span> 导出全部数据
-            </button>
+        <div class="section-group-title">📈 访问趋势</div>
+        <div class="chart-row">
+          <div class="chart-section chart-section--half">
+            <h3>近7日访问趋势</h3>
+            <div id="trendChart" style="width: 100%; height: 300px;"></div>
+            <p class="chart-hint">用于分析用户访问趋势及活跃度变化</p>
           </div>
-          <p class="chart-hint">点击按钮下载 CSV 格式数据文件，可用 Excel 打开查看</p>
+          <div class="chart-section chart-section--half">
+            <h3>今日访问时段分布</h3>
+            <div id="hourlyChart" style="width: 100%; height: 300px;"></div>
+            <p class="chart-hint">高峰时段以金色高亮标识</p>
+          </div>
+        </div>
+
+        <div class="section-group-title">🔄 用户行为</div>
+        <div class="chart-row">
+          <div class="chart-section chart-section--half">
+            <h3>用户行为路径分析</h3>
+            <div id="userFlowChart" style="width: 100%; height: 420px;"></div>
+            <p class="chart-hint" id="userFlowHint">展示用户从首页到各展点、再到打卡/答题的行为流转路径</p>
+          </div>
+          <div class="chart-section chart-section--half">
+            <h3>展点转化分析</h3>
+            <div class="chart-sub-row">
+              <div class="chart-section chart-section--sub">
+                <h3>各展点献花数（单位：人）</h3>
+                <div id="flowerChart" style="width: 100%; height: 160px;"></div>
+              </div>
+              <div class="chart-section chart-section--sub">
+                <h3>各展点打卡人数（单位：次）</h3>
+                <div id="checkinChart" style="width: 100%; height: 160px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-group-title">📝 答题分析</div>
+        <div class="chart-row">
+          <div class="chart-section chart-section--half">
+            <h3>各展点答题统计</h3>
+            <div id="quizStatsChart" style="width: 100%; height: 280px;"></div>
+            <p class="chart-hint">展示各展点的答题人数、平均分及满分人数</p>
+          </div>
+          <div class="chart-section chart-section--half">
+            <h3>各展点平均答题时长</h3>
+            <div id="quizTimeChart" style="width: 100%; height: 280px;"></div>
+            <p class="chart-hint">展示各展点的平均答题用时（秒）</p>
+          </div>
+        </div>
+
+        <div class="section-group-title">⚙️ 系统与运营</div>
+        <div class="chart-row">
+          <div class="system-status-card">
+            <div class="system-status-card__title">🖥️ 系统状态</div>
+            <div class="system-status-card__row"><span class="system-status-card__dot system-status-card__dot--green"></span> 服务状态：<strong id="sysStatus">运行中</strong></div>
+            <div class="system-status-card__row"><span class="system-status-card__dot system-status-card__dot--green"></span> 运行时长：<span id="sysUptime">—</span></div>
+            <div class="system-status-card__row"><span class="system-status-card__dot system-status-card__dot--green"></span> 数据库大小：<span id="sysDbSize">—</span></div>
+            <div class="system-status-card__row"><span class="system-status-card__dot system-status-card__dot--gray"></span> 最后备份：<span>建议定期备份</span></div>
+          </div>
+
+          <div class="chart-section export-section">
+            <h3>📥 数据导出</h3>
+            <div class="export-buttons">
+              <button class="btn btn-export" onclick="exportData('checkins')">
+                <span>📍</span> 导出打卡数据
+              </button>
+              <button class="btn btn-export" onclick="exportData('flowers')">
+                <span>🌸</span> 导出献花数据
+              </button>
+              <button class="btn btn-export" onclick="exportData('quiz')">
+                <span>📝</span> 导出答题数据
+              </button>
+              <button class="btn btn-export btn-export-all" onclick="exportData('all')">
+                <span>📊</span> 导出全部数据
+              </button>
+            </div>
+            <p class="chart-hint">点击按钮下载 CSV 格式数据文件，可用 Excel 打开查看</p>
+          </div>
         </div>
       </section>
 
@@ -985,6 +1013,7 @@
     let trendChart = null;
     let quizStatsChart = null;
     let quizTimeChart = null;
+    let userFlowChart = null;
 
     function showToast(message, isError = false) {
       const container = document.getElementById('toastContainer');
@@ -1718,12 +1747,76 @@
       quizTimeChart.setOption(option);
     }
 
+    function renderUserFlowChart(data) {
+      var chartDom = document.getElementById('userFlowChart');
+      var hintEl = document.getElementById('userFlowHint');
+      if (!chartDom) return;
+
+      var nodes = data.nodes || [];
+      var links = data.links || [];
+
+      if (nodes.length === 0 || links.length === 0) {
+        chartDom.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;font-size:0.95rem;">数据不足，无法生成路径图</div>';
+        if (hintEl) hintEl.textContent = '当前数据量较少，待更多用户访问后自动生成';
+        return;
+      }
+
+      if (!userFlowChart) {
+        userFlowChart = echarts.init(chartDom);
+      }
+      if (!userFlowChart) return;
+
+      var option = {
+        tooltip: {
+          trigger: 'item',
+          triggerOn: 'mousemove',
+          formatter: function(params) {
+            if (params.dataType === 'edge') {
+              return params.data.source + ' → ' + params.data.target + '<br/>流转量：' + params.data.value + ' 人';
+            }
+            return params.name;
+          }
+        },
+        series: [{
+          type: 'sankey',
+          layout: 'none',
+          emphasis: {
+            focus: 'adjacency'
+          },
+          nodeAlign: 'left',
+          layoutIterations: 32,
+          nodeWidth: 20,
+          nodeGap: 12,
+          curveness: 0.5,
+          data: nodes,
+          links: links,
+          label: {
+            color: '#333',
+            fontSize: 13,
+            fontWeight: 500
+          },
+          lineStyle: {
+            color: 'gradient',
+            curveness: 0.5,
+            opacity: 0.35
+          },
+          itemStyle: {
+            borderWidth: 0
+          },
+          color: ['#C8102E', '#D4AF37', '#E85D5D', '#B8860B', '#8B0000', '#FF9800', '#4CAF50']
+        }]
+      };
+
+      userFlowChart.setOption(option);
+    }
+
     window.addEventListener('resize', function () {
       if (flowerChart) flowerChart.resize();
       if (checkinChart) checkinChart.resize();
       if (trendChart) trendChart.resize();
       if (quizStatsChart) quizStatsChart.resize();
       if (quizTimeChart) quizTimeChart.resize();
+      if (userFlowChart) userFlowChart.resize();
     });
 
     function renderCompare(elementId, current, previous, label) {
@@ -2064,6 +2157,12 @@
         const hourlyData = await hourlyRes.json();
         if (hourlyData.success) {
           renderHourlyChart(hourlyData.data || []);
+        }
+
+        const flowRes = await fetch('/api/stats/user-flow');
+        const flowData = await flowRes.json();
+        if (flowData.success) {
+          renderUserFlowChart(flowData.data || {});
         }
 
         loadSystemStatus();

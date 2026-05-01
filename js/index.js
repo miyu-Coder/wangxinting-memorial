@@ -512,4 +512,14 @@
   } else {
     init();
   }
+
+  document.addEventListener("click", function (e) {
+    if (e.target.id === "hero-cta") {
+      e.preventDefault();
+      var target = document.getElementById("base-intro-heading");
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  });
 })();
