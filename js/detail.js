@@ -1383,6 +1383,9 @@
     var root = document.getElementById("quiz-root");
     if (!root) return;
 
+    window.__wxQuizActive = true;
+    updateAiGuideButton();
+
     var questions =
       loc && loc.quiz && Array.isArray(loc.quiz.questions) ? loc.quiz.questions : [];
     var exhibitId = normId(loc.id);
@@ -1596,6 +1599,9 @@
   }
 
     function showFinalResultPanel() {
+      window.__wxQuizActive = false;
+      updateAiGuideButton();
+
       var comment = quizCommentForScore(state.correct, total);
       root.innerHTML = "";
       var wrap = document.createElement("div");
@@ -1919,6 +1925,7 @@
     setupVideo(loc);
     updateAchievementLines(loc);
     setupQuiz(loc);
+    setupAiGuide(loc);
     setupCheckin(loc); // 添加打卡功能
     setupFlowerTribute(loc);
 
@@ -1944,6 +1951,408 @@
     if (sub) sub.textContent = "加载失败";
     setRetryVisible(true);
     if (main) main.hidden = true;
+  }
+
+  var aiGuideState = {
+    currentLoc: null,
+    typing: false,
+    initialized: false
+  };
+
+  function updateAiGuideButton() {
+    var btn = document.getElementById('btn-ai-guide');
+    var hint = document.getElementById('ai-guide-hint');
+    if (!btn) return;
+    var isActive = window.__wxQuizActive === true;
+    btn.disabled = isActive;
+    if (hint) hint.hidden = !isActive;
+  }
+
+  function closeAiChat() {
+    var overlay = document.getElementById('ai-chat-overlay');
+    if (overlay) {
+      overlay.setAttribute('hidden', '');
+      overlay.style.display = 'none';
+    }
+  }
+
+  function openAiChat() {
+    var overlay = document.getElementById('ai-chat-overlay');
+    if (!overlay) return;
+    overlay.removeAttribute('hidden');
+    overlay.style.display = '';
+    var messagesEl = document.getElementById('ai-chat-messages');
+    if (messagesEl && messagesEl.children.length === 0) {
+      addAiMessage('同志您好！🫡 我是基地的AI讲解员小亭，很高兴为您服务！您可以问我关于王新亭将军生平、革命事迹、基地展品等任何问题，小亭一定知无不言！');
+    }
+  }
+
+  function initAiGuideEvents() {
+    if (aiGuideState.initialized) return;
+    aiGuideState.initialized = true;
+
+    var btn = document.getElementById('btn-ai-guide');
+    var closeBtn = document.getElementById('ai-chat-close');
+    var overlay = document.getElementById('ai-chat-overlay');
+    var sendBtn = document.getElementById('ai-chat-send');
+    var input = document.getElementById('ai-chat-input');
+    var suggestionsEl = document.getElementById('ai-chat-suggestions');
+
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (btn.disabled) return;
+        openAiChat();
+      });
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        closeAiChat();
+      });
+    }
+
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) {
+          closeAiChat();
+        }
+      });
+    }
+
+    if (sendBtn && input) {
+      sendBtn.addEventListener('click', function () {
+        handleAiSend();
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleAiSend();
+        }
+      });
+    }
+
+    if (suggestionsEl) {
+      var suggestionBtns = suggestionsEl.querySelectorAll('.ai-chat-suggestion');
+      for (var i = 0; i < suggestionBtns.length; i++) {
+        (function (sbtn) {
+          sbtn.addEventListener('click', function () {
+            if (input) input.value = sbtn.getAttribute('data-q') || '';
+            handleAiSend();
+          });
+        })(suggestionBtns[i]);
+      }
+    }
+  }
+
+  function handleAiSend() {
+    if (aiGuideState.typing) return;
+    var input = document.getElementById('ai-chat-input');
+    if (!input) return;
+    var q = input.value.trim();
+    if (!q) return;
+    input.value = '';
+    addUserMessage(q);
+    aiGuideState.typing = true;
+
+    var messagesEl = document.getElementById('ai-chat-messages');
+    var thinkingEl = document.createElement('div');
+    thinkingEl.className = 'ai-chat-thinking';
+    thinkingEl.textContent = '🤖 正在分析问题...';
+    messagesEl.appendChild(thinkingEl);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    var delay = 500 + Math.floor(Math.random() * 300);
+    var question = q;
+    setTimeout(function () {
+      if (thinkingEl.parentNode) thinkingEl.parentNode.removeChild(thinkingEl);
+      var answer = generateAnswer(question, aiGuideState.currentLoc);
+      addAiMessageTyping(answer);
+    }, delay);
+  }
+
+  function setupAiGuide(loc) {
+    aiGuideState.currentLoc = loc;
+    window.__wxQuizActive = false;
+
+    closeAiChat();
+
+    var messagesEl = document.getElementById('ai-chat-messages');
+    if (messagesEl) messagesEl.innerHTML = '';
+
+    var block = document.getElementById('block-ai-guide');
+    if (block) block.hidden = false;
+
+    updateAiGuideButton();
+    initAiGuideEvents();
+  }
+
+  function addUserMessage(text) {
+    var messagesEl = document.getElementById('ai-chat-messages');
+    if (!messagesEl) return;
+    var bubble = document.createElement('div');
+    bubble.className = 'ai-chat-bubble ai-chat-bubble--user';
+    bubble.textContent = text;
+    messagesEl.appendChild(bubble);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addAiMessage(text) {
+    var messagesEl = document.getElementById('ai-chat-messages');
+    if (!messagesEl) return;
+    var row = document.createElement('div');
+    row.className = 'ai-chat-row ai-chat-row--ai';
+    var avatar = document.createElement('span');
+    avatar.className = 'ai-chat-avatar';
+    avatar.textContent = '🤖';
+    var bubble = document.createElement('div');
+    bubble.className = 'ai-chat-bubble ai-chat-bubble--ai';
+    bubble.textContent = text;
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addAiMessageTyping(text) {
+    var messagesEl = document.getElementById('ai-chat-messages');
+    if (!messagesEl) return;
+    aiGuideState.typing = true;
+
+    var row = document.createElement('div');
+    row.className = 'ai-chat-row ai-chat-row--ai';
+    var avatar = document.createElement('span');
+    avatar.className = 'ai-chat-avatar';
+    avatar.textContent = '🤖';
+    var bubble = document.createElement('div');
+    bubble.className = 'ai-chat-bubble ai-chat-bubble--ai';
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    messagesEl.appendChild(row);
+
+    var idx = 0;
+    var timer = setInterval(function () {
+      if (idx < text.length) {
+        bubble.textContent += text.charAt(idx);
+        idx++;
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      } else {
+        clearInterval(timer);
+        aiGuideState.typing = false;
+      }
+    }, 30);
+  }
+
+  function stripHtml(html) {
+    var div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  }
+
+  var AI_KEYWORD_MAP = [
+    {
+      test: /什么时候|哪年|何年|年份|年代|参军|入伍|出生|多大|几岁/,
+      match: /\d{4}年|\d+岁|出生|参军|入伍|投身|参加|告别故土/
+    },
+    {
+      test: /哪里|在哪|何地|地点|位置|什么地方/,
+      match: /孝感|湖北|湖南|河南|河北|山西|山东|安徽|江西|四川|重庆|北京|上海|广州|武汉|乡|村|镇|故居|馆|广场|位于/
+    },
+    {
+      test: /勋章|荣誉|奖章|表彰|功勋|称号|军衔|上将|将军|晋升/,
+      match: /勋章|荣誉|奖章|军衔|授予|荣获|上将|中将|少将|一级|二级|三级|解放|独立|八一|功勋|军职/
+    },
+    {
+      test: /香城固|神头岭|响堂铺|战役|战斗|战争|打仗|歼灭|伏击|指挥|抗日/,
+      match: /香城固|神头岭|响堂铺|战役|战斗|伏击|歼灭|缴获|击退|突围|进攻|防御|三战三捷|日军|抗日|指挥/
+    },
+    {
+      test: /展品|陈列|文物|收藏|展示|物品|照片|实物|展馆|陈列馆|有什么|哪些展/,
+      match: /展品|陈列|文物|收藏|展示|物品|照片|实物|手稿|文献|纪念|150|70|复制品|主题|单元/
+    },
+    {
+      test: /坦克|装甲|装备|武器|军事|武器装备/,
+      match: /坦克|装甲|装备|武器|军事|63式|59式|输送车|主战/
+    },
+    {
+      test: /纪念碑|广场|献花|瞻仰|缅怀|宣誓/,
+      match: /纪念碑|广场|献花|瞻仰|缅怀|宣誓|花岗岩|肃穆|纪念活动/
+    },
+    {
+      test: /故居|家|童年|少年|学徒|当铺|早年|贫苦/,
+      match: /故居|童年|少年|学徒|当铺|早年|贫苦|农家|辍学|家贫|生活/
+    }
+  ];
+
+  function buildExhibitIndex() {
+    var index = [];
+    for (var i = 0; i < LOCATIONS.length; i++) {
+      var loc = LOCATIONS[i];
+      if (!loc || !loc.text) continue;
+      var content = stripHtml(loc.text);
+      var sentences = content.split(/[。！？；]/);
+      var clean = [];
+      for (var j = 0; j < sentences.length; j++) {
+        var s = sentences[j].trim();
+        if (s) clean.push(s);
+      }
+      index.push({
+        id: loc.id,
+        title: loc.title || ('展点' + loc.id),
+        sentences: clean,
+        fullText: content
+      });
+    }
+    return index;
+  }
+
+  function searchInExhibit(question, exhibit) {
+    var matched = [];
+    for (var k = 0; k < AI_KEYWORD_MAP.length; k++) {
+      var rule = AI_KEYWORD_MAP[k];
+      if (rule.test.test(question)) {
+        for (var j = 0; j < exhibit.sentences.length; j++) {
+          if (rule.match.test(exhibit.sentences[j])) {
+            matched.push(exhibit.sentences[j]);
+          }
+        }
+        if (matched.length > 0) return { type: 'precise', sentences: matched, title: exhibit.title };
+      }
+    }
+    var bestMatch = null;
+    var bestScore = 0;
+    var qChars = question.replace(/[？?！!。，、的了是在有和与]/g, '');
+    for (var j = 0; j < exhibit.sentences.length; j++) {
+      var score = 0;
+      for (var c = 0; c < qChars.length; c++) {
+        if (exhibit.sentences[j].indexOf(qChars.charAt(c)) !== -1) score++;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = exhibit.sentences[j];
+      }
+    }
+    if (bestMatch && bestScore >= 2) {
+      return { type: 'fuzzy', sentences: [bestMatch], title: exhibit.title };
+    }
+    return null;
+  }
+
+  var QA_PRESET = [
+    {
+      test: /出生|生于|诞生|什么时候生|哪年生|出生地/,
+      answer: '小亭了解到：王新亭将军1908年出生于湖北孝感一个贫苦农家，在故居度过了童年与少年时光。'
+    },
+    {
+      test: /参军|入伍|参加红军|投身革命|当兵|什么时候参军|哪年参军/,
+      answer: '小亭了解到：1930年，22岁的王新亭告别故土，参加红军，从此开启了传奇的戎马生涯。他三年内从战士升至军政治部主任，堪称传奇！'
+    },
+    {
+      test: /学徒|当铺|辍学|小时候|少年|童年|贫苦|家贫/,
+      answer: '小亭了解到：将军12岁因家贫辍学，前往当铺做学徒谋生。正是在那片土地上，他目睹了旧社会的黑暗与不公，埋下了投身革命的种子。'
+    },
+    {
+      test: /勋章|荣誉|军衔|上将|授予|晋升|什么衔/,
+      answer: '小亭了解到：1955年，王新亭将军被授予上将军衔。他一生荣获一级八一勋章、一级独立自由勋章、一级解放勋章等崇高荣誉。'
+    },
+    {
+      test: /三战三捷|三战/,
+      answer: '小亭了解到：抗日战争时期，王新亭将军与陈赓搭档，指挥了神头岭伏击战、响堂铺战斗、香城固战斗，三战三捷，令日军闻风丧胆！'
+    },
+    {
+      test: /香城固/,
+      answer: '小亭了解到：香城固战斗是抗日战争时期的著名战斗之一，王新亭将军与陈赓搭档指挥此战，歼灭日军250余人，是平原伏击战的经典战例，三战三捷之一！'
+    },
+    {
+      test: /神头岭/,
+      answer: '小亭了解到：神头岭伏击战是抗日战争时期的著名战斗，由王新亭将军与陈赓共同指挥，是三战三捷的第一战，重创日军，极大鼓舞了抗日士气！'
+    },
+    {
+      test: /响堂铺/,
+      answer: '小亭了解到：响堂铺战斗是抗日战争时期的著名战斗，由王新亭将军与陈赓共同指挥，是三战三捷之一，给予日军沉重打击！'
+    },
+    {
+      test: /战斗|战役|打仗|战争|指挥|抗日|解放/,
+      answer: '小亭了解到：将军的战斗经历十分辉煌！抗日战争时期与陈赓搭档，指挥神头岭、响堂铺、香城固等著名战斗，三战三捷；解放战争时期参与运城、临汾、晋中、太原等重大战役。'
+    },
+    {
+      test: /运城|临汾|晋中|太原|解放战争/,
+      answer: '小亭了解到：解放战争时期，王新亭将军参与了运城、临汾、晋中、太原等重大战役，为解放全中国立下了赫赫战功！'
+    },
+    {
+      test: /展品|陈列|展览|照片|实物|手稿|有什么|哪些展|陈列馆/,
+      answer: '小亭了解到：陈列馆汇集约150张珍贵历史照片与70余件实物展品，包括将军生前使用过的物品、手稿、勋章复制品等，是全面了解将军生平事迹与革命精神的核心场馆。'
+    },
+    {
+      test: /去世|逝世|终年|享年|什么时候走|哪年走/,
+      answer: '小亭了解到：王新亭将军于1984年12月11日在北京逝世，终年76岁。将军的一生，是为党和人民不懈奋斗的一生。'
+    },
+    {
+      test: /故居|老家|家乡|住|房屋|房子/,
+      answer: '小亭了解到：故居建筑面积约80平方米，为20世纪初孝感本地典型的乡村民居，青砖灰瓦，朴素庄重。堂屋、卧室、灶房一应俱全，真实还原了那个年代普通农家子弟的生活场景。'
+    },
+    {
+      test: /广场|纪念碑|献花|瞻仰|缅怀|宣誓/,
+      answer: '小亭了解到：纪念广场占地逾5000平方米，中央矗立着王新亭将军纪念碑，碑身采用花岗岩材质，正面镌刻"王新亭将军永垂不朽"金色大字，碑前设有献花台供参观者致敬。'
+    },
+    {
+      test: /装备|坦克|装甲|武器|军事|63式|59式/,
+      answer: '小亭了解到：装备展区陈列63式装甲输送车和59式中型坦克等退役军事装备实物。63式是我国自行研制的第一代履带式装甲输送车，59式是新中国第一代主战坦克，见证了人民军队装甲兵从无到有的发展历程。'
+    },
+    {
+      test: /建国后|新中国成立|副总|参谋长|司令|军职/,
+      answer: '小亭了解到：新中国成立后，王新亭将军历任西南军区副政委、济南军区代司令员、解放军副总参谋长等重要军职，继续为国防事业贡献力量。'
+    }
+  ];
+
+  function generateAnswer(question, loc) {
+    if (/你是谁|你叫什么|你是什么|猜猜我是谁|你好|你是ai|你是AI|介绍一下你/.test(question)) {
+      return '小亭笑着说：我是基地的AI讲解员小亭呀！您可以问我关于王新亭将军和基地展品的任何问题。';
+    }
+
+    for (var p = 0; p < QA_PRESET.length; p++) {
+      if (QA_PRESET[p].test.test(question)) {
+        return QA_PRESET[p].answer;
+      }
+    }
+
+    var exhibitIndex = buildExhibitIndex();
+    if (exhibitIndex.length === 0) {
+      return '小亭抱歉地说：同志，小亭暂时还没准备好，请稍后再试。';
+    }
+
+    var currentId = loc ? normId(loc.id) : null;
+    var currentExhibit = null;
+    var otherExhibits = [];
+    for (var i = 0; i < exhibitIndex.length; i++) {
+      if (normId(exhibitIndex[i].id) === currentId) {
+        currentExhibit = exhibitIndex[i];
+      } else {
+        otherExhibits.push(exhibitIndex[i]);
+      }
+    }
+
+    if (currentExhibit) {
+      var result = searchInExhibit(question, currentExhibit);
+      if (result) {
+        if (result.type === 'precise') {
+          return '小亭了解到：关于您问的「' + question + '」，在【' + result.title + '】中有详细介绍：' + result.sentences.join('。') + '。';
+        }
+        return '小亭觉得：您问的「' + question + '」很有意思。虽然没有直接答案，但在【' + result.title + '】中提到过相关的内容：' + result.sentences.join('。') + '。您是想了解这方面吗？';
+      }
+    }
+
+    for (var i = 0; i < otherExhibits.length; i++) {
+      var result = searchInExhibit(question, otherExhibits[i]);
+      if (result) {
+        if (result.type === 'precise') {
+          return '小亭了解到：关于您问的「' + question + '」，在【' + result.title + '】中有详细介绍：' + result.sentences.join('。') + '。';
+        }
+        return '小亭觉得：您问的「' + question + '」很有意思。虽然没有直接答案，但在【' + result.title + '】中提到过相关的内容：' + result.sentences.join('。') + '。您是想了解这方面吗？';
+      }
+    }
+
+    return '小亭抱歉地说：同志，您问的「' + question + '」小亭暂时还没学到。不过，小亭对将军的生平和基地的展品可是很熟悉的！您可以试试问我：\n· 将军是什么时候出生的？\n· 他参加过哪些著名战斗？\n· 获得了什么荣誉？\n保证给您满意的答复！';
   }
 
   function run() {

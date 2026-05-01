@@ -127,6 +127,13 @@
         <button type="button" class="detail-text-expand" id="detail-text-expand">▼ 展开全文</button>
       </section>
 
+      <section class="detail-block detail-ai-block" id="block-ai-guide" hidden>
+        <button type="button" class="btn btn-ai-guide" id="btn-ai-guide">
+          🤖 AI 讲解员
+        </button>
+        <span class="ai-guide-hint" id="ai-guide-hint" hidden>答题中暂不可用</span>
+      </section>
+
       <section class="detail-block detail-checkin-block" id="block-checkin" aria-labelledby="checkin-label">
         <h2 id="checkin-label" class="section-title section-title--serif">参观打卡</h2>
         <div class="checkin-container" id="checkin-container">
@@ -203,6 +210,27 @@
   <script src="js/map-navigation.js" defer></script>
   <script src="js/detail.js?v=10" defer></script>
   <script src="js/lazy-load.js?v=1" defer></script>
+
+  <div class="ai-chat-overlay" id="ai-chat-overlay" hidden style="display:none">
+    <div class="ai-chat-panel">
+      <div class="ai-chat-header">
+        <span>🤖 AI 讲解员</span>
+        <button type="button" class="ai-chat-close" id="ai-chat-close" aria-label="关闭">&times;</button>
+      </div>
+      <div class="ai-chat-messages" id="ai-chat-messages"></div>
+      <div class="ai-chat-suggestions" id="ai-chat-suggestions">
+        <button type="button" class="ai-chat-suggestion" data-q="将军什么时候参军的？">将军什么时候参军的？</button>
+        <button type="button" class="ai-chat-suggestion" data-q="香城固战斗是怎么回事？">香城固战斗是怎么回事？</button>
+        <button type="button" class="ai-chat-suggestion" data-q="将军获得过哪些勋章？">将军获得过哪些勋章？</button>
+        <button type="button" class="ai-chat-suggestion" data-q="陈列馆有哪些展品？">陈列馆有哪些展品？</button>
+      </div>
+      <div class="ai-chat-input-bar">
+        <input type="text" class="ai-chat-input" id="ai-chat-input" placeholder="想问将军的什么事？" maxlength="100" />
+        <button type="button" class="ai-chat-send" id="ai-chat-send">发送</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function() {
       var sessionId = localStorage.getItem('visitor_session_id');

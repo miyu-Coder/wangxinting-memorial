@@ -134,7 +134,7 @@
 
 ---
 
-## 三、答题（3 个）
+## 三、答题（5 个）
 
 ### POST /api/quiz/submit
 
@@ -196,6 +196,36 @@
   }
 }
 ```
+
+### GET /api/quiz/user-records
+
+查询指定用户的答题记录（各展点最高分）。成就页用于同步后端数据，确保与排行榜一致。
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| nickname | String | 是 | 用户昵称 |
+
+成功返回：
+
+```json
+{
+  "success": true,
+  "records": {
+    "1": 4,
+    "3": 2
+  }
+}
+```
+
+records 中 key 为展点 ID（字符串），value 为该展点最高分。无记录时返回空对象 `{}`。
+
+### GET /api/quiz/time-by-user
+
+查询指定用户各展点答题用时。
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| nickname | String | 是 | 用户昵称 |
 
 ---
 
@@ -371,7 +401,7 @@
 
 ---
 
-## 八、纪念品预约（1 个）
+## 八、纪念品预约（2 个）
 
 ### POST /api/souvenir/order
 
@@ -386,6 +416,7 @@
 | orderType | String | 否 | 预约类型：`exhibit`（默认）/ `ranking` |
 | rank | Integer | 否 | 排名（排行榜预约时必填） |
 | prizeName | String | 否 | 奖品名称（不传则自动填充） |
+| remark | String | 否 | 备注（选填，最多 50 字） |
 
 成功返回：
 
@@ -414,6 +445,41 @@ prize_name 自动填充规则：
 | exhibit | exhibitId=2 | 红色传承手环 |
 | exhibit | exhibitId=3 | 荣誉纪念证书 |
 | exhibit | exhibitId=4 | 军工主题书签 |
+
+### GET /api/souvenir/check
+
+查询纪念品预约状态。排行榜页用于判断用户是否已预约。
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| nickname | String | 是 | 用户昵称 |
+| orderType | String | 否 | 预约类型筛选（如 `ranking`） |
+
+成功返回（已有预约）：
+
+```json
+{
+  "success": true,
+  "order": {
+    "id": 1,
+    "nickname": "小红",
+    "exhibit_id": 0,
+    "name": "张三",
+    "phone": "13800138000",
+    "status": 0,
+    "order_type": "ranking",
+    "prize_name": "第1名·将军纪念礼盒",
+    "remark": "喜欢红色款",
+    "created_at": "2026-04-30 10:00:00"
+  }
+}
+```
+
+成功返回（无预约）：
+
+```json
+{ "success": true, "order": null }
+```
 
 ---
 

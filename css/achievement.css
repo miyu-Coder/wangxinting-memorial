@@ -867,3 +867,69 @@ html.achievement-doc {
 .quiz-review-footer-btn:hover {
   background: #f5f5f5;
 }
+
+.achievement-particle-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.achievement-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.achievement-stat-card,
+.achievement-exhibit-item,
+.achievement-title-badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.achievement-stat-card::after,
+.achievement-exhibit-item::after,
+.achievement-title-badge::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+  pointer-events: none;
+  animation: sweepLight 2.5s ease-in-out infinite;
+}
+
+.achievement-exhibit-item::after {
+  animation-delay: 0.3s;
+}
+
+.achievement-exhibit-item:nth-child(2)::after {
+  animation-delay: 0.6s;
+}
+
+.achievement-exhibit-item:nth-child(3)::after {
+  animation-delay: 0.9s;
+}
+
+.achievement-exhibit-item:nth-child(4)::after {
+  animation-delay: 1.2s;
+}
+
+@keyframes sweepLight {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}
