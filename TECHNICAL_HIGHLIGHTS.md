@@ -183,6 +183,29 @@ AND visit_time > datetime('now', '-10 minutes')
 
 **论文描述**：页面访问统计采用会话级去重策略，在 10 分钟时间窗口内，同一会话对同一页面的重复访问不重复计数。该机制有效过滤了用户刷新页面、浏览器自动重载等场景产生的无效 PV，提升了访问统计的准确性。
 
+#### 3.5 Sankey 用户行为路径分析
+
+**亮点名称**：基于会话关联的用户行为桑基图
+
+**代码体现**：
+```javascript
+// 首页 → 各展点：通过 session_id 关联
+var indexSessions = await db.allAsync(
+  "SELECT DISTINCT session_id FROM page_views WHERE page = 'index'"
+);
+var fromIndex = exhibitSessionIds.filter(function(sid) {
+  return indexSessionIds.indexOf(sid) !== -1;
+}).length;
+
+// 各展点 → 打卡/答题：独立用户计数
+var checkinCount = await db.getAsync(
+  'SELECT COUNT(DISTINCT user_identifier) as cnt FROM visits WHERE exhibit_id = ?',
+  [eid]
+);
+```
+
+**论文描述**：系统设计了基于会话关联的用户行为路径分析模型。通过 page_views 表中的 session_id 字段，追踪用户从首页到各展点详情页的访问流转；再结合 visits 和 quiz_records 表的独立用户计数，构建"首页→展点→打卡/答题"的三级行为路径。前端采用 ECharts Sankey 桑基图可视化，以中国红与金色渐变配色，直观展示用户行为的流量分布与转化漏斗。当数据量不足（总流量 < 5）时自动隐藏图表并提示"数据不足"，避免小样本数据产生误导性结论。
+
 ### 四、安全设计亮点
 
 #### 4.1 环境变量管理
@@ -350,9 +373,10 @@ IP地址 + User-Agent → MD5哈希 → 取前16位 → user_identifier
 
 **3.5.1 数据看板**
 
-- ECharts 可视化：7日趋势折线图、时段分布柱状图
+- ECharts 可视化：7日趋势折线图、时段分布柱状图、Sankey 用户行为路径图
 - 核心指标：PV/UV、转化率、献花数、热门展点
-- 展点转化率 = 打卡数 / 浏览数 × 100%
+- 展点转化率 = 打卡数 / 浏览数 × 100%（上限 100%）
+- Sankey 路径分析：首页→展点→打卡/答题三级行为流转
 
 **3.5.2 内容管理**
 

@@ -347,6 +347,51 @@ records 中 key 为展点 ID（字符串），value 为该展点最高分。无�
 }
 ```
 
+### GET /api/stats/user-flow
+
+获取用户行为路径数据（用于 Sankey 桑基图可视化）。
+
+数据构造逻辑：
+1. 首页 → 各展点：统计访问过 index 的 session 中，有多少也访问了各展点详情页
+2. 各展点 → 打卡：统计各展点的独立打卡用户数
+3. 各展点 → 答题：统计各展点的独立答题用户数
+
+数据量不足时（总流量 < 5）返回空数组，前端显示"数据不足"。
+
+成功返回：
+
+```json
+{
+  "success": true,
+  "data": {
+    "nodes": [
+      { "name": "首页" },
+      { "name": "陈列馆" },
+      { "name": "故居" },
+      { "name": "广场" },
+      { "name": "装备展区" },
+      { "name": "打卡" },
+      { "name": "答题" }
+    ],
+    "links": [
+      { "source": "首页", "target": "陈列馆", "value": 120 },
+      { "source": "首页", "target": "故居", "value": 90 },
+      { "source": "陈列馆", "target": "打卡", "value": 80 },
+      { "source": "陈列馆", "target": "答题", "value": 60 }
+    ]
+  }
+}
+```
+
+数据不足时返回：
+
+```json
+{
+  "success": true,
+  "data": { "nodes": [], "links": [] }
+}
+```
+
 ---
 
 ## 六、页面追踪（1 个）
