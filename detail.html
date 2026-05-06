@@ -129,8 +129,9 @@
 
       <section class="detail-block detail-ai-block" id="block-ai-guide" hidden>
         <button type="button" class="btn btn-ai-guide" id="btn-ai-guide">
-          🤖 AI 讲解员
+          💬 不懂？问问小亭
         </button>
+        <p class="ai-guide-prompt" id="ai-guide-prompt">点我直接问「这辆坦克是什么型号？」</p>
         <span class="ai-guide-hint" id="ai-guide-hint" hidden>答题中暂不可用</span>
       </section>
 
@@ -208,24 +209,27 @@
   <script src="js/flowers.js?v=1"></script>
   <script src="js/audio-player.js?v=1"></script>
   <script src="js/map-navigation.js" defer></script>
+  <script src="js/ai-knowledge-base.js?v=1"></script>
   <script src="js/detail.js?v=10" defer></script>
   <script src="js/lazy-load.js?v=1" defer></script>
 
   <div class="ai-chat-overlay" id="ai-chat-overlay" hidden style="display:none">
     <div class="ai-chat-panel">
       <div class="ai-chat-header">
-        <span>🤖 AI 讲解员</span>
+        <span>🤖 导览助手 · 小亭</span>
         <button type="button" class="ai-chat-close" id="ai-chat-close" aria-label="关闭">&times;</button>
       </div>
       <div class="ai-chat-messages" id="ai-chat-messages"></div>
       <div class="ai-chat-suggestions" id="ai-chat-suggestions">
+        <button type="button" class="ai-chat-suggestion" data-q="怎么打卡？">怎么打卡？</button>
+        <button type="button" class="ai-chat-suggestion" data-q="怎么领纪念品？">怎么领纪念品？</button>
+        <button type="button" class="ai-chat-suggestion" data-q="基地在哪里？">基地在哪里？</button>
         <button type="button" class="ai-chat-suggestion" data-q="将军什么时候参军的？">将军什么时候参军的？</button>
         <button type="button" class="ai-chat-suggestion" data-q="香城固战斗是怎么回事？">香城固战斗是怎么回事？</button>
         <button type="button" class="ai-chat-suggestion" data-q="将军获得过哪些勋章？">将军获得过哪些勋章？</button>
-        <button type="button" class="ai-chat-suggestion" data-q="陈列馆有哪些展品？">陈列馆有哪些展品？</button>
       </div>
       <div class="ai-chat-input-bar">
-        <input type="text" class="ai-chat-input" id="ai-chat-input" placeholder="想问将军的什么事？" maxlength="100" />
+        <input type="text" class="ai-chat-input" id="ai-chat-input" placeholder="关于将军、基地或系统操作，都可以问我..." maxlength="100" />
         <button type="button" class="ai-chat-send" id="ai-chat-send">发送</button>
       </div>
     </div>

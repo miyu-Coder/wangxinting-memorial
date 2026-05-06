@@ -304,6 +304,22 @@
       });
     }
 
+    var btnOpenMapHome = document.getElementById("btn-open-map-home");
+    if (btnOpenMapHome) {
+      btnOpenMapHome.addEventListener("click", function () {
+        if (window.MapNavigation && typeof window.MapNavigation.openMapChooser === "function") {
+          window.MapNavigation.openMapChooser();
+        } else {
+          var addr = '湖北省孝感市孝南区朋兴乡北庙村';
+          if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            window.open('maps://?q=' + encodeURIComponent(addr), '_blank');
+          } else {
+            window.open('https://uri.amap.com/marker?position=&name=' + encodeURIComponent(addr), '_blank');
+          }
+        }
+      });
+    }
+
     loadActivityTicker();
     initFootprintMap();
     if (window.WxCommon && typeof window.WxCommon.initMessageWall === 'function') {

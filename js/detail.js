@@ -1962,10 +1962,19 @@
   function updateAiGuideButton() {
     var btn = document.getElementById('btn-ai-guide');
     var hint = document.getElementById('ai-guide-hint');
+    var prompt = document.getElementById('ai-guide-prompt');
     if (!btn) return;
     var isActive = window.__wxQuizActive === true;
     btn.disabled = isActive;
     if (hint) hint.hidden = !isActive;
+    if (prompt) {
+      var locId = getCurrentIdFromUrl();
+      var loc = locId != null ? loadLocationData(locId) : null;
+      if (loc) {
+        var name = loc.title || '这个展点';
+        prompt.textContent = '点我直接问「' + name + '有什么值得看的？」';
+      }
+    }
   }
 
   function closeAiChat() {
@@ -1983,7 +1992,7 @@
     overlay.style.display = '';
     var messagesEl = document.getElementById('ai-chat-messages');
     if (messagesEl && messagesEl.children.length === 0) {
-      addAiMessage('同志您好！🫡 我是基地的AI讲解员小亭，很高兴为您服务！您可以问我关于王新亭将军生平、革命事迹、基地展品等任何问题，小亭一定知无不言！');
+      addAiMessage('同志您好！我是导览助手小亭，关于将军生平、基地展品和系统使用，都可以问我～');
     }
   }
 
@@ -2306,8 +2315,20 @@
   ];
 
   function generateAnswer(question, loc) {
-    if (/你是谁|你叫什么|你是什么|猜猜我是谁|你好|你是ai|你是AI|介绍一下你/.test(question)) {
-      return '小亭笑着说：我是基地的AI讲解员小亭呀！您可以问我关于王新亭将军和基地展品的任何问题。';
+    if (typeof AI_KNOWLEDGE !== 'undefined') {
+      var categories = ['guides', 'functions', 'faq'];
+      for (var ci = 0; ci < categories.length; ci++) {
+        var items = AI_KNOWLEDGE[categories[ci]];
+        if (!items) continue;
+        for (var ki = 0; ki < items.length; ki++) {
+          var kws = items[ki].keywords;
+          for (var wi = 0; wi < kws.length; wi++) {
+            if (question.indexOf(kws[wi]) !== -1) {
+              return items[ki].reply;
+            }
+          }
+        }
+      }
     }
 
     for (var p = 0; p < QA_PRESET.length; p++) {
